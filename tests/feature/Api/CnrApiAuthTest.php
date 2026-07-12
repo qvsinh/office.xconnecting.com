@@ -8,22 +8,9 @@ use Tests\Support\Api\ApiKeyFixture;
 
 /**
  * Auth accept/reject paths shared by both proxy endpoints, exercised via
- * the CNR route. `ApiController::checkUserAccess()` behaves identically
- * regardless of which concrete proxy controller runs.
- *
- * BLOCKED (see testRejectPathsCannotBeFeatureTested... below for the full
- * repro): `ApiController::rejectUnauthorized()` calls `$this->response->
- * ...->send()->exit()` directly. `exit()` is a real PHP language construct —
- * under FeatureTestTrait the app runs in-process inside the PHPUnit worker,
- * so hitting this path terminates the entire PHPUnit process (confirmed:
- * the raw JSON body is echoed to stdout by send() and the run stops with
- * exit code 0, no test result is ever reported). Every "auth reject" /
- * "env mismatch" scenario in the plan's Integration test list goes through
- * this exact path and is therefore unrunnable via FeatureTestTrait until
- * fixed. Reported to backend-coder — see the tester's final report for the
- * recommended fix (return a Response instead of send()+exit(), e.g. via a
- * dedicated exception caught by the global handler, or short-circuiting in
- * ApiFilter::before() which CI4 supports natively).
+ * the CNR route. `ApiFilter::before()` behaves identically regardless of
+ * which concrete proxy controller runs, since it short-circuits the request
+ * with a 401 `ResponseInterface` before any controller is instantiated.
  *
  * @internal
  */
@@ -37,22 +24,90 @@ final class CnrApiAuthTest extends CIUnitTestCase
     protected $refresh   = true;
     protected $namespace = null;
 
-    /**
-     * Documents every reject-path scenario the plan requires (missing
-     * bearer, empty token, malformed token, disabled key, user_id mismatch,
-     * service_id mismatch, env mismatch on /live and /testing) without
-     * running them — each one crashes the PHPUnit process (see class
-     * docblock). Un-skip and split into per-scenario tests once
-     * ApiController::rejectUnauthorized() no longer calls exit() directly.
-     */
-    public function testRejectPathsCrashPhpunitViaControllerExit(): void
+    private const UNAUTHORIZED = ['status' => 'error', 'message' => 'Unauthorized'];
+
+    public function testMissingAuthorizationHeaderIsRejected(): void
     {
-        $this->markTestSkipped(
-            'Blocked: ApiController::rejectUnauthorized() calls send()->exit() directly, '
-            . 'which kills the whole PHPUnit process instead of failing one test '
-            . '(reproduced: raw JSON is echoed to stdout, run stops at exit code 0, '
-            . 'no test result reported). Fix in ApiController before un-skipping.'
-        );
+        $result = $this->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(self::UNAUTHORIZED);
+    }
+
+    public function testEmptyBearerTokenIsRejected(): void
+    {
+        $result = $this->withHeaders(['Authorization' => 'Bearer '])->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(self::UNAUTHORIZED);
+    }
+
+    public function testMalformedTokenIsRejected(): void
+    {
+        $result = $this->withHeaders(['Authorization' => 'Bearer not-a-real-token'])
+            ->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(self::UNAUTHORIZED);
+    }
+
+    public function testDisabledKeyIsRejected(): void
+    {
+        $key = $this->seedApiKey(1, 0, 800, ['is_enable' => 0]);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(self::UNAUTHORIZED);
+    }
+
+    public function testUserIdMismatchIsRejected(): void
+    {
+        // Token encodes user_id=1, but the key row on file belongs to user_id=2.
+        $key = $this->seedApiKey(1, 0, 800);
+        model(ApiAccessKeyModel::class)->update($key['id'], ['user_id' => 2]);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(self::UNAUTHORIZED);
+    }
+
+    public function testServiceIdMismatchIsRejected(): void
+    {
+        // Token encodes service_id=800, but the key row on file is service_id=900.
+        $key = $this->seedApiKey(1, 0, 800);
+        model(ApiAccessKeyModel::class)->update($key['id'], ['service_id' => 900]);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(self::UNAUTHORIZED);
+    }
+
+    public function testTestingKeyHittingLiveEndpointIsRejectedAsInvalidEndpoint(): void
+    {
+        $key = $this->seedApiKey(1, 0, 800);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/live');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(['status' => 'error', 'message' => 'Invalid endpoint']);
+    }
+
+    public function testLiveKeyHittingTestingEndpointIsRejectedAsInvalidEndpoint(): void
+    {
+        $key = $this->seedApiKey(1, 1, 800);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/testing');
+
+        $result->assertStatus(401);
+        $result->assertJSONExact(['status' => 'error', 'message' => 'Invalid endpoint']);
     }
 
     public function testValidEnabledKeyMatchingEnvIsAccepted(): void
