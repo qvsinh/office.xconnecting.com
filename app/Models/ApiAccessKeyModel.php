@@ -22,12 +22,10 @@ class ApiAccessKeyModel extends Model
         'description',
         'last_access',
     ];
-
-    protected $useTimestamps = false;
-    protected $createdField  = 'created_at';
-    protected $updatedField  = '';
-    protected $deletedField  = '';
-
+    protected $useTimestamps  = false;
+    protected $createdField   = 'created_at';
+    protected $updatedField   = '';
+    protected $deletedField   = '';
     protected $skipValidation = false;
 
     /**

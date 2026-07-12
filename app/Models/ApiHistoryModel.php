@@ -25,11 +25,9 @@ class ApiHistoryModel extends Model
         'metadata',
         'status',
     ];
-
-    protected $useTimestamps = true;
-    protected $createdField  = 'created_at';
-    protected $updatedField  = '';
-    protected $deletedField  = 'deleted_at';
-
+    protected $useTimestamps  = true;
+    protected $createdField   = 'created_at';
+    protected $updatedField   = '';
+    protected $deletedField   = 'deleted_at';
     protected $skipValidation = false;
 }

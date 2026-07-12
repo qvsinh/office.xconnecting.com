@@ -21,20 +21,18 @@ use Throwable;
  */
 abstract class ApiController extends BaseController
 {
-    protected $helpers = ['app', 'service_config'];
-
-    public ?object $user = null;
-    public ?int $service_id = null;
-    protected ?int $key_enable_log = null;
-
     private const SKIP_LOG_LISTING_COMMANDS = [
         'QueryEventList',
         'QueryDNSZoneList',
         'QueryContactList',
         'QueryDomainList',
     ];
-
     private const HISTORY_SORT_ALLOWLIST = ['created_at', 'id', 'status', 'command'];
+
+    protected $helpers             = ['app', 'service_config'];
+    public ?object $user           = null;
+    public ?int $service_id        = null;
+    protected ?int $key_enable_log = null;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
@@ -128,6 +126,7 @@ abstract class ApiController extends BaseController
             $builder->select('id, user_id, env, service_name, service_id, url, status, command, domain, params, response, metadata, created_at')
                 ->where('service_name', $serviceName)
                 ->where('service_id', $this->service_id)
+                ->where('user_id', $this->user->id) // per-user tenancy: a caller sees only their own history
                 ->where('deleted_at', null); // respect soft-deletes (builder() bypasses the model scope)
 
             if ($domain !== '') {

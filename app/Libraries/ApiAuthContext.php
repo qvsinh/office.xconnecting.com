@@ -11,7 +11,7 @@ namespace App\Libraries;
  */
 class ApiAuthContext
 {
-    public ?object $user = null;
-    public ?int $serviceId = null;
+    public ?object $user      = null;
+    public ?int $serviceId    = null;
     public ?int $keyEnableLog = null;
 }

@@ -162,6 +162,32 @@ final class CnrApiProxyTest extends CIUnitTestCase
         $this->assertSame('StatusAccount', $json['data']['rows'][0]['command']);
     }
 
+    public function testCommandHistoryIsScopedToCallingUser(): void
+    {
+        $key = $this->seedApiKey(1, 0, 800);
+
+        // Caller's own row (user 1, service 800).
+        model(ApiHistoryModel::class)->insert([
+            'env' => 'TESTING', 'service_name' => 'cnr', 'service_id' => 800, 'user_id' => 1,
+            'command' => 'StatusAccount', 'domain' => null, 'params' => '{}', 'response' => '{"code":200}',
+            'status' => 1,
+        ]);
+        // Another user sharing the same service_id must NOT leak into the caller's history.
+        model(ApiHistoryModel::class)->insert([
+            'env' => 'TESTING', 'service_name' => 'cnr', 'service_id' => 800, 'user_id' => 2,
+            'command' => 'QueryDomain', 'domain' => null, 'params' => '{}', 'response' => '{"code":200}',
+            'status' => 1,
+        ]);
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/testing?command=History');
+
+        $result->assertStatus(200);
+        $json = json_decode($result->getJSON(), true);
+        $this->assertCount(1, $json['data']['rows']);
+        $this->assertSame('StatusAccount', $json['data']['rows'][0]['command']);
+    }
+
     public function testCommandHistoryExcludesSoftDeletedRows(): void
     {
         $key   = $this->seedApiKey(1, 0, 800);

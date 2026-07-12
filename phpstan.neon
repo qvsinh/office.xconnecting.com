@@ -1,0 +1,19 @@
+parameters:
+    phpVersion: 80300
+    tmpDir: build/phpstan
+    level: 5
+    paths:
+        - app
+    bootstrapFiles:
+        - vendor/codeigniter4/framework/system/Test/bootstrap.php
+    scanDirectories:
+        - vendor/codeigniter4/framework/system/Helpers
+    excludePaths:
+        - app/Views/*
+        # Framework-generated stubs that branch on ENVIRONMENT: the test
+        # bootstrap pins it to a literal, so every ENVIRONMENT comparison in
+        # these stock files is flagged always-true/false. Not our code.
+        - app/Config/Database.php
+        - app/Config/Events.php
+        - app/Config/Logger.php
+        - app/Config/Security.php

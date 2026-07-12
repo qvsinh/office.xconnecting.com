@@ -79,11 +79,15 @@ class ApiFilter implements FilterInterface
         $context->user         = (object) ['id' => $userId, 'env' => $env];
         $context->serviceId    = $serviceId;
         $context->keyEnableLog = (int) $keyRow->enable_log;
+
+        return null; // allow the request to proceed to the controller
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         session()->destroy();
+
+        return null;
     }
 
     /**

@@ -19,3 +19,4 @@ writable/cache/*
 .claude/scheduled_tasks.lock
 build/logs/*
 build/.phpunit.cache/
+build/phpstan/

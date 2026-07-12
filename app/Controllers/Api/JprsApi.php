@@ -42,8 +42,7 @@ class JprsApi extends ApiController
             ])->setStatusCode(400);
         }
 
-        ['code' => $code, 'description' => $description, 'data' => $data, 'raw_response' => $raw] =
-            $this->parseJprsResponse($apiResponse);
+        ['code' => $code, 'description' => $description, 'data' => $data, 'raw_response' => $raw] = $this->parseJprsResponse($apiResponse);
 
         if ($code !== null && str_starts_with($code, '2')) {
             return $this->response->setJSON([
@@ -76,7 +75,7 @@ class JprsApi extends ApiController
      * connection, and return the raw (already ISO-2022-JP -> UTF-8 decoded)
      * response body. Returns `false` when the service config is incomplete.
      */
-    private function sendRequest(string $command): string|false
+    private function sendRequest(string $command): false|string
     {
         $config = get_jprs_service_config($this->service_id);
 
@@ -90,7 +89,7 @@ class JprsApi extends ApiController
             'OperationPassword' => $config['AgentLoginPassword'],
         ];
 
-        $params = $this->request->getVar() ?: [];
+        $params   = $this->request->getVar() ?: [];
         $metadata = $params['metadata'] ?? null;
         unset($params['metadata']);
 
@@ -209,7 +208,7 @@ class JprsApi extends ApiController
      * Parse the JPRS plain-text response: `Key:Value` lines (repeated keys
      * collapse to `;`-joined) plus the trailing 3-digit status line.
      *
-     * @return array{code: ?string, description: ?string, data: array<string, mixed>, raw_response: string[]}
+     * @return array{code: ?string, description: ?string, data: array<string, mixed>, raw_response: list<string>}
      */
     private function parseJprsResponse(string $responseBody): array
     {
@@ -233,7 +232,7 @@ class JprsApi extends ApiController
                 $value         = trim($value);
 
                 if (isset($result[$key])) {
-                    $result[$key] = (array) $result[$key];
+                    $result[$key]   = (array) $result[$key];
                     $result[$key][] = $value;
                 } else {
                     $result[$key] = $value;
