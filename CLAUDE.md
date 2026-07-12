@@ -9,7 +9,12 @@ AI agents. There is **no application code here yet** — it is being written fro
   frontend** (old server-rendered theme system) or its dated patterns. Port intent, not code.
 - **Frontend template:** [TailAdmin free Tailwind dashboard](https://github.com/TailAdmin/tailadmin-free-tailwind-dashboard-template)
   — Tailwind CSS + Alpine.js. Use it for the whole project (admin + user areas).
-- **Raw prompts** for this rebuild are logged in `changeslog/` for later review.
+- **Raw prompts** for this rebuild are logged verbatim in `changeslog/` (one file per prompt/
+  session) for later review.
+- **Working language (hard rule):** write **all saved artifacts in English** — plans, code, code
+  comments, commit messages, and changeslog notes — regardless of whether the prompt is in
+  Vietnamese or English. Chat replies may mirror the user's language; anything written to disk is
+  English.
 
 ## What we're rebuilding (feature summary)
 
