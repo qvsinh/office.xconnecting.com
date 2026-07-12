@@ -11,7 +11,11 @@ final class ApiHistoryModelTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate = true;
+    protected $migrate   = true;
+    protected $refresh   = true;
+    // null = migrate/regress every namespace (App's migrations aren't under
+    // the default 'Tests\Support' namespace CI4 scopes migrations to).
+    protected $namespace = null;
 
     public function testInsertAndScopedRead(): void
     {

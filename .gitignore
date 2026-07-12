@@ -5,6 +5,7 @@
 .env.development
 .env.staging
 .env.production
+phpunit.xml
 .codegraph
 .idea
 .ignores
@@ -16,3 +17,5 @@ writable/cache/*
 
 # Claude Code runtime
 .claude/scheduled_tasks.lock
+build/logs/*
+build/.phpunit.cache/
