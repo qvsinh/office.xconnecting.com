@@ -6,7 +6,6 @@ use CodeIgniter\Model;
 
 class ApiHistoryModel extends Model
 {
-    protected $DBGroup          = 'default';
     protected $table            = 'api_history';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;

@@ -6,7 +6,6 @@ use CodeIgniter\Model;
 
 class ApiAccessKeyModel extends Model
 {
-    protected $DBGroup          = 'default';
     protected $table            = 'users_api_access_keys';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;

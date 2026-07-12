@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Libraries\ApiAuthContext;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -29,4 +30,17 @@ class Services extends BaseService
      *     return new \CodeIgniter\Example();
      * }
      */
+
+    /**
+     * Per-request auth context handed off from `ApiFilter::before()` to
+     * `ApiController::initController()` (see App\Libraries\ApiAuthContext).
+     */
+    public static function apiAuthContext(bool $getShared = true): ApiAuthContext
+    {
+        if ($getShared) {
+            return static::getSharedInstance('apiAuthContext');
+        }
+
+        return new ApiAuthContext();
+    }
 }

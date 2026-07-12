@@ -3,18 +3,21 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Models\ApiAccessKeyModel;
 use App\Models\ApiHistoryModel;
-use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Base for registrar API proxy endpoints (CnrApi, JprsApi). Authenticates the
- * caller by Hashids-encoded Bearer token, scopes the request to the token's
- * env (live/testing) and service, and logs the call to `api_history`.
+ * Base for registrar API proxy endpoints (CnrApi, JprsApi). Bearer-token
+ * authentication, env/service scoping, and last-access bookkeeping happen in
+ * `ApiFilter::before()` (registered as the `apiFilter` route filter) since
+ * CI4 can short-circuit a filter with a 401 `ResponseInterface` without ever
+ * instantiating this controller. On success the filter stashes the resolved
+ * caller in the `apiAuthContext` service, which `initController()` copies
+ * onto `$this->user` / `$this->service_id` / `$this->key_enable_log` below.
+ * This controller logs the call to `api_history`.
  */
 abstract class ApiController extends BaseController
 {
@@ -37,81 +40,11 @@ abstract class ApiController extends BaseController
     {
         parent::initController($request, $response, $logger);
 
-        /** @var IncomingRequest $request */
-        $this->checkUserAccess($request);
-    }
+        $context = service('apiAuthContext');
 
-    private function checkUserAccess(IncomingRequest $request): void
-    {
-        $bearer = $this->request->getHeaderLine('Authorization');
-
-        if (empty($bearer) || ! str_starts_with($bearer, 'Bearer ')) {
-            $this->rejectUnauthorized('Unauthorized');
-        }
-
-        $accessToken = trim(substr($bearer, 7));
-
-        if ($accessToken === '') {
-            $this->rejectUnauthorized('Unauthorized');
-        }
-
-        try {
-            $decoded = get_hashids(32)->decode($accessToken);
-        } catch (Throwable) {
-            $this->rejectUnauthorized('Unauthorized');
-        }
-
-        $userId  = (int) ($decoded[0] ?? 0);
-        $envFlag = (int) ($decoded[1] ?? -1);
-        $serviceId = (int) ($decoded[2] ?? 0);
-
-        if ($userId === 0 || ! in_array($envFlag, [0, 1], true) || $serviceId === 0) {
-            $this->rejectUnauthorized('Unauthorized');
-        }
-
-        $keyRow = model(ApiAccessKeyModel::class)->findByAccessKey($accessToken);
-
-        if (! $keyRow
-            || (int) $keyRow->is_enable !== 1
-            || (int) $keyRow->user_id !== $userId
-            || (int) $keyRow->service_id !== $serviceId
-        ) {
-            $this->rejectUnauthorized('Unauthorized');
-        }
-
-        $this->user = (object) [
-            'id'  => $userId,
-            'env' => $envFlag === 1 ? 'LIVE' : 'TESTING',
-        ];
-        $this->service_id    = $serviceId;
-        $this->key_enable_log = (int) $keyRow->enable_log;
-
-        if (! $this->validateEndpoint($request)) {
-            $this->rejectUnauthorized('Invalid endpoint');
-        }
-
-        $this->updateTokenLastAccess($accessToken);
-    }
-
-    /**
-     * URI segment 3 (.../api/{cnr|jprs}/{live|testing}/...) must be a valid
-     * env value and must match the env encoded in the caller's token.
-     */
-    protected function validateEndpoint(IncomingRequest $request): bool
-    {
-        $envSegment = $request->getUri()->getSegment(3);
-
-        if (! in_array($envSegment, ['live', 'testing'], true)) {
-            return false;
-        }
-
-        return ($this->user->env === 'LIVE' && $envSegment === 'live')
-            || ($this->user->env === 'TESTING' && $envSegment === 'testing');
-    }
-
-    protected function updateTokenLastAccess(string $accessToken): void
-    {
-        model(ApiAccessKeyModel::class)->touchLastAccess($accessToken);
+        $this->user           = $context->user;
+        $this->service_id     = $context->serviceId;
+        $this->key_enable_log = $context->keyEnableLog;
     }
 
     /**
@@ -227,15 +160,5 @@ abstract class ApiController extends BaseController
                 'message'        => 'Failed to fetch history: ' . $e->getMessage(),
             ])->setStatusCode(500);
         }
-    }
-
-    private function rejectUnauthorized(string $message): never
-    {
-        $this->response
-            ->setJSON(['status' => 'error', 'message' => $message])
-            ->setStatusCode(401)
-            ->send();
-
-        exit();
     }
 }
