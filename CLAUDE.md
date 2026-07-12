@@ -68,6 +68,22 @@ APIs and exposes them to clients through issued API keys, logging every call. Co
   swallow them; these operations have billing / provisioning side effects.
 - Format & check with `php-cs-fixer`, `phpstan`, and `phpunit`.
 
+## Coding & review discipline — ponytail (REQUIRED)
+
+Use the **`ponytail`** skill for all coding, and **`ponytail-review`** for all code review.
+Lazy means efficient, not careless: understand the problem fully, then ship the shortest change
+that works.
+
+- **Coding:** invoke `ponytail` before writing/editing code. Climb its ladder — does this need to
+  exist? reuse what's already here? stdlib / CI4 built-in / existing dependency before new code?
+  Prefer the smallest correct diff, delete over add, boring over clever. No speculative
+  abstractions, no scaffolding "for later". Fix bugs at the root (shared function), not per-caller.
+- **Review:** invoke `ponytail-review` after code changes (alongside the `reviewer` agent) to flag
+  over-engineering, dead code, and needless complexity. Quality/simplification only — it does not
+  replace security/correctness review.
+- Do **not** simplify away input validation, error handling on registrar/billing side effects,
+  auth/ownership scoping, or `esc()` output escaping — those are never "extra".
+
 ## Common Commands
 
 ```bash

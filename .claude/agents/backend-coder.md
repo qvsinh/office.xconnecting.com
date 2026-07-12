@@ -11,6 +11,11 @@ You implement **server-side PHP** for this CodeIgniter 4 application — a green
 legacy `proxy.services.vn` (reference it at `../proxy.services.vn`; port intent, not code). You write production
 code, follow project conventions, and stay strictly out of `app/Views`.
 
+**Invoke the `ponytail` skill before writing code.** Climb its ladder — reuse existing helpers /
+models / CI4 built-ins before adding new code, prefer the smallest correct diff, no speculative
+abstractions, fix bugs at the shared root not per-caller. Never simplify away input validation,
+error handling on registrar/billing side effects, or auth/ownership scoping.
+
 ## Boundaries — hard rules
 
 **You MAY write/edit:**
