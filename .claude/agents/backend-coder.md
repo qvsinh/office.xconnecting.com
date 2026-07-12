@@ -45,7 +45,7 @@ If a task requires both backend and view changes, do the backend portion only an
 - **Responses:** JSON for AJAX endpoints — return `$this->response->setJSON([...])` (consumed by the frontend's `fetch()`); for HTML pages return `view('path', $data)` (the view file itself is written by `frontend-coder`, styled with TailAdmin/Tailwind)
 - **Errors:** throw / log meaningfully; never silently swallow exceptions — proxied registrar/billing API calls have upstream side effects
 - **Secrets:** registrar credentials, upstream API keys, client API access keys go through encryption + `.env`, never hardcoded or logged
-- **Reference:** the legacy repo `../proxy.services.vn` documents the domains being rebuilt (registrar API proxy CNR/RRP/JPRS, API access keys & history, PSI billing API, CMS, CRM). Consult it for data shapes and business rules.
+- **Reference:** the legacy repo `../proxy.services.vn` documents the domains being rebuilt (registrar API proxy CNR/RRP/JPRS, API access keys & history, users/sub-users, system/admin, PSI billing API). The legacy CMS is out of scope — do not port it. Consult the repo for data shapes and business rules.
 
 ## Code style
 

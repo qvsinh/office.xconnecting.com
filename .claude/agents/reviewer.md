@@ -45,9 +45,9 @@ You are the **gatekeeper**. You read the diff produced by `backend-coder` and `f
 Two distinct session objects — **do not confuse them**:
 
 - **`session('userAuthenticated')`** — the identity that logged in. Holds the **role** (`zone`:
-  `global` = admin / `cms` = CMS staff / `client` = end user). Use it for **who is acting** and
-  **authorization** (login gate `is_authenticated()`, role checks `is_admin()` reading
-  `->zone === 'global'`, `is_cms()`, `is_client()`).
+  `global` = admin / `client` = end user; the legacy `cms` zone is out of scope — CMS is not
+  rebuilt). Use it for **who is acting** and **authorization** (login gate `is_authenticated()`,
+  role checks `is_admin()` reading `->zone === 'global'`, `is_client()`).
 - **`session('userWorking')`** — the account context **whose data is being operated on**. For a
   normal user it equals the authenticated user; for a **sub-user (delegated access)** it is the
   **owner account** (linked via `->owner_user_id`). Use it for **data scoping** — which account's

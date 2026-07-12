@@ -1,4 +1,4 @@
-# Project: proxyv2.services.vn — Rebuild of proxy.services.vn (Registrar API Proxy, Developer Console & CMS)
+# Project: proxyv2.services.vn — Rebuild of proxy.services.vn (Registrar API Proxy & Developer Console)
 
 **This is a greenfield rebuild** of the existing `proxy.services.vn` platform onto the
 **latest CodeIgniter 4** and a **TailAdmin (Tailwind CSS) frontend**, built end-to-end by
@@ -16,15 +16,17 @@ AI agents. There is **no application code here yet** — it is being written fro
 A **registrar API proxy/gateway + developer console**. It sits in front of upstream registrar
 APIs and exposes them to clients through issued API keys, logging every call. Core domains:
 
-- **API proxy/gateway** — proxy upstream registrar APIs (CNR / CentralNic / RRP, and JPRS for
+- **Proxy (CNR + JPRS)** — proxy upstream registrar APIs (CNR / CentralNic / RRP, and JPRS for
   `.jp`) to clients via `/api/cnr/*` and `/api/jprs/*`, authenticated by per-client **API access
   keys** (`apiFilter`) with per-key enable/disable and request logging.
-- **Developer console** — admin & client consoles to compose and run CNR / JPRS API calls
-  (`ConsoleCnr` / `ConsoleJprs`) with request/response **API history** and log management.
-- **Billing integration** — upstream **PSI Billing API** console (logs, preview, retention).
-- **CMS** — posts, pages, FAQ, news, contact, menus, SEO.
-- **CRM** & **user management** — customers, sub-users (delegated access), notifications,
-  scheduled tasks, servers, translations, email templates, 2FA, activity/system logs.
+- **API** — API access keys, request/response **API history** & log management, and admin/client
+  **developer consoles** to compose and run CNR / JPRS calls (`ConsoleCnr` / `ConsoleJprs`).
+- **Users** — user management, sub-users (delegated access), notifications, 2FA.
+- **System** — servers, scheduled tasks, translations, email templates, settings/site variables,
+  system logs, and the upstream **PSI Billing API** console.
+
+> **Out of scope:** the legacy CMS (posts, pages, FAQ, news) is **not** being rebuilt — it still
+> exists in the legacy repo only because it hasn't been removed yet. Do not port it.
 
 > For the exact controllers, models, registrar API contracts, and proxy/keying rules, consult
 > the legacy repo at `../proxy.services.vn`.
