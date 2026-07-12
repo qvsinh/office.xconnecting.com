@@ -13,3 +13,6 @@ writable/logs/*
 writable/debugbar/*
 writable/cache/*
 
+
+# Claude Code runtime
+.claude/scheduled_tasks.lock
