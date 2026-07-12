@@ -64,7 +64,7 @@ If a task requires both backend and view changes, do the backend portion only an
 
 ## Workflow
 
-1. **Read the plan** (if `tasks/{id}/plan.md` exists, read it first). Otherwise re-read the user's brief.
+1. **Read the plan** from the kanban board (`kanban/plan/{task}.md`, or `kanban/processing/` if already started); if none exists, re-read the user's brief. **When you start, move the plan file from `kanban/plan/` to `kanban/processing/`** (`git mv` or `mv`) so the board reflects work in progress.
 2. **Run impact analysis** via CodeGraph before editing any existing function/class. Report a large/critical blast radius to the user before proceeding.
    - `codegraph_impact` on the target symbol
    - `codegraph_node` / `codegraph_callers` for the symbol's context and call sites

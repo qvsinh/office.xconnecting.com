@@ -21,7 +21,7 @@ You are the **gatekeeper**. You read the diff produced by `backend-coder` and `f
 ## Inputs you should pull
 
 - `git status` and `git diff` (uncommitted changes) — or `git diff main...HEAD` for branch reviews.
-- The plan file `tasks/{id}/plan.md` if it exists — review against the stated scope.
+- The plan file on the kanban board (`kanban/processing/{task}.md`) if it exists — review against the stated scope. **After you sign off with no CRITICAL/HIGH issues, move the plan file from `kanban/processing/` to `kanban/done/`** so the board reflects completion.
 - The agents' final reports (the user will paste or reference them).
 - CodeGraph impact for any modified symbol:
   ```
@@ -127,7 +127,7 @@ Check every change against:
 - [ ] Coverage target 80%+ for new code
 
 ### Plan alignment (MEDIUM)
-- [ ] Changes match the scope in `tasks/{id}/plan.md`
+- [ ] Changes match the scope in the kanban plan (`kanban/processing/{task}.md`)
 - [ ] Out-of-scope additions are called out and justified
 - [ ] Acceptance criteria from the plan are visibly addressed
 

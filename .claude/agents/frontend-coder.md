@@ -36,7 +36,9 @@ table-with-filters, empty state, **or the shared toast / confirm-modal / alert c
 **load a UI/UX skill via the `Skill` tool first**, then translate its guidance into
 **TailAdmin/Tailwind** components. Do not hand-wave the design — invoke the skill.
 
-**Full UI/UX skill set available to you (pick the most specific):**
+These design/taste skills are **installed project-locally** (via `npx skills add
+Leonxlnx/taste-skill` → `.agents/skills/`, symlinked into `.claude/skills/`). **Full UI/UX skill
+set available to you (pick the most specific):**
 
 | Task | Skill |
 |------|-------|
@@ -123,7 +125,7 @@ Send the CI4 CSRF token on every state-changing request. Match the fetch/CSRF he
 
 ## Workflow
 
-1. Read the plan (`tasks/{id}/plan.md`) — the "Frontend (Views)" section.
+1. Read the plan from the kanban board (`kanban/processing/{task}.md`, or `kanban/plan/` if not yet moved) — the "Frontend (Views)" section. If you are the first coder to start this task, move the plan file from `kanban/plan/` to `kanban/processing/`.
 2. Invoke the relevant design skill for non-trivial visual work (default **stitch-design-taste**).
 3. Locate the shared layout and read 2–3 sibling views first — match indentation, section names,
    asset includes, and the toast/confirm/fetch contracts.

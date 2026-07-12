@@ -8,7 +8,7 @@ Tài liệu này dành cho **người dùng (developer)**. Mô tả 5 subagent �
 
 | Tên | Model | Nhiệm vụ | Phạm vi file |
 |-----|-------|----------|--------------|
-| **planner** | opus | Phân tích yêu cầu, lên kế hoạch chi tiết | Ghi `tasks/{id}/plan.md` |
+| **planner** | opus | Phân tích yêu cầu, lên kế hoạch chi tiết | Ghi `kanban/plan/{task}.md` |
 | **backend-coder** | sonnet | Viết code PHP backend | `app/Controllers`, `app/Models`, `app/Libraries`, `app/Filters`, `app/Helpers`, `app/Database`, `app/Config`, `app/Commands`, `tests/` |
 | **frontend-coder** | sonnet | Viết code giao diện | **Chỉ** `app/Views/` |
 | **reviewer** | opus | Review code của 2 coder | Chỉ đọc, không sửa |
@@ -29,7 +29,7 @@ Trong prompt của bạn, nói rõ tên agent:
 ```
 
 ```
-@backend-coder thêm endpoint POST /user/api-keys/{id}/toggle theo plan tại tasks/2001/plan.md
+@backend-coder thêm endpoint POST /user/api-keys/{id}/toggle theo plan tại kanban/plan/2001-api-key-toggle.md
 ```
 
 ```
@@ -72,9 +72,12 @@ Claude sẽ phát đồng thời cả 2 tool call thay vì làm tuần tự → 
 
 ```
    planner
-      │
+      │  ghi plan → kanban/plan/{task}.md
       ▼
-   tasks/{id}/plan.md
+   kanban/plan/          (chờ bắt đầu)
+      │  coder bắt đầu → mv sang kanban/processing/
+      ▼
+   kanban/processing/    (đang code)
       │
       ├──────────────┐
       ▼              ▼
@@ -96,7 +99,10 @@ backend-coder   frontend-coder    (chạy song song khi độc lập)
        ├─ Không ───┴──► coder fix
        │ Pass
        ▼
-        git commit (bạn tự làm hoặc yêu cầu)
+   reviewer duyệt xong → mv kanban/processing/ → kanban/done/
+      │
+      ▼
+   git commit (bạn tự làm hoặc yêu cầu)
 ```
 
 ### Ví dụ một phiên làm việc đầy đủ
@@ -104,7 +110,7 @@ backend-coder   frontend-coder    (chạy song song khi độc lập)
 ```
 Bạn: "Có task 2001 trong tasks/2001/, hãy lên plan và implement"
 
-→ Claude gọi planner → tạo tasks/2001/plan.md
+→ Claude gọi planner → tạo kanban/plan/2001-{slug}.md
 → Bạn xem plan, OK
 → Bạn: "ok plan đẹp, implement đi"
 → Claude gọi backend-coder + frontend-coder song song
@@ -141,8 +147,9 @@ Bạn: "Có task 2001 trong tasks/2001/, hãy lên plan và implement"
 
 ## 5. Quản lý plan
 
-- Có **task number** (ví dụ task 2001): plan lưu tại `tasks/2001/plan.md`
-- **Không có** task number: plan lưu tại `tasks/YYYYMMDD/plan.md` theo ngày hiện tại (ví dụ `tasks/20260526/plan.md`)
+- Có **task number** (ví dụ task 2001): plan lưu tại `kanban/plan/2001-{slug}.md`
+- **Không có** task number: plan lưu tại `kanban/plan/YYYYMMDD-{slug}.md` theo ngày hiện tại (ví dụ `kanban/plan/20260526-api-key-toggle.md`)
+- File plan **di chuyển** theo vòng đời: `kanban/plan/` → `kanban/processing/` (khi bắt đầu code) → `kanban/done/` (khi review xong). Xem `kanban/README.md`.
 - Sau khi plan xong, bạn nên **đọc lại** trước khi cho implement — sửa scope ở giai đoạn này rẻ hơn nhiều so với sửa sau khi đã code
 
 ---
@@ -153,7 +160,7 @@ Bạn: "Có task 2001 trong tasks/2001/, hãy lên plan và implement"
 Task chạm > 3 file hoặc cần thiết kế DB: bắt buộc qua `planner` trước. Tiết kiệm thời gian gấp 3 lần so với "code thẳng".
 
 ### Tip 2 — Cho coder đọc plan
-Khi gọi coder, ghi rõ `theo plan tại tasks/{id}/plan.md` để agent đọc plan thay vì hỏi lại bạn.
+Khi gọi coder, ghi rõ `theo plan tại kanban/plan/{task}.md` để agent đọc plan thay vì hỏi lại bạn (agent sẽ tự chuyển file sang `kanban/processing/` khi bắt đầu).
 
 ### Tip 3 — Review trước commit, luôn luôn
 `reviewer` rẻ hơn rất nhiều so với việc revert/hotfix sau khi merge. Đừng bỏ qua.

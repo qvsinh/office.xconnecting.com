@@ -54,7 +54,12 @@ APIs and exposes them to clients through issued API keys, logging every call. Co
 - AJAX via **vanilla `fetch()`** with the CI4 CSRF token; return `setJSON()` from controllers.
 - **Toast**, **confirm modal**, and **alert banner** are small reusable Alpine components (define
   once in the layout, reuse everywhere) — never the browser's native `alert()` / `confirm()`. Load a
-  UI/UX skill (`minimalist-ui` / `stitch-design-taste`) when first building them.
+  UI/UX skill when first building them.
+- **UI/UX skills (installed project-locally via `npx skills add Leonxlnx/taste-skill`):**
+  `stitch-design-taste` (default taste pass), `design-taste-frontend`, `minimalist-ui` (fits
+  TailAdmin), `high-end-visual-design`, `gpt-taste`, `industrial-brutalist-ui`, `image-to-code`,
+  `imagegen-frontend-web`/`-mobile`, `brandkit`, plus `frontend-patterns`. The `frontend-coder`
+  agent must load the most specific one before non-trivial visual work (see its skill table).
 - **Escape all dynamic output** with `esc()` (laminas-escaper) to prevent XSS — Tailwind styling
   does not exempt output from escaping.
 - Extend a shared layout via `$this->extend()` / `$this->section()`; do not duplicate chrome.
@@ -88,6 +93,20 @@ that works.
   replace security/correctness review.
 - Do **not** simplify away input validation, error handling on registrar/billing side effects,
   auth/ownership scoping, or `esc()` output escaping — those are never "extra".
+
+Ponytail skill set available (plugin): `ponytail` (coding), `ponytail-review` (review),
+`ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`.
+
+## Task board — kanban (plan → processing → done)
+
+Every planned task is one Markdown file that **moves** through three directories:
+
+- `kanban/plan/` — plan written by `planner`, not yet started.
+- `kanban/processing/` — a coder has started; move the file here when work begins.
+- `kanban/done/` — implemented, tested, and reviewed; `reviewer` moves it here after sign-off.
+
+One file per task, **moved (never copied)** across stages so its history stays in one place. This
+replaces the old `tasks/{id}/plan.md` location. See `kanban/README.md`.
 
 ## Common Commands
 

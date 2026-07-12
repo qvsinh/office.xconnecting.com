@@ -41,7 +41,7 @@ You verify that changes work and stay working. You run the existing test suite, 
 
 ### When asked to verify a change
 
-1. **Read the plan** (`tasks/{id}/plan.md`) and the test plan section.
+1. **Read the plan** from the kanban board (`kanban/processing/{task}.md`) and the test plan section.
 2. **Run the affected suite first** before touching anything:
    ```bash
    ./vendor/bin/phpunit --testsuite Unit

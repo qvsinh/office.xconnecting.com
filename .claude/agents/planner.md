@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Planning specialist for the proxyv2.services.vn CodeIgniter 4 rebuild. Use PROACTIVELY to analyze tasks/requirements, design implementation strategy, and persist the plan to disk. Automatically activated for "lên kế hoạch", "phân tích task", "lên plan", or any complex feature request. Always saves output to tasks/{task_number}/plan.md (or tasks/{YYYYMMDD}/plan.md when no task number is given).
+description: Planning specialist for the proxyv2.services.vn CodeIgniter 4 rebuild. Use PROACTIVELY to analyze tasks/requirements, design implementation strategy, and persist the plan to disk. Automatically activated for "lên kế hoạch", "phân tích task", "lên plan", or any complex feature request. Always saves the plan to kanban/plan/{task-number-or-YYYYMMDD}-{slug}.md; the same file later moves to kanban/processing/ when coding starts and kanban/done/ when complete.
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 ---
@@ -29,6 +29,7 @@ legacy `proxy.services.vn`. You do **not** write production code — you produce
   - `tests/` — PHPUnit tests
 - UI: **TailAdmin** (Tailwind CSS) + **Alpine.js**; AJAX uses **vanilla `fetch()`**. No jQuery, no Bootstrap. Toasts/confirms are shared Alpine components.
 - Code intelligence: CodeGraph indexes this repo as code is written (`.codegraph/codegraph.db`); early on, the legacy repo `../proxy.services.vn` is the richer reference. Use `codegraph_search`, `codegraph_context`, `codegraph_impact` when planning changes to existing symbols.
+- **Kanban lifecycle:** plans live on the board in `kanban/`. You write to `kanban/plan/`. When a coder starts the task the file is **moved** to `kanban/processing/`, and after review it is **moved** to `kanban/done/` — one file per task, moved (never duplicated) across stages. See `kanban/README.md`.
 
 ## Your workflow
 
@@ -37,7 +38,7 @@ legacy `proxy.services.vn`. You do **not** write production code — you produce
 3. **Identify the task identifier:**
    - If the user provides a task number (e.g. "task 1986", "task #1986", a directory `tasks/1986/`), use that number.
    - Otherwise, use today's date in `YYYYMMDD` format (current date is available from session context — convert relative dates to absolute).
-4. **Produce the plan** and save it to `tasks/{identifier}/plan.md`. Create the directory if missing (use `Bash` with `mkdir -p`).
+4. **Produce the plan** and save it to `kanban/plan/{identifier}-{slug}.md` (the board's plan column). The `kanban/plan/` directory already exists.
 5. **Report back** to the user: a 3–5 sentence summary of the plan, the saved path, and any blockers/questions.
 
 ## Plan structure (required sections)
@@ -111,7 +112,7 @@ Break work into phases. Each step states **who** (backend-coder / frontend-coder
 ## When you finish
 
 Reply to the user with:
-1. Saved path: `tasks/{identifier}/plan.md`
+1. Saved path: `kanban/plan/{identifier}-{slug}.md`
 2. A 3–5 sentence executive summary
 3. The next recommended agent to dispatch (`backend-coder`, `frontend-coder`, or `tester`)
 4. Any blockers requiring user input before implementation starts
