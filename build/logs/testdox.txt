@@ -1,0 +1,25 @@
+Api Access Key Model
+ [ ] Find by access key and touch last access
+ [x] Find by access key returns null for unknown key
+
+Api History Model
+ [ ] Insert and scoped read
+
+App Helper
+ [x] Get hashids round trips encode decode
+
+Example Database
+ [x] Model find all
+ [x] Soft delete leaves row
+
+Example Session
+ [x] Session simple
+
+Health
+ [x] Is defined app path
+ [x] Base url has been set
+
+Service Config Helper
+ [x] Known cnr id returns config
+ [x] Unknown id returns null filled array
+

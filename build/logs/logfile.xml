@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="/home/sin/workx/websites/proxyv2.services.vn/phpunit.dist.xml" tests="11" assertions="15" errors="1" failures="1" skipped="0" time="0.195714">
+    <testsuite name="App" tests="11" assertions="15" errors="1" failures="1" skipped="0" time="0.195714">
+      <testsuite name="ApiAccessKeyModelTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiAccessKeyModelTest.php" tests="2" assertions="1" errors="1" failures="0" skipped="0" time="0.089553">
+        <testcase name="testFindByAccessKeyAndTouchLastAccess" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiAccessKeyModelTest.php" line="16" class="ApiAccessKeyModelTest" classname="ApiAccessKeyModelTest" assertions="0" time="0.065102">
+          <error type="CodeIgniter\Database\Exceptions\DatabaseException">ApiAccessKeyModelTest::testFindByAccessKeyAndTouchLastAccess
+CodeIgniter\Database\Exceptions\DatabaseException: Duplicate entry 'test-access-key-123' for key 'access_key'
+
+/home/sin/workx/websites/proxyv2.services.vn/vendor/codeigniter4/framework/system/Database/BaseConnection.php:863
+/home/sin/workx/websites/proxyv2.services.vn/vendor/codeigniter4/framework/system/Database/BaseBuilder.php:2355
+/home/sin/workx/websites/proxyv2.services.vn/vendor/codeigniter4/framework/system/Model.php:357
+/home/sin/workx/websites/proxyv2.services.vn/vendor/codeigniter4/framework/system/BaseModel.php:899
+/home/sin/workx/websites/proxyv2.services.vn/vendor/codeigniter4/framework/system/Model.php:670
+/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiAccessKeyModelTest.php:19</error>
+        </testcase>
+        <testcase name="testFindByAccessKeyReturnsNullForUnknownKey" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiAccessKeyModelTest.php" line="37" class="ApiAccessKeyModelTest" classname="ApiAccessKeyModelTest" assertions="1" time="0.024451"/>
+      </testsuite>
+      <testsuite name="ApiHistoryModelTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiHistoryModelTest.php" tests="1" assertions="1" errors="0" failures="1" skipped="0" time="0.026458">
+        <testcase name="testInsertAndScopedRead" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiHistoryModelTest.php" line="16" class="ApiHistoryModelTest" classname="ApiHistoryModelTest" assertions="1" time="0.026458">
+          <failure type="PHPUnit\Framework\ExpectationFailedException">ApiHistoryModelTest::testInsertAndScopedRead
+Failed asserting that actual size 2 matches expected size 1.
+
+/home/sin/workx/websites/proxyv2.services.vn/tests/database/ApiHistoryModelTest.php:32</failure>
+        </testcase>
+      </testsuite>
+      <testsuite name="ExampleDatabaseTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ExampleDatabaseTest.php" tests="2" assertions="3" errors="0" failures="0" skipped="0" time="0.061829">
+        <testcase name="testModelFindAll" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ExampleDatabaseTest.php" line="17" class="ExampleDatabaseTest" classname="ExampleDatabaseTest" assertions="1" time="0.029777"/>
+        <testcase name="testSoftDeleteLeavesRow" file="/home/sin/workx/websites/proxyv2.services.vn/tests/database/ExampleDatabaseTest.php" line="28" class="ExampleDatabaseTest" classname="ExampleDatabaseTest" assertions="2" time="0.032052"/>
+      </testsuite>
+      <testsuite name="ExampleSessionTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/session/ExampleSessionTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.001610">
+        <testcase name="testSessionSimple" file="/home/sin/workx/websites/proxyv2.services.vn/tests/session/ExampleSessionTest.php" line="10" class="ExampleSessionTest" classname="ExampleSessionTest" assertions="1" time="0.001610"/>
+      </testsuite>
+      <testsuite name="AppHelperTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/AppHelperTest.php" tests="1" assertions="2" errors="0" failures="0" skipped="0" time="0.003233">
+        <testcase name="testGetHashidsRoundTripsEncodeDecode" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/AppHelperTest.php" line="16" class="AppHelperTest" classname="AppHelperTest" assertions="2" time="0.003233"/>
+      </testsuite>
+      <testsuite name="HealthTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/HealthTest.php" tests="2" assertions="3" errors="0" failures="0" skipped="0" time="0.010395">
+        <testcase name="testIsDefinedAppPath" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/HealthTest.php" line="12" class="HealthTest" classname="HealthTest" assertions="1" time="0.000988"/>
+        <testcase name="testBaseUrlHasBeenSet" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/HealthTest.php" line="17" class="HealthTest" classname="HealthTest" assertions="2" time="0.009407"/>
+      </testsuite>
+      <testsuite name="ServiceConfigHelperTest" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/ServiceConfigHelperTest.php" tests="2" assertions="4" errors="0" failures="0" skipped="0" time="0.002635">
+        <testcase name="testKnownCnrIdReturnsConfig" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/ServiceConfigHelperTest.php" line="16" class="ServiceConfigHelperTest" classname="ServiceConfigHelperTest" assertions="2" time="0.001877"/>
+        <testcase name="testUnknownIdReturnsNullFilledArray" file="/home/sin/workx/websites/proxyv2.services.vn/tests/unit/ServiceConfigHelperTest.php" line="25" class="ServiceConfigHelperTest" classname="ServiceConfigHelperTest" assertions="2" time="0.000759"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>
