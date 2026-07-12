@@ -127,7 +127,8 @@ abstract class ApiController extends BaseController
             $builder = model(ApiHistoryModel::class)->builder();
             $builder->select('id, user_id, env, service_name, service_id, url, status, command, domain, params, response, metadata, created_at')
                 ->where('service_name', $serviceName)
-                ->where('service_id', $this->service_id);
+                ->where('service_id', $this->service_id)
+                ->where('deleted_at', null); // respect soft-deletes (builder() bypasses the model scope)
 
             if ($domain !== '') {
                 $builder->like('domain', $domain);

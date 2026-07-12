@@ -162,6 +162,33 @@ final class CnrApiProxyTest extends CIUnitTestCase
         $this->assertSame('StatusAccount', $json['data']['rows'][0]['command']);
     }
 
+    public function testCommandHistoryExcludesSoftDeletedRows(): void
+    {
+        $key   = $this->seedApiKey(1, 0, 800);
+        $model = model(ApiHistoryModel::class);
+
+        $model->insert([
+            'env' => 'TESTING', 'service_name' => 'cnr', 'service_id' => 800, 'user_id' => 1,
+            'command' => 'StatusAccount', 'domain' => null, 'params' => '{}', 'response' => '{"code":200}',
+            'status' => 1,
+        ]);
+        // A soft-deleted row (same scope) must not surface in History.
+        $deletedId = $model->insert([
+            'env' => 'TESTING', 'service_name' => 'cnr', 'service_id' => 800, 'user_id' => 1,
+            'command' => 'QueryDomain', 'domain' => null, 'params' => '{}', 'response' => '{"code":200}',
+            'status' => 1,
+        ], true);
+        $model->delete($deletedId); // soft-delete → sets deleted_at
+
+        $result = $this->withHeaders(['Authorization' => 'Bearer ' . $key['token']])
+            ->get('/api/cnr/testing?command=History');
+
+        $result->assertStatus(200);
+        $json = json_decode($result->getJSON(), true);
+        $this->assertCount(1, $json['data']['rows']);
+        $this->assertSame('StatusAccount', $json['data']['rows'][0]['command']);
+    }
+
     public function testDomainCommandRestrictionReturns403(): void
     {
         $key = $this->seedApiKey(1, 0, 800);

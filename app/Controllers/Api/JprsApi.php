@@ -117,7 +117,7 @@ class JprsApi extends ApiController
                 'body'    => $body,
                 'headers' => ['Content-Type' => 'text/plain; charset=iso-2022-jp'],
                 'cert'    => empty($config['pem_key_pass']) ? $mergedCert : [$mergedCert, $config['pem_key_pass']],
-                'verify'  => $config['ssl_verify'] === 'yes',
+                'verify'  => ($config['ssl_verify'] ?? 'yes') !== 'no', // secure by default: only an explicit 'no' disables mTLS verification
             ]);
 
             $responseBody = mb_convert_encoding((string) $response->getBody(), 'UTF-8', 'ISO-2022-JP');
