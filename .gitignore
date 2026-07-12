@@ -1,0 +1,15 @@
+.gpg.development.txt
+.gpg.staging.txt
+.gpg.production.txt
+.env
+.env.development
+.env.staging
+.env.production
+.codegraph
+.idea
+.ignores
+vendor
+writable/logs/*
+writable/debugbar/*
+writable/cache/*
+
