@@ -1,0 +1,135 @@
+<?php
+/**
+ * Standalone site-gate page (does not extend layouts/app — sits in front of
+ * the app login, no session context yet). Posts JSON-handled form to
+ * POST /basic-auth with the CSRF token; contract:
+ * success -> {status:'success', redirect_url, csrf_hash} ;
+ * failure -> HTTP 401 {status:'failed', message, csrf_hash}.
+ */
+?>
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Authentication — proxyv2.services.vn</title>
+    <meta name="csrf-token-name" content="<?= esc(csrf_token(), 'attr') ?>">
+    <meta name="csrf-token" content="<?= esc(csrf_hash(), 'attr') ?>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="flex h-full min-h-screen items-center justify-center bg-gray-50 px-4 font-sans text-[#111111] antialiased">
+    <div class="w-full max-w-sm" x-data="basicAuthForm()">
+        <div class="mb-8 text-center">
+            <span class="text-xl font-semibold tracking-tight">proxyv2</span>
+            <p class="mt-1 text-sm text-[#787774]">Authentication required</p>
+        </div>
+
+        <div class="rounded-lg border border-[#EAEAEA] bg-white p-8 shadow-sm">
+            <div x-show="errorMessage" x-cloak x-transition
+                 class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                <div class="flex items-start justify-between gap-3">
+                    <span x-text="errorMessage"></span>
+                    <button type="button" class="shrink-0 opacity-60 hover:opacity-100" @click="errorMessage = ''" aria-label="Dismiss">&times;</button>
+                </div>
+            </div>
+
+            <form @submit.prevent="submit">
+                <div class="mb-4">
+                    <label for="username" class="mb-1.5 block text-sm font-medium">Username</label>
+                    <input id="username" name="username" type="text" autocomplete="username" required
+                           x-model="username"
+                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                    <p x-show="fieldErrors.username" x-cloak class="mt-1 text-xs text-red-700" x-text="fieldErrors.username"></p>
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="mb-1.5 block text-sm font-medium">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required
+                           x-model="password"
+                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                    <p x-show="fieldErrors.password" x-cloak class="mt-1 text-xs text-red-700" x-text="fieldErrors.password"></p>
+                </div>
+
+                <button type="submit" :disabled="submitting"
+                        class="flex w-full items-center justify-center rounded-md bg-[#111111] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60">
+                    <span x-show="!submitting">Continue</span>
+                    <span x-show="submitting" x-cloak>Verifying…</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function basicAuthForm() {
+            return {
+                username: '',
+                password: '',
+                submitting: false,
+                errorMessage: '',
+                fieldErrors: {},
+
+                validate() {
+                    this.fieldErrors = {};
+                    if (!this.username) this.fieldErrors.username = 'Username is required.';
+                    if (!this.password) this.fieldErrors.password = 'Password is required.';
+                    return Object.keys(this.fieldErrors).length === 0;
+                },
+
+                async submit() {
+                    this.errorMessage = '';
+                    if (!this.validate()) return;
+
+                    this.submitting = true;
+                    const csrfName = document.querySelector('meta[name="csrf-token-name"]').content;
+                    const csrfHashMeta = document.querySelector('meta[name="csrf-token"]');
+
+                    const body = new URLSearchParams();
+                    body.set('username', this.username);
+                    body.set('password', this.password);
+                    body.set(csrfName, csrfHashMeta.content);
+
+                    let res, json;
+                    try {
+                        res = await fetch('/basic-auth', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body,
+                        });
+                    } catch (e) {
+                        this.errorMessage = 'Network error. Please try again.';
+                        this.submitting = false;
+                        return;
+                    }
+
+                    try {
+                        json = await res.json();
+                    } catch (e) {
+                        this.errorMessage = 'Network error. Please try again.';
+                        this.submitting = false;
+                        return;
+                    }
+
+                    // Config\Security::$regenerate rotates the CSRF hash on every
+                    // validated request (success or failure) — refresh our stored
+                    // token now so an immediate retry doesn't 403 on a stale hash.
+                    if (json.csrf_hash) {
+                        csrfHashMeta.content = json.csrf_hash;
+                    }
+
+                    if (res.ok && json.status === 'success') {
+                        window.location = json.redirect_url;
+                        return;
+                    }
+
+                    this.errorMessage = json.message || 'Authentication failed. Please try again.';
+                    this.submitting = false;
+                },
+            };
+        }
+    </script>
+</body>
+</html>

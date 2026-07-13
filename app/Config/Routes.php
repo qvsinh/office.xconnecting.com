@@ -5,6 +5,12 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
 
+// Site gate: precedes app login (BasicAuthFilter, registered as a global
+// before-filter with `except => ['basic-auth', 'api/*']`), so these routes
+// must not sit behind authFilter/guestFilter/adminFilter.
+$routes->get('basic-auth', 'BasicAuth::index');
+$routes->post('basic-auth', 'BasicAuth::authenticate', ['filter' => 'csrf']);
+
 // Login is guest-only; CSRF is scoped to this web POST only, never to
 // the stateless `api` group below (its ApiFilter::after() destroys the
 // session, so a session-based CSRF token would never survive there).

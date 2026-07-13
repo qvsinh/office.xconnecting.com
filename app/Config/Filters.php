@@ -5,6 +5,7 @@ namespace Config;
 use App\Filters\AdminFilter;
 use App\Filters\ApiFilter;
 use App\Filters\AuthFilter;
+use App\Filters\BasicAuthFilter;
 use App\Filters\GuestFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
@@ -42,6 +43,7 @@ class Filters extends BaseFilters
         'authFilter'    => AuthFilter::class,
         'adminFilter'   => AdminFilter::class,
         'guestFilter'   => GuestFilter::class,
+        'basicauth'     => BasicAuthFilter::class,
     ];
 
     /**
@@ -83,6 +85,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
+            'basicauth' => ['except' => ['basic-auth', 'api/*']],
         ],
         'after' => [
             // 'honeypot',

@@ -32,6 +32,19 @@ final class AuthWebFlowTest extends CIUnitTestCase
     protected $refresh = true;
     protected $namespace;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // This suite covers the app-login flow, not the basic-auth site
+        // gate itself — the sandbox `.env` has `app.basic.auth.username`
+        // set, so every request would otherwise get redirected to
+        // `/basic-auth` first. Pre-pass the gate here; `withSession()`
+        // calls further down capture this flag along with whatever the
+        // request itself sets.
+        $this->withSession(['basicAuthAuthenticated' => 1]);
+    }
+
     protected function tearDown(): void
     {
         parent::tearDown();
@@ -144,9 +157,12 @@ final class AuthWebFlowTest extends CIUnitTestCase
         // ENVIRONMENT === 'testing' (always true under PHPUnit) — it never
         // actually clears $_SESSION in this harness, which is a framework
         // test-harness limitation, not a defect in Auth::logout(). Simulate
-        // the post-destroy state (empty session) to verify authFilter still
-        // blocks the next request once the session really is gone.
-        $result = $this->withSession([])->get('/dashboard');
+        // the post-destroy state (empty session, `basicAuthAuthenticated`
+        // re-primed to isolate authFilter's own behaviour — the real gate
+        // re-prompting after a full session destroy is covered by the
+        // basic-auth gate's own tests) to verify authFilter still blocks
+        // the next request once the session really is gone.
+        $result = $this->withSession(['basicAuthAuthenticated' => 1])->get('/dashboard');
         $result->assertRedirectTo('/login');
     }
 
