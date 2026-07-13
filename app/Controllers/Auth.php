@@ -35,8 +35,9 @@ class Auth extends BaseController
 
         if (! $this->validate($rules)) {
             return $this->response->setStatusCode(401)->setJSON([
-                'status'  => 'failed',
-                'message' => implode(' ', $this->validator->getErrors()),
+                'status'    => 'failed',
+                'message'   => implode(' ', $this->validator->getErrors()),
+                'csrf_hash' => csrf_hash(),
             ]);
         }
 
@@ -50,12 +51,16 @@ class Auth extends BaseController
 
         if (! $user || ! hash_equals($user->password, $passwordHash) || (int) $user->status !== 1) {
             return $this->response->setStatusCode(401)->setJSON([
-                'status'  => 'failed',
-                'message' => 'Invalid or inactive account.',
+                'status'    => 'failed',
+                'message'   => 'Invalid or inactive account.',
+                'csrf_hash' => csrf_hash(),
             ]);
         }
 
         $userModel->stampLogin((int) $user->id);
+
+        // Rotate the session ID on privilege change to prevent session fixation.
+        session()->regenerate(true);
 
         session()->set('userAuthenticated', $user);
         session()->set('userWorking', $user);
@@ -64,6 +69,7 @@ class Auth extends BaseController
         return $this->response->setJSON([
             'status'       => 'success',
             'redirect_url' => $this->dashboardUrl(),
+            'csrf_hash'    => csrf_hash(),
         ]);
     }
 

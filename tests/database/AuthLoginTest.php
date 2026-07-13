@@ -40,6 +40,7 @@ final class AuthLoginTest extends CIUnitTestCase
         $result->assertJSONFragment(['status' => 'success', 'redirect_url' => '/admin/dashboard']);
         $this->assertSame('admin@example.com', session('userAuthenticated')->email);
         $this->assertSame('admin@example.com', session('userWorking')->email);
+        $this->assertNotEmpty(json_decode($result->response()->getJSON(), true)['csrf_hash']);
     }
 
     public function testLoginSuccessClientRedirectsToDashboard(): void
@@ -63,6 +64,19 @@ final class AuthLoginTest extends CIUnitTestCase
         $this->assertNotNull($refreshed->login_at);
     }
 
+    public function testLoginRegeneratesSessionIdToPreventFixation(): void
+    {
+        $this->seedUser(['email' => 'fixation@example.com', 'zone' => 'client']);
+
+        // CIUnitTestCase swaps in MockSession, which doesn't touch the real
+        // PHP session id (session_start() is stubbed out) but does flip
+        // `didRegenerate` when Session::regenerate() runs — use that to
+        // confirm the controller calls it on the login success path.
+        $this->postLogin('fixation@example.com', self::FIXTURE_TEST_PASSWORD);
+
+        $this->assertTrue(session()->didRegenerate);
+    }
+
     public function testLoginFailsWithWrongPassword(): void
     {
         $this->seedUser(['email' => 'wrongpw@example.com']);
@@ -72,6 +86,7 @@ final class AuthLoginTest extends CIUnitTestCase
         $result->assertStatus(401);
         $result->assertJSONFragment(['status' => 'failed']);
         $this->assertNull(session('userAuthenticated'));
+        $this->assertNotEmpty(json_decode($result->response()->getJSON(), true)['csrf_hash']);
     }
 
     public function testLoginFailsForUnknownEmail(): void

@@ -82,15 +82,16 @@
 
                     this.submitting = true;
                     const csrfName = document.querySelector('meta[name="csrf-token-name"]').content;
-                    const csrfHash = document.querySelector('meta[name="csrf-token"]').content;
+                    const csrfHashMeta = document.querySelector('meta[name="csrf-token"]');
 
                     const body = new URLSearchParams();
                     body.set('email', this.email);
                     body.set('password', this.password);
-                    body.set(csrfName, csrfHash);
+                    body.set(csrfName, csrfHashMeta.content);
 
+                    let res, json;
                     try {
-                        const res = await fetch('/login', {
+                        res = await fetch('/login', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -98,19 +99,34 @@
                             },
                             body,
                         });
-                        const json = await res.json();
-
-                        if (res.ok && json.status === 'success') {
-                            window.location = json.redirect_url;
-                            return;
-                        }
-
-                        this.errorMessage = json.message || 'Login failed. Please try again.';
                     } catch (e) {
                         this.errorMessage = 'Network error. Please try again.';
-                    } finally {
                         this.submitting = false;
+                        return;
                     }
+
+                    try {
+                        json = await res.json();
+                    } catch (e) {
+                        this.errorMessage = 'Network error. Please try again.';
+                        this.submitting = false;
+                        return;
+                    }
+
+                    // Config\Security::$regenerate rotates the CSRF hash on every
+                    // validated request (success or failure) — refresh our stored
+                    // token now so an immediate retry doesn't 403 on a stale hash.
+                    if (json.csrf_hash) {
+                        csrfHashMeta.content = json.csrf_hash;
+                    }
+
+                    if (res.ok && json.status === 'success') {
+                        window.location = json.redirect_url;
+                        return;
+                    }
+
+                    this.errorMessage = json.message || 'Login failed. Please try again.';
+                    this.submitting = false;
                 },
             };
         }
