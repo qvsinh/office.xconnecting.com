@@ -23,10 +23,23 @@ $routes->get('logout', 'Auth::logout', ['filter' => 'authFilter']);
 
 $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static function (RouteCollection $routes) {
     $routes->get('dashboard', 'Admin\Dashboard::index');
+
+    $routes->get('api-access-keys', 'Admin\ApiAccessKeys::index');
+    $routes->post('api-access-keys/create', 'Admin\ApiAccessKeys::create', ['filter' => 'csrf']);
+    $routes->post('api-access-keys/update', 'Admin\ApiAccessKeys::update', ['filter' => 'csrf']);
+    $routes->post('api-access-keys/toggle', 'Admin\ApiAccessKeys::toggle', ['filter' => 'csrf']);
+    $routes->post('api-access-keys/toggle-log', 'Admin\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
+    $routes->post('api-access-keys/delete', 'Admin\ApiAccessKeys::delete', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
     $routes->get('dashboard', 'Client\Dashboard::index');
+
+    $routes->get('my-api-access-keys', 'Client\ApiAccessKeys::index');
+    $routes->post('my-api-access-keys/create', 'Client\ApiAccessKeys::create', ['filter' => 'csrf']);
+    $routes->post('my-api-access-keys/toggle', 'Client\ApiAccessKeys::toggle', ['filter' => 'csrf']);
+    $routes->post('my-api-access-keys/toggle-log', 'Client\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
+    $routes->post('my-api-access-keys/remove', 'Client\ApiAccessKeys::remove', ['filter' => 'csrf']);
 });
 
 $routes->group('api', ['filter' => 'apiFilter'], static function (RouteCollection $routes) {

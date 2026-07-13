@@ -51,6 +51,46 @@ if (! function_exists('get_jprs_service_config')) {
     }
 }
 
+if (! function_exists('list_api_services')) {
+    /**
+     * Enumerate every registrar service configured in `.env` (scans
+     * `cnr.{id}.service_api_id` / `jprs.{id}.service_api_id`) for the API
+     * access key create/edit dropdowns. Only the id/provider are surfaced —
+     * never a password, PEM path, or agent credential.
+     *
+     * Reads `$_ENV` rather than the argument-less `getenv()` — CI4's
+     * `DotEnv` populates both `putenv()` and `$_ENV` from `.env`, but PHP's
+     * no-arg `getenv()` reflects only the SAPI's original process
+     * environment snapshot, not values added via `putenv()`/`$_ENV` later
+     * in the request (a documented PHP quirk, not a CI4 bug).
+     *
+     * @return list<array{id: int, provider: string, label: string}>
+     */
+    function list_api_services(): array
+    {
+        $services = [];
+
+        foreach ($_ENV as $key => $value) {
+            if (! preg_match('/^(cnr|jprs)\.(\d+)\.service_api_id$/', (string) $key, $matches)) {
+                continue;
+            }
+
+            $provider = $matches[1];
+            $id       = (int) $matches[2];
+
+            $services[$id] = [
+                'id'       => $id,
+                'provider' => $provider,
+                'label'    => sprintf('%s %d (%s.%d)', strtoupper($provider), $id, $provider, $id),
+            ];
+        }
+
+        ksort($services);
+
+        return array_values($services);
+    }
+}
+
 if (! function_exists('get_service_config')) {
     /**
      * Auto-detect provider (JPRS then CNR) by numeric id and return its config.

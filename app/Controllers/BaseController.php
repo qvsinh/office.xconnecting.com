@@ -42,4 +42,34 @@ abstract class BaseController extends Controller
         // Preload any models, libraries, etc, here.
         // $this->session = service('session');
     }
+
+    /**
+     * Shared JSON success envelope (`status`/`message`/`csrf_hash`) for
+     * fetch()-driven mutation endpoints, matching Auth::login()'s pattern.
+     *
+     * @param array<string, mixed> $extra
+     */
+    protected function jsonSuccess(string $message, array $extra = []): ResponseInterface
+    {
+        return $this->response->setJSON(array_merge([
+            'status'    => 'success',
+            'message'   => $message,
+            'csrf_hash' => csrf_hash(),
+        ], $extra));
+    }
+
+    /**
+     * Shared JSON failure envelope. Accepts either a plain message or a
+     * CI4 validator error array (flattened into one string).
+     *
+     * @param array<string, string>|string $message
+     */
+    protected function jsonFailed(array|string $message, int $status = 400): ResponseInterface
+    {
+        return $this->response->setStatusCode($status)->setJSON([
+            'status'    => 'failed',
+            'message'   => is_array($message) ? implode(' ', $message) : $message,
+            'csrf_hash' => csrf_hash(),
+        ]);
+    }
 }
