@@ -20,3 +20,5 @@ writable/cache/*
 build/logs/*
 build/.phpunit.cache/
 build/phpstan/
+writable/session/*
+!writable/session/index.html
