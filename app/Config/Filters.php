@@ -2,7 +2,10 @@
 
 namespace Config;
 
+use App\Filters\AdminFilter;
 use App\Filters\ApiFilter;
+use App\Filters\AuthFilter;
+use App\Filters\GuestFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -36,6 +39,9 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'apiFilter'     => ApiFilter::class,
+        'authFilter'    => AuthFilter::class,
+        'adminFilter'   => AdminFilter::class,
+        'guestFilter'   => GuestFilter::class,
     ];
 
     /**
