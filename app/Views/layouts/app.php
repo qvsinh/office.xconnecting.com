@@ -46,16 +46,20 @@ $navZone ??= is_admin() ? 'admin' : 'client';
                     <a href="/admin/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
                         Dashboard
                     </a>
+                    <a href="/admin/api-access-keys" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        API access keys
+                    </a>
                     <span class="block px-3 pt-4 text-xs font-medium uppercase tracking-wide text-[#787774]">Coming soon</span>
-                    <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">API access keys</span>
                     <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">API history</span>
                     <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">Users</span>
                 <?php else : ?>
                     <a href="/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
                         Dashboard
                     </a>
+                    <a href="/my-api-access-keys" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        API access keys
+                    </a>
                     <span class="block px-3 pt-4 text-xs font-medium uppercase tracking-wide text-[#787774]">Coming soon</span>
-                    <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">API access keys</span>
                     <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">API history</span>
                     <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">CNR / JPRS console</span>
                 <?php endif; ?>
@@ -214,6 +218,40 @@ $navZone ??= is_admin() ? 'admin' : 'client';
             token: document.querySelector('meta[name="csrf-token"]')?.content,
             headerName: document.querySelector('meta[name="csrf-header-name"]')?.content,
         };
+
+        // Shared POST-as-form helper for fetch()-driven mutation endpoints.
+        // Sends `fields` + the CSRF token as x-www-form-urlencoded, refreshes
+        // window.csrf.token from the JSON envelope's csrf_hash (rotates on
+        // every validated request — see auth/login.php), parses JSON on both
+        // success and error responses, and never throws on 4xx. Returns the
+        // parsed JSON, or null on a network/parse failure (after toasting).
+        async function postForm(url, fields) {
+            const body = new URLSearchParams();
+            Object.entries(fields || {}).forEach(([k, v]) => body.set(k, v ?? ''));
+            body.set(window.csrf.fieldName, window.csrf.token);
+
+            let res, json;
+            try {
+                res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body,
+                });
+            } catch (e) {
+                window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', text: 'Network error. Please try again.' } }));
+                return null;
+            }
+
+            try {
+                json = await res.json();
+            } catch (e) {
+                window.dispatchEvent(new CustomEvent('toast', { detail: { type: 'error', text: 'Network error. Please try again.' } }));
+                return null;
+            }
+
+            if (json.csrf_hash) window.csrf.token = json.csrf_hash;
+            return json;
+        }
     </script>
 </body>
 </html>
