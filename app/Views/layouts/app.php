@@ -62,12 +62,28 @@ if ($navZone === 'admin') {
         ['label' => 'Logs', 'href' => '/admin/system/logs'],
     ];
 }
+
+// Inline icon-per-group map (heroicons-outline style, stroke="currentColor").
+// Static developer-authored markup, not user data — no esc() needed on these.
+$navIcons = [
+    'Menu'    => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>',
+    'API'     => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8l-4 4 4 4m8-8l4 4-4 4m-3-11l-2 14" /></svg>',
+    'Account' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" /></svg>',
+    'Admin'   => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /></svg>',
+];
+$navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="8" /></svg>';
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="utf-8">
-    <script>if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+        // Pre-paint sidebar state (mirrors the dark-mode toggle above): read the
+        // persisted desktop expanded/collapsed choice before Alpine boots so the
+        // sidebar's initial width matches on first paint — no reload flash.
+        if (localStorage.getItem('sidebarExpanded') === 'false') document.documentElement.classList.add('sidebar-collapsed');
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= isset($pageTitle) ? esc($pageTitle) . ' — ' : '' ?>proxyv2.services.vn</title>
     <meta name="csrf-token-name" content="<?= esc(csrf_token(), 'attr') ?>">
@@ -98,6 +114,7 @@ if ($navZone === 'admin') {
 </head>
 <body class="h-full bg-gray-50 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100"
       x-data="appShell()"
+      x-init="init()"
       @toast.window="pushToast($event.detail)"
       @confirm.window="openConfirm($event.detail)"
       @alert.window="pushAlert($event.detail)">
@@ -117,36 +134,77 @@ if ($navZone === 'admin') {
     <?php endif ?>
 
     <div class="flex h-full min-h-screen">
-        <!-- Sidebar -->
-        <aside class="hidden w-64 shrink-0 border-r border-[#EAEAEA] bg-white lg:flex lg:flex-col dark:border-gray-800 dark:bg-gray-900"
-               x-show="!sidebarCollapsed" x-cloak>
-            <div class="flex h-16 items-center border-b border-[#EAEAEA] px-6 dark:border-gray-800">
-                <span class="text-lg font-semibold tracking-tight">proxyv2</span>
+        <!-- Mobile off-canvas backdrop -->
+        <div class="fixed inset-0 z-40 bg-black/50 lg:hidden" x-show="sidebarMobileOpen" x-cloak
+             x-transition.opacity @click="sidebarMobileOpen = false"
+             @keydown.escape.window="sidebarMobileOpen = false"></div>
+
+        <!-- Sidebar: fixed on desktop so the icon-rail hover-expand overlays
+             content instead of reflowing it; off-canvas drawer on mobile. -->
+        <aside class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-[#EAEAEA] bg-white transition-all duration-200 ease-linear lg:translate-x-0 dark:border-gray-800 dark:bg-gray-900"
+               :class="{
+                   '-translate-x-full': !sidebarMobileOpen,
+                   'translate-x-0': sidebarMobileOpen,
+                   'lg:w-20': !sidebarExpanded && !sidebarHovered,
+                   'lg:w-72': sidebarExpanded || sidebarHovered,
+                   'lg:shadow-lg': sidebarHovered && !sidebarExpanded,
+               }"
+               @mouseenter="sidebarHovered = true" @mouseleave="sidebarHovered = false"
+               x-trap.noscroll="sidebarMobileOpen">
+            <div class="flex h-16 shrink-0 items-center overflow-hidden border-b border-[#EAEAEA] px-6 dark:border-gray-800">
+                <span class="text-lg font-semibold tracking-tight" x-show="navLabelsVisible()">proxyv2</span>
+                <span class="text-lg font-semibold tracking-tight" x-show="!navLabelsVisible()" x-cloak>P</span>
             </div>
-            <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-                <?php foreach ($navGroups as $groupLabel => $groupItems) : ?>
-                    <div>
-                        <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"><?= esc($groupLabel) ?></p>
-                        <div class="space-y-1">
-                            <?php foreach ($groupItems as $item) : $active = url_is($item['href']); ?>
-                                <a href="<?= esc($item['href'], 'attr') ?>"
-                                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium <?= $active
-                                        ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
-                                        : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
-                                    <?= esc($item['label']) ?>
-                                </a>
-                            <?php endforeach ?>
+            <nav class="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+                <?php foreach ($navGroups as $groupLabel => $groupItems) :
+                    $groupActive = false;
+                    foreach ($groupItems as $item) {
+                        if (url_is($item['href'])) {
+                            $groupActive = true;
+                            break;
+                        }
+                    }
+                ?>
+                    <div x-data="{ open: <?= $groupActive ? 'true' : 'false' ?> }">
+                        <button type="button"
+                                class="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                                @click="open = !open" :aria-expanded="open">
+                            <span class="flex items-center gap-3">
+                                <?= $navIcons[$groupLabel] ?? $navIconDefault ?>
+                                <span class="whitespace-nowrap" x-show="navLabelsVisible()"><?= esc($groupLabel) ?></span>
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 transition-transform duration-200"
+                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"
+                                 x-show="navLabelsVisible()" :class="open ? 'rotate-180' : ''">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                        <div class="grid transition-all duration-200 ease-in-out"
+                             :class="(open && navLabelsVisible()) ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                            <div class="overflow-hidden">
+                                <div class="space-y-1 pt-1">
+                                    <?php foreach ($groupItems as $item) : $active = url_is($item['href']); ?>
+                                        <a href="<?= esc($item['href'], 'attr') ?>" @click="sidebarMobileOpen = false"
+                                           class="block whitespace-nowrap rounded-md py-2 pl-11 pr-3 text-sm font-medium <?= $active
+                                                ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
+                                                : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
+                                            <?= esc($item['label']) ?>
+                                        </a>
+                                    <?php endforeach ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach ?>
             </nav>
         </aside>
 
-        <div class="flex min-h-screen flex-1 flex-col">
+        <div class="flex min-h-screen flex-1 flex-col transition-all duration-200 ease-linear"
+             :class="sidebarExpanded ? 'lg:pl-72' : 'lg:pl-20'">
             <!-- Topbar -->
             <header class="flex h-16 items-center justify-between border-b border-[#EAEAEA] bg-white px-4 lg:px-6 dark:border-gray-800 dark:bg-gray-900">
-                <button type="button" class="rounded-md p-2 text-[#787774] hover:bg-gray-100 lg:hidden dark:text-gray-400 dark:hover:bg-gray-800"
-                        @click="sidebarCollapsed = !sidebarCollapsed" aria-label="Toggle sidebar">
+                <button type="button" class="rounded-md p-2 text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        @click="toggleSidebar()" aria-label="Toggle sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -306,11 +364,36 @@ if ($navZone === 'admin') {
     <script>
         function appShell() {
             return {
-                sidebarCollapsed: false,
+                // Desktop expanded/collapsed choice, persisted; mirrors the
+                // 'sidebar-collapsed' html class the pre-paint <head> script
+                // sets from localStorage before Alpine boots (no reload flash).
+                sidebarExpanded: !document.documentElement.classList.contains('sidebar-collapsed'),
+                sidebarHovered: false, // transient: true while hovering a collapsed desktop rail
+                sidebarMobileOpen: false, // transient: mobile off-canvas drawer
                 toasts: [],
                 alerts: [],
                 confirmState: { open: false, title: '', body: '', variant: 'default', confirmLabel: '', onConfirm: null },
                 _seq: 0,
+
+                init() {
+                    this.$watch('sidebarExpanded', (v) => localStorage.setItem('sidebarExpanded', v ? 'true' : 'false'));
+                },
+
+                // Header hamburger: toggles the persisted rail on desktop (lg+,
+                // matches Tailwind's `lg` breakpoint), the off-canvas drawer below it.
+                toggleSidebar() {
+                    if (window.innerWidth >= 1024) {
+                        this.sidebarExpanded = !this.sidebarExpanded;
+                    } else {
+                        this.sidebarMobileOpen = !this.sidebarMobileOpen;
+                    }
+                },
+
+                // Nav labels/chevrons show when: desktop expanded, desktop
+                // collapsed-but-hovered (rail hover-expand), or mobile drawer open.
+                navLabelsVisible() {
+                    return this.sidebarExpanded || this.sidebarHovered || this.sidebarMobileOpen;
+                },
 
                 pushToast(detail) {
                     const id = ++this._seq;
