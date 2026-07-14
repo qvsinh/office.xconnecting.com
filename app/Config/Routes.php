@@ -73,6 +73,12 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->get('servers/edit/(:num)', 'Admin\Servers::edit/$1');
     $routes->post('servers/update', 'Admin\Servers::update', ['filter' => 'csrf']);
     $routes->post('servers/delete', 'Admin\Servers::delete', ['filter' => 'csrf']);
+
+    $routes->get('settings', 'Admin\Settings::index');
+    $routes->post('settings/create', 'Admin\Settings::create', ['filter' => 'csrf']);
+    $routes->get('settings/edit/(:num)', 'Admin\Settings::edit/$1');
+    $routes->post('settings/update', 'Admin\Settings::update', ['filter' => 'csrf']);
+    $routes->post('settings/delete', 'Admin\Settings::delete', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
