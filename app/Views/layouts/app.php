@@ -52,6 +52,7 @@ $navGroups = [
 if ($navZone === 'admin') {
     $navGroups['Admin'] = [
         ['label' => 'Users', 'href' => '/admin/users'],
+        ['label' => 'Servers', 'href' => '/admin/servers'],
         ['label' => 'System info', 'href' => '/admin/system'],
         ['label' => 'Migrations', 'href' => '/admin/system/migrations'],
         ['label' => 'Logs', 'href' => '/admin/system/logs'],
