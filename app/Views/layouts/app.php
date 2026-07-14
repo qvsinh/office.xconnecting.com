@@ -57,6 +57,7 @@ if ($navZone === 'admin') {
         ['label' => 'Translations', 'href' => '/admin/translations'],
         ['label' => 'Email Templates', 'href' => '/admin/email-templates'],
         ['label' => 'Sent Emails', 'href' => '/admin/emails'],
+        ['label' => 'Scheduled Tasks', 'href' => '/admin/scheduled-tasks'],
         ['label' => 'System info', 'href' => '/admin/system'],
         ['label' => 'Migrations', 'href' => '/admin/system/migrations'],
         ['label' => 'Logs', 'href' => '/admin/system/logs'],
