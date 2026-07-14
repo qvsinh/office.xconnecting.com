@@ -40,6 +40,16 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('console/cnr/run', 'Admin\ConsoleCnr::run', ['filter' => 'csrf']);
     $routes->get('console/jprs', 'Admin\ConsoleJprs::index');
     $routes->post('console/jprs/run', 'Admin\ConsoleJprs::run', ['filter' => 'csrf']);
+
+    $routes->get('users', 'Admin\Users::index');
+    $routes->post('users/create', 'Admin\Users::create', ['filter' => 'csrf']);
+    $routes->get('users/edit/(:num)', 'Admin\Users::edit/$1');
+    $routes->post('users/update', 'Admin\Users::update', ['filter' => 'csrf']);
+    $routes->get('users/view/(:num)', 'Admin\Users::view/$1');
+    $routes->get('users/note/(:num)', 'Admin\Users::note/$1');
+    $routes->post('users/note', 'Admin\Users::updateNote', ['filter' => 'csrf']);
+    $routes->post('users/act-as/(:num)', 'Admin\Users::actAs/$1', ['filter' => 'csrf']);
+    $routes->post('users/stop-acting-as', 'Admin\Users::stopActing', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {

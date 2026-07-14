@@ -18,7 +18,18 @@ class CreateUsers extends Migration
         // Migration::$db is typed as the generic ConnectionInterface, which
         // doesn't declare tableExists() — go through Database::connect()
         // (typed @return BaseConnection) for the same connection instead.
-        if (Database::connect($this->DBGroup)->tableExists('users')) {
+        // `tableExists()` (cached) caches table names per connection
+        // (BaseConnection::$dataCache) and never invalidates on
+        // createTable()/dropTable(), so a long-lived connection re-running
+        // this migration (e.g. the test suite's regress()+latest() cycle
+        // between every test method) can see a stale "still exists" result
+        // right after a prior cycle actually dropped the table — silently
+        // skipping recreation and breaking every migration that runs after
+        // it in the same cycle. Reset the cache first.
+        $db = Database::connect($this->DBGroup);
+        $db->resetDataCache();
+
+        if ($db->tableExists('users')) {
             return;
         }
 
