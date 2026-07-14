@@ -23,8 +23,6 @@ use Throwable;
  */
 abstract class ApiController extends BaseController
 {
-    private const HISTORY_SORT_ALLOWLIST = ['created_at', 'id', 'status', 'command'];
-
     protected $helpers             = ['app', 'service_config'];
     public ?object $user           = null;
     public ?int $service_id        = null;
@@ -50,7 +48,7 @@ abstract class ApiController extends BaseController
         $req = $this->request;
 
         $sortBy = (string) ($req->getVar('sort_by') ?? 'created_at');
-        if (! in_array($sortBy, self::HISTORY_SORT_ALLOWLIST, true)) {
+        if (! in_array($sortBy, ApiHistoryModel::SCOPED_SORT_ALLOWLIST, true)) {
             $sortBy = 'created_at';
         }
         $sortDir = strtolower((string) ($req->getVar('sort') ?? 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -63,26 +61,17 @@ abstract class ApiController extends BaseController
         $domain  = trim((string) ($req->getVar('domain') ?? ''));
 
         try {
-            $builder = model(ApiHistoryModel::class)->builder();
-            $builder->select('id, user_id, env, service_name, service_id, url, status, command, domain, params, response, metadata, created_at')
-                ->where('service_name', $serviceName)
-                ->where('service_id', $this->service_id)
-                ->where('user_id', $this->user->id) // per-user tenancy: a caller sees only their own history
-                ->where('deleted_at', null); // respect soft-deletes (builder() bypasses the model scope)
-
-            if ($domain !== '') {
-                $builder->like('domain', $domain);
-            }
-
-            if ($keyword !== '') {
-                $builder->groupStart()
-                    ->like('response', $keyword)
-                    ->orLike('params', $keyword)
-                    ->orLike('command', $keyword)
-                    ->groupEnd();
-            }
-
-            $rows = $builder->orderBy($sortBy, $sortDir)->get($limit, $offset)->getResultArray();
+            $rows = model(ApiHistoryModel::class)->searchScoped(
+                $serviceName,
+                $this->service_id,
+                $this->user->id,
+                $sortBy,
+                $sortDir,
+                $limit,
+                $offset,
+                $keyword,
+                $domain,
+            );
 
             return $this->response->setJSON([
                 'status'         => 'success',

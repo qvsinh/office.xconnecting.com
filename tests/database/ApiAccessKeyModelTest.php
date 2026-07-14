@@ -161,4 +161,40 @@ final class ApiAccessKeyModelTest extends CIUnitTestCase
 
         $this->assertSame(1, $keyModel->countAdmin(['keyword' => 'ada@example.com']));
     }
+
+    public function testListForConsoleClientZoneScopesToOwnEnabledKeysOfTheGivenProvider(): void
+    {
+        $model = new ApiAccessKeyModel();
+
+        $mine    = $model->createForUser((object) ['id' => 1, 'env' => 'TESTING'], 800); // cnr
+        $model->insert(['user_id' => 1, 'access_key' => 'disabled-key', 'service_id' => 800, 'is_enable' => 0, 'enable_log' => 1]);
+        $model->insert(['user_id' => 2, 'access_key' => 'other-user-key', 'service_id' => 800, 'is_enable' => 1, 'enable_log' => 1]);
+        $model->createForUser((object) ['id' => 1, 'env' => 'TESTING'], 801); // jprs, different provider
+
+        $keys = $model->listForConsole(1, 'cnr');
+
+        $this->assertCount(1, $keys);
+        $this->assertSame($mine, $keys[0]->access_key);
+        $this->assertSame(1, (int) $keys[0]->is_enable);
+    }
+
+    public function testListForConsoleAdminZoneReturnsEveryUsersKeysWithOwnerInfo(): void
+    {
+        $userModel = model(UserModel::class);
+        $userId    = $userModel->insert([
+            'name' => 'Console Owner', 'email' => 'console-owner@example.com',
+            'password' => 'unused-hash', 'zone' => 'client', 'env' => 'TESTING',
+        ], true);
+
+        $model = new ApiAccessKeyModel();
+        $model->createForUser((object) ['id' => $userId, 'env' => 'TESTING'], 800);
+        $model->insert(['user_id' => $userId, 'access_key' => 'disabled-admin-key', 'service_id' => 800, 'is_enable' => 0, 'enable_log' => 1]);
+
+        $keys = $model->listForConsole(null, 'cnr');
+
+        // Admin zone: both enabled and disabled keys are listed (the run()
+        // endpoint, not the list, is what rejects disabled keys).
+        $this->assertCount(2, $keys);
+        $this->assertSame('Console Owner', $keys[0]->user_name);
+    }
 }

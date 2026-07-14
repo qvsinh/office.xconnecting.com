@@ -35,6 +35,11 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->get('api-history/preview', 'Admin\ApiHistory::preview');
     $routes->post('api-history/delete', 'Admin\ApiHistory::delete', ['filter' => 'csrf']);
     $routes->post('api-history/delete-all', 'Admin\ApiHistory::deleteAll', ['filter' => 'csrf']);
+
+    $routes->get('console/cnr', 'Admin\ConsoleCnr::index');
+    $routes->post('console/cnr/run', 'Admin\ConsoleCnr::run', ['filter' => 'csrf']);
+    $routes->get('console/jprs', 'Admin\ConsoleJprs::index');
+    $routes->post('console/jprs/run', 'Admin\ConsoleJprs::run', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
@@ -51,6 +56,11 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('api-history/delete', 'Client\ApiHistory::delete', ['filter' => 'csrf']);
     $routes->post('api-history/delete-all', 'Client\ApiHistory::deleteAll', ['filter' => 'csrf']);
     $routes->post('api-history/delete-by-age', 'Client\ApiHistory::deleteByAge', ['filter' => 'csrf']);
+
+    $routes->get('console/cnr', 'Client\ConsoleCnr::index');
+    $routes->post('console/cnr/run', 'Client\ConsoleCnr::run', ['filter' => 'csrf']);
+    $routes->get('console/jprs', 'Client\ConsoleJprs::index');
+    $routes->post('console/jprs/run', 'Client\ConsoleJprs::run', ['filter' => 'csrf']);
 });
 
 $routes->group('api', ['filter' => 'apiFilter'], static function (RouteCollection $routes) {

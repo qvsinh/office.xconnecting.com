@@ -34,6 +34,14 @@ class ApiHistoryModel extends Model
      */
     private const DELETE_CHUNK = 500;
 
+    /**
+     * Sortable columns for `searchScoped()` — the query behind the Bearer
+     * proxy's and the web console's `command=History` shortcut. Deliberately
+     * narrower than `SORT_ALLOWLIST` (no `service_name`/`service_id`/
+     * `domain` — those are already fixed by the scope, not sortable there).
+     */
+    public const SCOPED_SORT_ALLOWLIST = ['created_at', 'id', 'status', 'command'];
+
     protected $table            = 'api_history';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
@@ -156,6 +164,52 @@ class ApiHistoryModel extends Model
         $this->applyHistoryFilters($this->builder(), $filters);
 
         return $this->countAllResults();
+    }
+
+    /**
+     * Filtered/sorted/paginated read scoped to one user's single service —
+     * the exact query behind the Bearer proxy's `command=History` shortcut
+     * (`Api\ApiController::fetchHistory()`) and the web console's `History`
+     * shortcut (`ConsoleController`), kept as one root so the two can't
+     * drift apart (ponytail: was inline in `fetchHistory()` alone; extracted
+     * here once the console needed the same read).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function searchScoped(
+        string $serviceName,
+        int $serviceId,
+        int $userId,
+        string $sortBy,
+        string $sortDir,
+        int $limit,
+        int $offset,
+        string $keyword = '',
+        string $domain = '',
+    ): array {
+        $sortColumn = in_array($sortBy, self::SCOPED_SORT_ALLOWLIST, true) ? $sortBy : 'created_at';
+        $sortOrder  = strtolower($sortDir) === 'asc' ? 'asc' : 'desc';
+
+        $builder = $this->builder();
+        $builder->select('id, user_id, env, service_name, service_id, url, status, command, domain, params, response, metadata, created_at')
+            ->where('service_name', $serviceName)
+            ->where('service_id', $serviceId)
+            ->where('user_id', $userId) // per-user tenancy: a caller sees only their own history
+            ->where('deleted_at', null); // respect soft-deletes (builder() bypasses the model scope)
+
+        if ($domain !== '') {
+            $builder->like('domain', $domain);
+        }
+
+        if ($keyword !== '') {
+            $builder->groupStart()
+                ->like('response', $keyword)
+                ->orLike('params', $keyword)
+                ->orLike('command', $keyword)
+                ->groupEnd();
+        }
+
+        return $builder->orderBy($sortColumn, $sortOrder)->get($limit, $offset)->getResultArray();
     }
 
     /**

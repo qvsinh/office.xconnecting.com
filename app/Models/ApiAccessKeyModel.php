@@ -115,6 +115,46 @@ class ApiAccessKeyModel extends Model
     }
 
     /**
+     * Key list for the web developer console, scoped to one registrar
+     * `$provider` ('cnr'|'jprs', per `list_api_services()`'s service-id
+     * map). `$userId === null` is the admin zone (every user's keys, joined
+     * with the owner's name/email); a non-null `$userId` is the client zone
+     * (that user's own **enabled** keys only — the console must never let a
+     * client select or run a disabled key).
+     *
+     * @return list<object>
+     */
+    public function listForConsole(?int $userId, string $provider): array
+    {
+        helper('service_config');
+
+        $serviceIds = array_column(
+            array_filter(list_api_services(), static fn (array $service): bool => $service['provider'] === $provider),
+            'id',
+        );
+
+        if ($serviceIds === []) {
+            return [];
+        }
+
+        if ($userId !== null) {
+            return $this->where('user_id', $userId)
+                ->where('is_enable', 1)
+                ->whereIn('service_id', $serviceIds)
+                ->orderBy('id', 'DESC')
+                ->findAll();
+        }
+
+        return $this->db->table($this->table . ' uak')
+            ->select('uak.*, u.name AS user_name, u.email AS user_email')
+            ->join('users u', 'u.id = uak.user_id', 'left')
+            ->whereIn('uak.service_id', $serviceIds)
+            ->orderBy('uak.id', 'DESC')
+            ->get()
+            ->getResult();
+    }
+
+    /**
      * Admin list joined with the owning user, keyword-searchable
      * (email exact / numeric id-or-user-or-service / name LIKE).
      *
