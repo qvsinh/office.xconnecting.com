@@ -96,6 +96,14 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     // Read-only sent-email log — `id` is a VARCHAR token, hence `(:segment)`.
     $routes->get('emails', 'Admin\Emails::index');
     $routes->get('emails/show/(:segment)', 'Admin\Emails::show/$1');
+
+    $routes->get('scheduled-tasks', 'Admin\ScheduledTasks::index');
+    $routes->post('scheduled-tasks/create', 'Admin\ScheduledTasks::create', ['filter' => 'csrf']);
+    $routes->get('scheduled-tasks/edit/(:num)', 'Admin\ScheduledTasks::edit/$1');
+    $routes->post('scheduled-tasks/update', 'Admin\ScheduledTasks::update', ['filter' => 'csrf']);
+    $routes->post('scheduled-tasks/delete', 'Admin\ScheduledTasks::delete', ['filter' => 'csrf']);
+    $routes->post('scheduled-tasks/toggle', 'Admin\ScheduledTasks::toggle', ['filter' => 'csrf']);
+    $routes->post('scheduled-tasks/run', 'Admin\ScheduledTasks::runNow', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
