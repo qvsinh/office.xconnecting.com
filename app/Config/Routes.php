@@ -30,6 +30,11 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('api-access-keys/toggle', 'Admin\ApiAccessKeys::toggle', ['filter' => 'csrf']);
     $routes->post('api-access-keys/toggle-log', 'Admin\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
     $routes->post('api-access-keys/delete', 'Admin\ApiAccessKeys::delete', ['filter' => 'csrf']);
+
+    $routes->get('api-history', 'Admin\ApiHistory::logs');
+    $routes->get('api-history/preview', 'Admin\ApiHistory::preview');
+    $routes->post('api-history/delete', 'Admin\ApiHistory::delete', ['filter' => 'csrf']);
+    $routes->post('api-history/delete-all', 'Admin\ApiHistory::deleteAll', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
@@ -40,6 +45,12 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('my-api-access-keys/toggle', 'Client\ApiAccessKeys::toggle', ['filter' => 'csrf']);
     $routes->post('my-api-access-keys/toggle-log', 'Client\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
     $routes->post('my-api-access-keys/remove', 'Client\ApiAccessKeys::remove', ['filter' => 'csrf']);
+
+    $routes->get('api-history', 'Client\ApiHistory::logs');
+    $routes->get('api-history/preview', 'Client\ApiHistory::preview');
+    $routes->post('api-history/delete', 'Client\ApiHistory::delete', ['filter' => 'csrf']);
+    $routes->post('api-history/delete-all', 'Client\ApiHistory::deleteAll', ['filter' => 'csrf']);
+    $routes->post('api-history/delete-by-age', 'Client\ApiHistory::deleteByAge', ['filter' => 'csrf']);
 });
 
 $routes->group('api', ['filter' => 'apiFilter'], static function (RouteCollection $routes) {
