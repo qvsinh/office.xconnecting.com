@@ -3,13 +3,12 @@
 use App\Models\ApiHistoryModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
-use Tests\Support\Api\TestApiController;
 
 /**
- * `ApiController::logApiCall()` gating logic, exercised directly on a
- * minimal concrete subclass (see `Tests\Support\Api\TestApiController`) so
- * it can be tested without the full HTTP/auth request lifecycle. Requires a
- * real DB since `logApiCall` writes to `api_history`.
+ * `ApiHistoryModel::record()`'s gating logic (`enable_log` gate, listing-
+ * command skip, sensitive-field strip, domain fallback) — moved here from
+ * `ApiController::logApiCall()` so both `CnrClient` and `JprsClient` share
+ * one root instead of duplicating the rules per caller.
  *
  * @internal
  */
@@ -21,63 +20,61 @@ final class ApiControllerLogApiCallTest extends CIUnitTestCase
     protected $refresh   = true;
     protected $namespace = null;
 
-    private function controller(int $enableLog = 1): TestApiController
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function record(array $row, bool $enableLog): void
     {
-        $controller = new TestApiController();
-        $controller->setUser(1, 'TESTING');
-        $controller->setServiceId(800);
-        $controller->setKeyEnableLog($enableLog);
-
-        return $controller;
+        model(ApiHistoryModel::class)->record($row + ['user_id' => 1, 'service_id' => 800], $enableLog);
     }
 
     public function testReturnsEarlyWithoutInsertingWhenLoggingDisabled(): void
     {
-        $this->controller(0)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'StatusAccount',
             'params'       => ['domain' => 'example.com'],
-        ]);
+        ], false);
 
         $this->assertSame(0, model(ApiHistoryModel::class)->countAllResults());
     }
 
     public function testInsertsRowWhenLoggingEnabled(): void
     {
-        $this->controller(1)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'StatusAccount',
             'params'       => ['domain' => 'example.com'],
-        ]);
+        ], true);
 
         $this->assertSame(1, model(ApiHistoryModel::class)->countAllResults());
     }
 
     public function testSkipsListingCommandWhenLimitParamPresent(): void
     {
-        $this->controller(1)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'QueryDomainList',
             'params'       => ['limit' => 50],
-        ]);
+        ], true);
 
         $this->assertSame(0, model(ApiHistoryModel::class)->countAllResults());
     }
 
     public function testLogsListingCommandWhenLimitParamAbsent(): void
     {
-        $this->controller(1)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'QueryDomainList',
             'params'       => ['domain' => 'example.com'],
-        ]);
+        ], true);
 
         $this->assertSame(1, model(ApiHistoryModel::class)->countAllResults());
     }
 
     public function testStripsSensitiveFieldsFromStoredParams(): void
     {
-        $this->controller(1)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'ModifyDomain',
             'params'       => [
@@ -86,7 +83,7 @@ final class ApiControllerLogApiCallTest extends CIUnitTestCase
                 'OperationPassword'  => 'secret-op-pass',
                 'AgentLoginPassword' => 'secret-login-pass',
             ],
-        ]);
+        ], true);
 
         $row = model(ApiHistoryModel::class)->first();
         $this->assertNotNull($row);
@@ -101,11 +98,11 @@ final class ApiControllerLogApiCallTest extends CIUnitTestCase
 
     public function testDerivesDomainFallbackFromDnszoneParamWhenDomainMissing(): void
     {
-        $this->controller(1)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'QueryDNSZoneList',
             'params'       => ['dnszone' => 'example.com'],
-        ]);
+        ], true);
 
         $row = model(ApiHistoryModel::class)->first();
         $this->assertSame('example.com', $row['domain']);
@@ -113,12 +110,12 @@ final class ApiControllerLogApiCallTest extends CIUnitTestCase
 
     public function testExplicitDomainTakesPrecedenceOverDnszone(): void
     {
-        $this->controller(1)->callLogApiCall([
+        $this->record([
             'service_name' => 'cnr',
             'command'      => 'ModifyDomain',
             'domain'       => 'explicit.com',
             'params'       => ['dnszone' => 'other.com'],
-        ]);
+        ], true);
 
         $row = model(ApiHistoryModel::class)->first();
         $this->assertSame('explicit.com', $row['domain']);

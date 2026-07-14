@@ -1,27 +1,24 @@
 <?php
 
-use App\Controllers\Api\JprsApi;
+use App\Libraries\JprsClient;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
- * `JprsApi::buildJprsPlainPayload` / `parseJprsResponse` are private (pure
- * string building/parsing, no HTTP/DB dependency) — invoked via reflection
- * per the plan's guidance. Also covers the UTF-8<->ISO-2022-JP round trip
+ * `JprsClient::buildJprsPlainPayload` / `parseJprsResponse` are pure string
+ * building/parsing (no HTTP/DB dependency) — public on the shared client so
+ * no reflection is needed. Also covers the UTF-8<->ISO-2022-JP round trip
  * used to encode the request body / decode the response body.
  *
  * @internal
  */
-final class JprsApiPayloadTest extends CIUnitTestCase
+final class JprsClientPayloadTest extends CIUnitTestCase
 {
     /**
      * @param array<string, mixed> $payload
      */
     private function build(array $payload): string
     {
-        $method = new ReflectionMethod(JprsApi::class, 'buildJprsPlainPayload');
-        $method->setAccessible(true);
-
-        return $method->invoke(new JprsApi(), $payload);
+        return (new JprsClient())->buildJprsPlainPayload($payload);
     }
 
     /**
@@ -29,10 +26,7 @@ final class JprsApiPayloadTest extends CIUnitTestCase
      */
     private function parse(string $body): array
     {
-        $method = new ReflectionMethod(JprsApi::class, 'parseJprsResponse');
-        $method->setAccessible(true);
-
-        return $method->invoke(new JprsApi(), $body);
+        return (new JprsClient())->parseJprsResponse($body);
     }
 
     public function testBuildsCommandHeaderLineWithAsteriskPrefix(): void

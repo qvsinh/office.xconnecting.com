@@ -4,6 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
+use Throwable;
 
 class ApiHistoryModel extends Model
 {
@@ -16,6 +17,17 @@ class ApiHistoryModel extends Model
      * Columns searched by a `keyword` filter term.
      */
     private const KEYWORD_FIELDS = ['service_name', 'command', 'domain', 'url', 'params', 'response'];
+
+    /**
+     * Listing-style commands whose call is skipped from `api_history` when a
+     * `limit` param is present (pagination noise), per `record()`'s gate.
+     */
+    private const SKIP_LOG_LISTING_COMMANDS = [
+        'QueryEventList',
+        'QueryDNSZoneList',
+        'QueryContactList',
+        'QueryDomainList',
+    ];
 
     /**
      * Chunk size for soft-deleting a filtered/aged set of rows.
@@ -46,6 +58,66 @@ class ApiHistoryModel extends Model
     protected $updatedField   = '';
     protected $deletedField   = 'deleted_at';
     protected $skipValidation = false;
+
+    /**
+     * Persist a proxy/console call to `api_history`, gated by the key's
+     * `enable_log`. Never throws into the caller — logging failures are
+     * logged and swallowed. This is the single root both `CnrClient` and
+     * `JprsClient` call (ponytail: was duplicated per-caller as
+     * `ApiController::logApiCall()`, moved here so the gate/strip rules
+     * can't drift between callers).
+     *
+     * Expected `$row` keys: user_id, env, service_name, service_id, url,
+     * command, domain, params (array|string), response (array|string),
+     * metadata, status.
+     */
+    public function record(array $row, bool $enableLog): void
+    {
+        if (! $enableLog) {
+            return;
+        }
+
+        $command    = $row['command'] ?? null;
+        $callParams = $row['params'] ?? null;
+
+        if (in_array($command, self::SKIP_LOG_LISTING_COMMANDS, true)
+            && is_array($callParams)
+            && isset($callParams['limit'])
+        ) {
+            return;
+        }
+
+        if (is_array($callParams)) {
+            unset($callParams['AgentLoginID'], $callParams['OperationPassword'], $callParams['AgentLoginPassword']);
+        }
+
+        $domain = $row['domain'] ?? null;
+        if (empty($domain) && is_array($callParams)) {
+            $domain = $callParams['dnszone'] ?? null;
+        }
+
+        $response = $row['response'] ?? null;
+
+        $insert = [
+            'user_id'      => $row['user_id'] ?? null,
+            'env'          => $row['env'] ?? null,
+            'service_name' => $row['service_name'] ?? null,
+            'service_id'   => $row['service_id'] ?? null,
+            'url'          => $row['url'] ?? null,
+            'status'       => $row['status'] ?? 1,
+            'command'      => $command,
+            'domain'       => $domain,
+            'params'       => is_string($callParams) ? $callParams : json_encode($callParams, JSON_PRETTY_PRINT),
+            'response'     => is_string($response) ? $response : json_encode($response, JSON_PRETTY_PRINT),
+            'metadata'     => $row['metadata'] ?? null,
+        ];
+
+        try {
+            $this->insert($insert);
+        } catch (Throwable $e) {
+            log_message('error', 'Failed to log API history: ' . $e->getMessage());
+        }
+    }
 
     /**
      * Filtered, sorted, paginated read. `$filters['user_id']`, when present,

@@ -3,6 +3,8 @@
 namespace Config;
 
 use App\Libraries\ApiAuthContext;
+use App\Libraries\CnrClient;
+use App\Libraries\JprsClient;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -42,5 +44,31 @@ class Services extends BaseService
         }
 
         return new ApiAuthContext();
+    }
+
+    /**
+     * Shared RRP (CNR) upstream client — see App\Libraries\CnrClient. Used by
+     * the Bearer proxy (`Api\CnrApi`) and the web developer console.
+     */
+    public static function cnrClient(bool $getShared = true): CnrClient
+    {
+        if ($getShared) {
+            return static::getSharedInstance('cnrClient');
+        }
+
+        return new CnrClient();
+    }
+
+    /**
+     * Shared JPRS (.jp) upstream client — see App\Libraries\JprsClient. Used
+     * by the Bearer proxy (`Api\JprsApi`) and the web developer console.
+     */
+    public static function jprsClient(bool $getShared = true): JprsClient
+    {
+        if ($getShared) {
+            return static::getSharedInstance('jprsClient');
+        }
+
+        return new JprsClient();
     }
 }

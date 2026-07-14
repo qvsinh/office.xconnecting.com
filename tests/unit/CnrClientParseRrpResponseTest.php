@@ -1,25 +1,22 @@
 <?php
 
-use App\Controllers\Api\CnrApi;
+use App\Libraries\CnrClient;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
- * `CnrApi::parseRrpResponse` is private (pure string parsing, no HTTP/DB
- * dependency) — invoked via reflection per the plan's guidance.
+ * `CnrClient::parseRrpResponse` is pure string parsing (no HTTP/DB
+ * dependency) — public on the shared client so no reflection is needed.
  *
  * @internal
  */
-final class CnrApiParseRrpResponseTest extends CIUnitTestCase
+final class CnrClientParseRrpResponseTest extends CIUnitTestCase
 {
     /**
      * @return array<string, mixed>
      */
     private function parse(string $body): array
     {
-        $method = new ReflectionMethod(CnrApi::class, 'parseRrpResponse');
-        $method->setAccessible(true);
-
-        return $method->invoke(new CnrApi(), $body);
+        return (new CnrClient())->parseRrpResponse($body);
     }
 
     public function testParsesKeyValueLines(): void

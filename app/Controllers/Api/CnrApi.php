@@ -3,13 +3,14 @@
 namespace App\Controllers\Api;
 
 use CodeIgniter\HTTP\ResponseInterface;
-use Throwable;
 
 /**
  * RRP (CNR/RRPProxy) registrar proxy — forwards `command` + params to the
  * upstream RRP HTTP API and normalizes the response into the standard
  * success/error envelope. See ../../../../proxy.services.vn/app/Controllers/Api/CnrApi.php
- * for the legacy contract this ports.
+ * for the legacy contract this ports. The upstream call/parse/log logic
+ * itself lives in the shared `App\Libraries\CnrClient` (`service('cnrClient')`)
+ * so it isn't duplicated by the web developer console.
  */
 class CnrApi extends ApiController
 {
@@ -49,7 +50,13 @@ class CnrApi extends ApiController
             ])->setStatusCode(403);
         }
 
-        $apiResponse = $this->sendRequest($command, $params);
+        $apiResponse = service('cnrClient')->call(
+            $this->service_id,
+            $this->user->env ?? 'TESTING',
+            $command,
+            $params,
+            ['user_id' => $this->user->id ?? null, 'enable_log' => (int) $this->key_enable_log === 1],
+        );
 
         if (isset($apiResponse['code']) && str_starts_with((string) $apiResponse['code'], '2')) {
             return $this->response->setJSON([
@@ -65,98 +72,5 @@ class CnrApi extends ApiController
             'data'           => $apiResponse,
             'message'        => $apiResponse['description'] ?? 'An error occurred',
         ])->setStatusCode(200);
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     *
-     * @return array<string, mixed>
-     */
-    private function sendRequest(string $command, array $params): array
-    {
-        $metadata = $params['metadata'] ?? null;
-        unset($params['metadata']);
-
-        $config = get_cnr_service_config($this->service_id);
-
-        if (empty($config['name']) || empty($config['password']) || empty($config['url'])) {
-            return [
-                'code'        => 500,
-                'description' => 'Configuration for service cnr.' . $this->service_id . ' not found.',
-            ];
-        }
-
-        $queryParams = [
-            's_login' => $config['name'],
-            's_pw'    => $config['password'],
-            'command' => $command,
-        ] + $params;
-
-        $domain = $params['domain'] ?? $params['DomainName'] ?? null;
-
-        try {
-            $response     = service('curlrequest')->get($config['url'], ['query' => $queryParams]);
-            $responseData = $this->parseRrpResponse((string) $response->getBody());
-
-            $this->logApiCall([
-                'env'          => $this->user->env ?? 'TESTING',
-                'service_name' => 'cnr',
-                'service_id'   => $this->service_id,
-                'url'          => $config['url'],
-                'status'       => (isset($responseData['code']) && str_starts_with((string) $responseData['code'], '2')) ? 1 : 0,
-                'command'      => $command,
-                'domain'       => $domain,
-                'params'       => $params,
-                'response'     => $responseData,
-                'metadata'     => $metadata,
-            ]);
-
-            return $responseData;
-        } catch (Throwable $e) {
-            $this->logApiCall([
-                'env'          => $this->user->env ?? 'TESTING',
-                'service_name' => 'cnr',
-                'service_id'   => $this->service_id,
-                'url'          => $config['url'],
-                'status'       => 0,
-                'command'      => $command,
-                'domain'       => $domain,
-                'params'       => $params,
-                'response'     => ['error' => $e->getMessage()],
-                'metadata'     => $metadata,
-            ]);
-
-            return ['code' => 500, 'description' => $e->getMessage()];
-        }
-    }
-
-    /**
-     * Parse RRP's `key=value` line protocol, folding `property[name][idx]=value`
-     * lines into a `property.{name}` indexed array.
-     *
-     * @return array<string, mixed>
-     */
-    private function parseRrpResponse(string $responseBody): array
-    {
-        $lines  = explode("\n", trim($responseBody));
-        $result = [];
-
-        foreach ($lines as $line) {
-            if (! str_contains($line, '=')) {
-                continue;
-            }
-
-            [$key, $value] = explode('=', $line, 2);
-            $key           = trim($key);
-            $value         = trim($value);
-
-            if (preg_match('/property\[([^\]]+)\]\[(\d+)\]/', $key, $matches)) {
-                $result['property'][$matches[1]][(int) $matches[2]] = $value;
-            } else {
-                $result[$key] = $value;
-            }
-        }
-
-        return $result;
     }
 }

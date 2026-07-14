@@ -17,16 +17,12 @@ use Throwable;
  * instantiating this controller. On success the filter stashes the resolved
  * caller in the `apiAuthContext` service, which `initController()` copies
  * onto `$this->user` / `$this->service_id` / `$this->key_enable_log` below.
- * This controller logs the call to `api_history`.
+ * The upstream call itself (and its `api_history` logging via
+ * `ApiHistoryModel::record()`) happens in the shared `CnrClient`/`JprsClient`
+ * libraries; this base only provides the `command=History` read shortcut.
  */
 abstract class ApiController extends BaseController
 {
-    private const SKIP_LOG_LISTING_COMMANDS = [
-        'QueryEventList',
-        'QueryDNSZoneList',
-        'QueryContactList',
-        'QueryDomainList',
-    ];
     private const HISTORY_SORT_ALLOWLIST = ['created_at', 'id', 'status', 'command'];
 
     protected $helpers             = ['app', 'service_config'];
@@ -43,61 +39,6 @@ abstract class ApiController extends BaseController
         $this->user           = $context->user;
         $this->service_id     = $context->serviceId;
         $this->key_enable_log = $context->keyEnableLog;
-    }
-
-    /**
-     * Persist a proxy call to `api_history`, gated by the key's `enable_log`.
-     * Never throws into the response path — logging failures are logged and swallowed.
-     *
-     * Expected keys: env, service_name, service_id, url, command, domain, params
-     * (array|string), response (array|string), metadata, status.
-     */
-    protected function logApiCall(array $params): void
-    {
-        if ((int) $this->key_enable_log !== 1) {
-            return;
-        }
-
-        $command    = $params['command'] ?? null;
-        $callParams = $params['params'] ?? null;
-
-        if (in_array($command, self::SKIP_LOG_LISTING_COMMANDS, true)
-            && is_array($callParams)
-            && isset($callParams['limit'])
-        ) {
-            return;
-        }
-
-        if (is_array($callParams)) {
-            unset($callParams['AgentLoginID'], $callParams['OperationPassword'], $callParams['AgentLoginPassword']);
-        }
-
-        $domain = $params['domain'] ?? null;
-        if (empty($domain) && is_array($callParams)) {
-            $domain = $callParams['dnszone'] ?? null;
-        }
-
-        $response = $params['response'] ?? null;
-
-        $row = [
-            'user_id'      => $this->user->id ?? null,
-            'env'          => $params['env'] ?? null,
-            'service_name' => $params['service_name'] ?? null,
-            'service_id'   => $params['service_id'] ?? $this->service_id,
-            'url'          => $params['url'] ?? null,
-            'status'       => $params['status'] ?? 1,
-            'command'      => $command,
-            'domain'       => $domain,
-            'params'       => is_string($callParams) ? $callParams : json_encode($callParams, JSON_PRETTY_PRINT),
-            'response'     => is_string($response) ? $response : json_encode($response, JSON_PRETTY_PRINT),
-            'metadata'     => $params['metadata'] ?? null,
-        ];
-
-        try {
-            model(ApiHistoryModel::class)->insert($row);
-        } catch (Throwable $e) {
-            log_message('error', 'Failed to log API history: ' . $e->getMessage());
-        }
     }
 
     /**
