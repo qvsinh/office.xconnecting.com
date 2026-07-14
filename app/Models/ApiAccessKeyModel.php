@@ -137,8 +137,11 @@ class ApiAccessKeyModel extends Model
             return [];
         }
 
+        // Never load access_key here: the console only needs display fields and must
+        // never expose the secret to the view (defense-in-depth — the view already omits it).
         if ($userId !== null) {
-            return $this->where('user_id', $userId)
+            return $this->select('id, user_id, user_status, service_id, is_enable, enable_log, description, last_access')
+                ->where('user_id', $userId)
                 ->where('is_enable', 1)
                 ->whereIn('service_id', $serviceIds)
                 ->orderBy('id', 'DESC')
@@ -146,7 +149,7 @@ class ApiAccessKeyModel extends Model
         }
 
         return $this->db->table($this->table . ' uak')
-            ->select('uak.*, u.name AS user_name, u.email AS user_email')
+            ->select('uak.id, uak.user_id, uak.user_status, uak.service_id, uak.is_enable, uak.enable_log, uak.description, uak.last_access, u.name AS user_name, u.email AS user_email')
             ->join('users u', 'u.id = uak.user_id', 'left')
             ->whereIn('uak.service_id', $serviceIds)
             ->orderBy('uak.id', 'DESC')

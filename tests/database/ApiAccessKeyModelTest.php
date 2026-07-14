@@ -166,7 +166,7 @@ final class ApiAccessKeyModelTest extends CIUnitTestCase
     {
         $model = new ApiAccessKeyModel();
 
-        $mine    = $model->createForUser((object) ['id' => 1, 'env' => 'TESTING'], 800); // cnr
+        $model->createForUser((object) ['id' => 1, 'env' => 'TESTING'], 800); // cnr (mine, enabled)
         $model->insert(['user_id' => 1, 'access_key' => 'disabled-key', 'service_id' => 800, 'is_enable' => 0, 'enable_log' => 1]);
         $model->insert(['user_id' => 2, 'access_key' => 'other-user-key', 'service_id' => 800, 'is_enable' => 1, 'enable_log' => 1]);
         $model->createForUser((object) ['id' => 1, 'env' => 'TESTING'], 801); // jprs, different provider
@@ -174,8 +174,10 @@ final class ApiAccessKeyModelTest extends CIUnitTestCase
         $keys = $model->listForConsole(1, 'cnr');
 
         $this->assertCount(1, $keys);
-        $this->assertSame($mine, $keys[0]->access_key);
         $this->assertSame(1, (int) $keys[0]->is_enable);
+        $this->assertSame(800, (int) $keys[0]->service_id);
+        // Console list must NOT load the access_key secret (defense-in-depth).
+        $this->assertObjectNotHasProperty('access_key', $keys[0]);
     }
 
     public function testListForConsoleAdminZoneReturnsEveryUsersKeysWithOwnerInfo(): void
