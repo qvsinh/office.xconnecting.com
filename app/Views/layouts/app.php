@@ -54,6 +54,7 @@ if ($navZone === 'admin') {
         ['label' => 'Users', 'href' => '/admin/users'],
         ['label' => 'Servers', 'href' => '/admin/servers'],
         ['label' => 'Settings', 'href' => '/admin/settings'],
+        ['label' => 'Translations', 'href' => '/admin/translations'],
         ['label' => 'System info', 'href' => '/admin/system'],
         ['label' => 'Migrations', 'href' => '/admin/system/migrations'],
         ['label' => 'Logs', 'href' => '/admin/system/logs'],
