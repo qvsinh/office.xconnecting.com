@@ -67,6 +67,12 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('users/note', 'Admin\Users::updateNote', ['filter' => 'csrf']);
     $routes->post('users/act-as/(:num)', 'Admin\Users::actAs/$1', ['filter' => 'csrf']);
     $routes->post('users/stop-acting-as', 'Admin\Users::stopActing', ['filter' => 'csrf']);
+
+    $routes->get('servers', 'Admin\Servers::index');
+    $routes->post('servers/create', 'Admin\Servers::create', ['filter' => 'csrf']);
+    $routes->get('servers/edit/(:num)', 'Admin\Servers::edit/$1');
+    $routes->post('servers/update', 'Admin\Servers::update', ['filter' => 'csrf']);
+    $routes->post('servers/delete', 'Admin\Servers::delete', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
