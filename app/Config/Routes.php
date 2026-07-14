@@ -86,6 +86,16 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->get('translations/edit/(:num)', 'Admin\Translations::edit/$1');
     $routes->post('translations/update', 'Admin\Translations::update', ['filter' => 'csrf']);
     $routes->post('translations/delete', 'Admin\Translations::delete', ['filter' => 'csrf']);
+
+    $routes->get('email-templates', 'Admin\EmailTemplates::index');
+    $routes->post('email-templates/create', 'Admin\EmailTemplates::create', ['filter' => 'csrf']);
+    $routes->get('email-templates/edit/(:num)', 'Admin\EmailTemplates::edit/$1');
+    $routes->post('email-templates/update', 'Admin\EmailTemplates::update', ['filter' => 'csrf']);
+    $routes->post('email-templates/delete', 'Admin\EmailTemplates::delete', ['filter' => 'csrf']);
+
+    // Read-only sent-email log — `id` is a VARCHAR token, hence `(:segment)`.
+    $routes->get('emails', 'Admin\Emails::index');
+    $routes->get('emails/show/(:segment)', 'Admin\Emails::show/$1');
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {

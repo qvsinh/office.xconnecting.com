@@ -5,14 +5,14 @@
  * a shared Alpine modal, delete via the shared confirm modal, plus a per-
  * language JSON export link. Mirrors `admin/settings/index.php`.
  *
- * @var list<object>                             $items   searchAdmin() rows (id/lang_code/location/slug/content)
- * @var int                                       $total
- * @var int                                       $page
- * @var int                                       $limit
- * @var string                                    $sort
- * @var string                                    $order
- * @var array{keyword:string, lang_code:string}   $filters
- * @var list<string>                              $langCodes
+ * @var list<object>                            $items   searchAdmin() rows (id/lang_code/location/slug/content)
+ * @var int                                     $total
+ * @var int                                     $page
+ * @var int                                     $limit
+ * @var string                                  $sort
+ * @var string                                  $order
+ * @var array{keyword:string, lang_code:string} $filters
+ * @var list<string>                            $langCodes
  */
 $this->extend('layouts/app');
 
