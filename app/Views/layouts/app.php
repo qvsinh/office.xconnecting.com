@@ -49,8 +49,10 @@ $navZone ??= is_admin() ? 'admin' : 'client';
                     <a href="/admin/api-access-keys" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         API access keys
                     </a>
+                    <a href="/admin/api-history" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        API history
+                    </a>
                     <span class="block px-3 pt-4 text-xs font-medium uppercase tracking-wide text-[#787774]">Coming soon</span>
-                    <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">API history</span>
                     <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">Users</span>
                 <?php else : ?>
                     <a href="/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
@@ -59,8 +61,10 @@ $navZone ??= is_admin() ? 'admin' : 'client';
                     <a href="/my-api-access-keys" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         API access keys
                     </a>
+                    <a href="/api-history" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        API history
+                    </a>
                     <span class="block px-3 pt-4 text-xs font-medium uppercase tracking-wide text-[#787774]">Coming soon</span>
-                    <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">API history</span>
                     <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">CNR / JPRS console</span>
                 <?php endif; ?>
             </nav>
