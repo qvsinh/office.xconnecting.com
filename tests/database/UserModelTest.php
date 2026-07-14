@@ -145,4 +145,29 @@ final class UserModelTest extends CIUnitTestCase
 
         $this->assertSame(1, $model->countActiveAdmins());
     }
+
+    public function testEnableGoogle2faSetsSecretAndMethod(): void
+    {
+        $model = new UserModel();
+        $id    = $model->insert(['name' => '2fa User', 'email' => '2fa-enable@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
+
+        $model->enableGoogle2fa($id, 'JBSWY3DPEHPK3PXP');
+
+        $user = $model->find($id);
+        $this->assertSame('google2fa', $user->two_factor_method);
+        $this->assertSame('JBSWY3DPEHPK3PXP', $user->google2fa_secret);
+    }
+
+    public function testDisableTwoFactorClearsSecretAndMethod(): void
+    {
+        $model = new UserModel();
+        $id    = $model->insert(['name' => '2fa User', 'email' => '2fa-disable@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
+        $model->enableGoogle2fa($id, 'JBSWY3DPEHPK3PXP');
+
+        $model->disableTwoFactor($id);
+
+        $user = $model->find($id);
+        $this->assertSame('none', $user->two_factor_method);
+        $this->assertNull($user->google2fa_secret);
+    }
 }

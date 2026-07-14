@@ -40,10 +40,13 @@ class UserModel extends Model
         'name',
         'email',
         'password',
+        'company',
+        'phone_number',
         'zone',
         'env',
         'status',
         'two_factor_method',
+        'google2fa_secret',
         'language',
         'timezone',
         'login_at',
@@ -79,6 +82,31 @@ class UserModel extends Model
     public function findUser(int $id): ?object
     {
         return $this->find($id);
+    }
+
+    /**
+     * Persists an enrolled Google Authenticator (TOTP) secret and switches
+     * the account over to it — the one place `google2fa_secret` is written
+     * on enrollment (`Account::verifyGoogle2fa()`).
+     */
+    public function enableGoogle2fa(int $id, string $secret): void
+    {
+        $this->update($id, [
+            'google2fa_secret'  => $secret,
+            'two_factor_method' => 'google2fa',
+        ]);
+    }
+
+    /**
+     * Clears the TOTP secret and reverts to password-only login
+     * (`Account::disable2fa()`).
+     */
+    public function disableTwoFactor(int $id): void
+    {
+        $this->update($id, [
+            'google2fa_secret'  => null,
+            'two_factor_method' => 'none',
+        ]);
     }
 
     /**

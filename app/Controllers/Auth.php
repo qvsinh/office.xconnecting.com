@@ -9,12 +9,16 @@ use CodeIgniter\HTTP\ResponseInterface;
  * Web password login. Ported from
  * ../proxy.services.vn/app/Controllers/Auth.php, password-only:
  * - No `RUNNING_MODE=dev` password-skip backdoor (intentionally not ported).
- * - No 2FA branch yet — accounts with `two_factor_method` set still log in
- *   with password alone until the dedicated 2FA card lands (kanban plan §7).
+ * - `two_factor_method !== 'none'` accounts stop short of an authenticated
+ *   session after a correct password: only `pending2faUserId` (the id, never
+ *   the user object) is set, and `verify2fa()` is the one place that grants
+ *   `userAuthenticated`/`userWorking` for those accounts. See §4 below.
  * - No remember-me, signup, or password-reset (later cards).
  */
 class Auth extends BaseController
 {
+    private const MAX_VERIFY_2FA_ATTEMPTS = 5;
+
     protected $helpers = ['auth'];
 
     public function showLogin(): ResponseInterface|string
@@ -57,6 +61,10 @@ class Auth extends BaseController
             ]);
         }
 
+        if ($user->two_factor_method !== 'none') {
+            return $this->beginPending2fa($user);
+        }
+
         $userModel->stampLogin((int) $user->id);
 
         // Rotate the session ID on privilege change to prevent session fixation.
@@ -78,6 +86,119 @@ class Auth extends BaseController
         session()->destroy();
 
         return redirect()->to('/login');
+    }
+
+    /**
+     * The 2FA challenge page for a password-correct, second-factor-pending
+     * login. Guarded in-controller rather than by a new filter: a pending
+     * user isn't authenticated, so `guestFilter` would let them straight
+     * through, and `authFilter` would just bounce them to `/login` — neither
+     * filter can tell "pending" apart from "guest".
+     */
+    public function showVerify2fa(): ResponseInterface|string
+    {
+        if (is_authenticated()) {
+            return redirect()->to($this->dashboardUrl());
+        }
+
+        if (! session('pending2faUserId')) {
+            return redirect()->to('/login');
+        }
+
+        return view('auth/verify_2fa');
+    }
+
+    public function verify2fa(): ResponseInterface
+    {
+        if (is_authenticated()) {
+            return redirect()->to($this->dashboardUrl());
+        }
+
+        $pendingId = (int) session('pending2faUserId');
+        if ($pendingId <= 0) {
+            return redirect()->to('/login');
+        }
+
+        if (! $this->validate(['code' => 'required|exact_length[6]|numeric'])) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'status'    => 'failed',
+                'message'   => implode(' ', $this->validator->getErrors()),
+                'csrf_hash' => csrf_hash(),
+            ]);
+        }
+
+        // Brute-force cap: a 6-digit TOTP code has only 1,000,000 combinations.
+        $attempts = (int) session('verify2faAttempts');
+        if ($attempts >= self::MAX_VERIFY_2FA_ATTEMPTS) {
+            $this->clearPending2fa();
+
+            return $this->response->setStatusCode(429)->setJSON([
+                'status'    => 'failed',
+                'message'   => 'Too many attempts. Please log in again.',
+                'csrf_hash' => csrf_hash(),
+            ]);
+        }
+
+        $userModel = model(UserModel::class);
+        $user      = $userModel->findUser($pendingId);
+
+        if (! $user || (int) $user->status !== 1 || $user->two_factor_method === 'none' || ! $user->google2fa_secret) {
+            $this->clearPending2fa();
+
+            return redirect()->to('/login');
+        }
+
+        $code = (string) $this->request->getPost('code');
+
+        if (! service('google2fa')->verify($user->google2fa_secret, $code)) {
+            session()->set('verify2faAttempts', $attempts + 1);
+
+            return $this->response->setStatusCode(401)->setJSON([
+                'status'    => 'failed',
+                'message'   => 'Invalid authentication code.',
+                'csrf_hash' => csrf_hash(),
+            ]);
+        }
+
+        $userModel->stampLogin($pendingId);
+
+        // Rotate the session ID on privilege change to prevent session fixation.
+        session()->regenerate(true);
+
+        session()->set('userAuthenticated', $user);
+        session()->set('userWorking', $user);
+        session()->set('language', $user->language);
+        $this->clearPending2fa();
+
+        return $this->response->setJSON([
+            'status'       => 'success',
+            'redirect_url' => $this->dashboardUrl(),
+            'csrf_hash'    => csrf_hash(),
+        ]);
+    }
+
+    /**
+     * Sets the pending-2FA marker for a password-correct login. Stores the
+     * id only — never the user object — so `verify2fa()` always re-fetches
+     * the authoritative row rather than trusting anything cached here.
+     */
+    private function beginPending2fa(object $user): ResponseInterface
+    {
+        session()->set('pending2faUserId', (int) $user->id);
+        session()->remove('verify2faAttempts');
+
+        return $this->response->setJSON([
+            'status'       => 'success',
+            'requires_2fa' => true,
+            'redirect_url' => '/verify-2fa',
+            'csrf_hash'    => csrf_hash(),
+        ]);
+    }
+
+    private function clearPending2fa(): void
+    {
+        session()->remove('pending2faUserId');
+        session()->remove('verify2faAttempts');
     }
 
     private function dashboardUrl(): string

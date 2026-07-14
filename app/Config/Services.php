@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Libraries\ApiAuthContext;
 use App\Libraries\CnrClient;
+use App\Libraries\Google2faService;
 use App\Libraries\JprsClient;
 use CodeIgniter\Config\BaseService;
 
@@ -70,5 +71,18 @@ class Services extends BaseService
         }
 
         return new JprsClient();
+    }
+
+    /**
+     * Google Authenticator (TOTP) wrapper — see App\Libraries\Google2faService.
+     * Used by `Account` (enrollment) and `Auth::verify2fa()` (login 2nd factor).
+     */
+    public static function google2fa(bool $getShared = true): Google2faService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('google2fa');
+        }
+
+        return new Google2faService();
     }
 }

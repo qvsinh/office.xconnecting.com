@@ -21,6 +21,14 @@ $routes->group('', ['filter' => 'guestFilter'], static function (RouteCollection
 
 $routes->get('logout', 'Auth::logout', ['filter' => 'authFilter']);
 
+// 2FA login challenge: the user isn't authenticated yet (only password-
+// verified, pending a second factor), so this sits behind neither
+// guestFilter (would let a pending user straight through, indistinguishable
+// from a guest) nor authFilter (would just bounce to /login) — Auth itself
+// guards on `pending2faUserId` (see Auth::showVerify2fa()/verify2fa()).
+$routes->get('verify-2fa', 'Auth::showVerify2fa');
+$routes->post('verify-2fa', 'Auth::verify2fa', ['filter' => 'csrf']);
+
 $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static function (RouteCollection $routes) {
     $routes->get('dashboard', 'Admin\Dashboard::index');
 
@@ -62,6 +70,14 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
     $routes->get('dashboard', 'Client\Dashboard::index');
+
+    $routes->get('account', 'Account::profile');
+    $routes->post('account/profile', 'Account::updateProfile', ['filter' => 'csrf']);
+    $routes->post('account/change-password', 'Account::changePassword', ['filter' => 'csrf']);
+    $routes->get('account/security', 'Account::security');
+    $routes->post('account/2fa/setup', 'Account::setupGoogle2fa', ['filter' => 'csrf']);
+    $routes->post('account/2fa/verify', 'Account::verifyGoogle2fa', ['filter' => 'csrf']);
+    $routes->post('account/2fa/disable', 'Account::disable2fa', ['filter' => 'csrf']);
 
     $routes->get('my-api-access-keys', 'Client\ApiAccessKeys::index');
     $routes->post('my-api-access-keys/create', 'Client\ApiAccessKeys::create', ['filter' => 'csrf']);
