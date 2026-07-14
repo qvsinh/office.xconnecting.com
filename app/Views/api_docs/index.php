@@ -20,7 +20,7 @@ $cnrCurl = 'curl -s \\' . "\n"
 $cnrSuccess = <<<'JSON'
     {
       "status": "success",
-      "api_service_id": 800,
+      "api_service_id": "cnr.800",
       "data": {
         "code": "200",
         "description": "Command completed successfully",
@@ -34,8 +34,8 @@ $cnrSuccess = <<<'JSON'
 $cnrError = <<<'JSON'
     {
       "status": "error",
-      "api_service_id": 800,
-      "message": "command parameter is required"
+      "api_service_id": "cnr.800",
+      "message": "Command parameter is missing."
     }
     JSON;
 
@@ -46,7 +46,7 @@ $jprsCurl = 'curl -s \\' . "\n"
 $jprsSuccess = <<<'JSON'
     {
       "status": "success",
-      "api_service_id": 801,
+      "api_service_id": "jprs.801",
       "data": {
         "ResultCode": "200",
         "ResultMessage": "Command completed successfully.",
@@ -59,8 +59,12 @@ $jprsSuccess = <<<'JSON'
 $jprsError = <<<'JSON'
     {
       "status": "error",
-      "api_service_id": 801,
-      "message": "Invalid or disabled API access key"
+      "api_service_id": "jprs.801",
+      "data": {
+        "code": "541",
+        "description": "Parameter value policy error"
+      },
+      "message": "Parameter value policy error"
     }
     JSON;
 ?>
@@ -167,12 +171,12 @@ $jprsError = <<<'JSON'
         <div class="mt-4 space-y-3 text-sm leading-relaxed">
             <p>Every response is JSON with the same top-level shape:</p>
             <p class="rounded-md border border-[#EAEAEA] bg-[#F7F6F3] px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-900">
-                { "status": "success"|"error", "api_service_id": &lt;int&gt;, "data"|"message": ... }
+                { "status": "success"|"error", "api_service_id": "cnr.&lt;id&gt;"|"jprs.&lt;id&gt;", "data": ..., "message": ... }
             </p>
             <ul class="list-disc space-y-1 pl-5">
                 <li><strong>CNR</strong> success = the upstream RRP response <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">code</code> starts with <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">2</code> (e.g. <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">200</code>).</li>
                 <li><strong>JPRS</strong> success = a 3-digit <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">2xx</code> result code.</li>
-                <li>On success the envelope carries <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">data</code> (the registrar's raw response); on error it carries a human-readable <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">message</code> instead — including a <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">400</code> for a missing <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">command</code>/<code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">Command</code> and a <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">403</code> for a command your key is restricted from using.</li>
+                <li>On success the envelope carries <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">data</code> (the registrar's raw response); on error it adds a human-readable <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">message</code> (alongside <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">data</code> when the registrar returned one) — including a <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">400</code> for a missing <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">command</code>/<code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">Command</code> and a <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-900">403</code> for a domain/command restriction (certain commands are blocked for specific domains).</li>
             </ul>
         </div>
     </section>
