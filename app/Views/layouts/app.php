@@ -99,6 +99,13 @@ if (is_authenticated()) {
                     <a href="/admin/system/logs" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         Logs
                     </a>
+                    <p class="px-3 pt-4 pb-1 text-xs font-medium uppercase tracking-wide text-[#787774]">Account</p>
+                    <a href="/account" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Profile
+                    </a>
+                    <a href="/account/security" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Security
+                    </a>
                 <?php else : ?>
                     <a href="/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
                         Dashboard
@@ -117,6 +124,13 @@ if (is_authenticated()) {
                     </a>
                     <a href="/notifications" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         Notifications
+                    </a>
+                    <p class="px-3 pt-4 pb-1 text-xs font-medium uppercase tracking-wide text-[#787774]">Account</p>
+                    <a href="/account" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Profile
+                    </a>
+                    <a href="/account/security" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Security
                     </a>
                 <?php endif; ?>
             </nav>
@@ -191,7 +205,9 @@ if (is_authenticated()) {
                             <p class="truncate text-sm font-medium"><?= esc($user->name ?? '') ?></p>
                             <p class="truncate text-xs text-[#787774]"><?= esc($user->email ?? '') ?></p>
                         </div>
-                        <a href="/logout" class="block px-4 py-2 text-sm text-[#9F2F2D] hover:bg-gray-50">Log out</a>
+                        <a href="/account" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50">Account</a>
+                        <a href="/account/security" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50">Security</a>
+                        <a href="/logout" class="block border-t border-[#EAEAEA] px-4 py-2 text-sm text-[#9F2F2D] hover:bg-gray-50">Log out</a>
                     </div>
                 </div>
                 </div>
