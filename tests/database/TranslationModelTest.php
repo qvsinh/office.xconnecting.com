@@ -1,0 +1,167 @@
+<?php
+
+use App\Models\TranslationModel;
+use CodeIgniter\Test\CIUnitTestCase;
+use CodeIgniter\Test\DatabaseTestTrait;
+
+/**
+ * @internal
+ */
+final class TranslationModelTest extends CIUnitTestCase
+{
+    use DatabaseTestTrait;
+
+    protected $migrate   = true;
+    protected $refresh   = true;
+    protected $namespace = null;
+
+    public function testFindTranslationReturnsRow(): void
+    {
+        $model = new TranslationModel();
+        $id    = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+
+        $translation = $model->findTranslation($id);
+
+        $this->assertNotNull($translation);
+        $this->assertSame('welcome', $translation->slug);
+    }
+
+    public function testFindTranslationReturnsNullForUnknownId(): void
+    {
+        $model = new TranslationModel();
+
+        $this->assertNull($model->findTranslation(999999));
+    }
+
+    public function testExistsForLangSlugDetectsDuplicateAndIgnoresOtherLanguages(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+
+        $this->assertTrue($model->existsForLangSlug('en', 'welcome'));
+        $this->assertFalse($model->existsForLangSlug('ja', 'welcome'));
+        $this->assertFalse($model->existsForLangSlug('en', 'goodbye'));
+    }
+
+    public function testExistsForLangSlugExcludesGivenId(): void
+    {
+        $model = new TranslationModel();
+        $id    = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+
+        $this->assertFalse($model->existsForLangSlug('en', 'welcome', $id));
+
+        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $this->assertTrue($model->existsForLangSlug('en', 'goodbye', $id));
+    }
+
+    public function testSearchAdminFiltersByKeywordAcrossSlugAndContent(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome aboard']);
+        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'See you later']);
+
+        $bySlug = $model->searchAdmin(['keyword' => 'welcome']);
+        $this->assertCount(1, $bySlug);
+        $this->assertSame('welcome', $bySlug[0]->slug);
+
+        $byContent = $model->searchAdmin(['keyword' => 'later']);
+        $this->assertCount(1, $byContent);
+        $this->assertSame('goodbye', $byContent[0]->slug);
+    }
+
+    public function testSearchAdminFiltersByLangCode(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+
+        $rows = $model->searchAdmin(['lang_code' => 'ja']);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('ja', $rows[0]->lang_code);
+    }
+
+    public function testSearchAdminRejectsArbitrarySortColumnAndFallsBackToLangCode(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'zz', 'slug' => 'a', 'content' => '1']);
+        $model->insert(['lang_code' => 'aa', 'slug' => 'b', 'content' => '2']);
+
+        $rows = $model->searchAdmin([], 'content; DROP TABLE translation;', 'asc');
+
+        // Falls back to default sort (lang_code asc) rather than erroring or
+        // injecting the malicious column into the query.
+        $this->assertSame('aa', $rows[0]->lang_code);
+    }
+
+    public function testCountAdminMatchesUnpaginatedRowCountForSameFilters(): void
+    {
+        $model = new TranslationModel();
+        for ($i = 0; $i < 5; $i++) {
+            $model->insert(['lang_code' => 'en', 'slug' => "key_{$i}", 'content' => "value {$i}"]);
+        }
+
+        $filters = ['lang_code' => 'en'];
+        $page    = $model->searchAdmin($filters, 'id', 'asc', 2, 0);
+
+        $this->assertCount(2, $page);
+        $this->assertSame(5, $model->countAdmin($filters));
+    }
+
+    public function testDistinctLangCodesReturnsUniqueSortedCodes(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+
+        $this->assertSame(['en', 'ja'], $model->distinctLangCodes());
+    }
+
+    public function testAllByLangReturnsOnlyThatLanguagesRowsOrderedBySlug(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+
+        $rows = $model->allByLang('en');
+
+        $this->assertCount(2, $rows);
+        $this->assertSame('goodbye', $rows[0]->slug);
+        $this->assertSame('welcome', $rows[1]->slug);
+    }
+
+    public function testExportForLangReturnsSlugContentMap(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+
+        $this->assertSame(
+            ['goodbye' => 'Bye', 'welcome' => 'Welcome'],
+            $model->exportForLang('en'),
+        );
+    }
+
+    public function testExportForLangReturnsEmptyArrayForNullOrEmptyLang(): void
+    {
+        $model = new TranslationModel();
+        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+
+        $this->assertSame([], $model->exportForLang(null));
+        $this->assertSame([], $model->exportForLang(''));
+    }
+
+    public function testDeleteHardRemovesTheRow(): void
+    {
+        $model = new TranslationModel();
+        $id    = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+
+        $model->delete($id);
+
+        $this->assertNull($model->find($id));
+        $this->assertSame(0, $model->builder()->where('id', $id)->countAllResults());
+    }
+}

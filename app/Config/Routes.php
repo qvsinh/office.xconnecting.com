@@ -79,6 +79,13 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->get('settings/edit/(:num)', 'Admin\Settings::edit/$1');
     $routes->post('settings/update', 'Admin\Settings::update', ['filter' => 'csrf']);
     $routes->post('settings/delete', 'Admin\Settings::delete', ['filter' => 'csrf']);
+
+    $routes->get('translations', 'Admin\Translations::index');
+    $routes->get('translations/export', 'Admin\Translations::export');
+    $routes->post('translations/create', 'Admin\Translations::create', ['filter' => 'csrf']);
+    $routes->get('translations/edit/(:num)', 'Admin\Translations::edit/$1');
+    $routes->post('translations/update', 'Admin\Translations::update', ['filter' => 'csrf']);
+    $routes->post('translations/delete', 'Admin\Translations::delete', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
