@@ -23,3 +23,6 @@ build/phpstan/
 writable/session/*
 !writable/session/index.html
 .php-cs-fixer.cache
+
+# Vendor registrar API reference manuals (CNR/JPRS) — kept locally, not in repo (12M of PDFs/zips)
+/docs/
