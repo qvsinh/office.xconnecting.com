@@ -26,3 +26,31 @@ if (! function_exists('is_client')) {
         return is_authenticated() && session('userAuthenticated')->zone === 'client';
     }
 }
+
+/*
+ * VIEW-LAYER ONLY below this line. `current_zone()`/`is_working_admin()` read
+ * `userWorking` (the "acting-as" identity) so the sidebar/nav render the zone
+ * the admin is currently impersonating. They MUST NOT be used for
+ * authorization — that stays on `is_admin()`/`is_client()`/`userAuthenticated`
+ * above, which an act-as switch never changes.
+ */
+
+if (! function_exists('current_zone')) {
+    function current_zone(): string
+    {
+        $working = session('userWorking') ?? session('userAuthenticated');
+
+        if ($working === null) {
+            return 'client';
+        }
+
+        return $working->zone ?? 'client';
+    }
+}
+
+if (! function_exists('is_working_admin')) {
+    function is_working_admin(): bool
+    {
+        return current_zone() === 'global';
+    }
+}
