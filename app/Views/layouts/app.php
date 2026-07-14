@@ -89,6 +89,16 @@ if (is_authenticated()) {
                     <a href="/notifications" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         Notifications
                     </a>
+                    <p class="px-3 pt-4 pb-1 text-xs font-medium uppercase tracking-wide text-[#787774]">System</p>
+                    <a href="/admin/system" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Info
+                    </a>
+                    <a href="/admin/system/migrations" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Migrations
+                    </a>
+                    <a href="/admin/system/logs" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Logs
+                    </a>
                 <?php else : ?>
                     <a href="/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
                         Dashboard
