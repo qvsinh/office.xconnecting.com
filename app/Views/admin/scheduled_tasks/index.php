@@ -7,13 +7,13 @@
  * `admin/translations/index.php`.
  *
  * @var list<object>                                          $items       searchAdmin() rows
- * @var int                                                    $total
- * @var int                                                    $page
- * @var int                                                    $limit
- * @var string                                                 $sort
- * @var string                                                 $order
- * @var array{keyword:string, handler:string, enabled:string}  $filters
- * @var list<string>                                           $handlerKeys allowlisted handler registry keys
+ * @var int                                                   $total
+ * @var int                                                   $page
+ * @var int                                                   $limit
+ * @var string                                                $sort
+ * @var string                                                $order
+ * @var array{keyword:string, handler:string, enabled:string} $filters
+ * @var list<string>                                          $handlerKeys allowlisted handler registry keys
  */
 $this->extend('layouts/app');
 
@@ -127,11 +127,11 @@ $statusBadgeClass = static function (?string $status): string {
                 <?php foreach ($items as $item) : ?>
                     <?php
                     $rowState = esc(json_encode([
-                        'id'          => (int) $item->id,
-                        'name'        => (string) ($item->name ?? ''),
-                        'enabled'     => (bool) $item->enabled,
-                        'lastStatus'  => $item->last_status,
-                        'lastResult'  => $item->last_result,
+                        'id'         => (int) $item->id,
+                        'name'       => (string) ($item->name ?? ''),
+                        'enabled'    => (bool) $item->enabled,
+                        'lastStatus' => $item->last_status,
+                        'lastResult' => $item->last_result,
                     ]), 'attr');
                     ?>
                     <tr x-data="taskRow(<?= $rowState ?>)">

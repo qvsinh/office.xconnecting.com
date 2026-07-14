@@ -10,13 +10,13 @@
  * `<iframe srcdoc>` (no `allow-scripts`), bound via Alpine's `:srcdoc`
  * attribute binding (never `x-html`).
  *
- * @var list<object>                          $items   searchAdmin() rows (id/name/subject/from_email/to_email/status/created_at)
- * @var int                                    $total
- * @var int                                    $page
- * @var int                                    $limit
- * @var string                                 $sort
- * @var string                                 $order
- * @var array{keyword:string, status:string}   $filters
+ * @var list<object>                         $items   searchAdmin() rows (id/name/subject/from_email/to_email/status/created_at)
+ * @var int                                  $total
+ * @var int                                  $page
+ * @var int                                  $limit
+ * @var string                               $sort
+ * @var string                               $order
+ * @var array{keyword:string, status:string} $filters
  */
 $this->extend('layouts/app');
 
