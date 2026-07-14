@@ -71,7 +71,7 @@ $jprsError = <<<'JSON'
 <?php $this->section('content') ?>
 <div class="mx-auto max-w-4xl">
     <div>
-        <h1 class="text-xl font-semibold tracking-tight">API docs</h1>
+        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">API docs</h1>
         <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
             How to call the CNR and JPRS registrar proxy with your own API access key —
             authentication, endpoints, request/response shape, and copy-pasteable examples.
@@ -185,7 +185,7 @@ $jprsError = <<<'JSON'
     <section id="curl-examples" class="mt-4 rounded-lg border border-[#EAEAEA] bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400">Examples</h2>
 
-        <h3 class="mt-4 text-sm font-medium">CNR — StatusAccount</h3>
+        <h3 class="mt-4 text-sm font-medium dark:text-gray-100">CNR — StatusAccount</h3>
         <div class="relative mt-2">
             <pre class="overflow-x-auto whitespace-pre rounded-md bg-[#F7F6F3] p-4 font-mono text-xs leading-relaxed dark:bg-gray-900"><code><?= esc($cnrCurl) ?></code></pre>
             <button type="button" x-data="{ copied: false }"
@@ -206,7 +206,7 @@ $jprsError = <<<'JSON'
             </div>
         </div>
 
-        <h3 class="mt-6 text-sm font-medium">JPRS — StatusDomain</h3>
+        <h3 class="mt-6 text-sm font-medium dark:text-gray-100">JPRS — StatusDomain</h3>
         <div class="relative mt-2">
             <pre class="overflow-x-auto whitespace-pre rounded-md bg-[#F7F6F3] p-4 font-mono text-xs leading-relaxed dark:bg-gray-900"><code><?= esc($jprsCurl) ?></code></pre>
             <button type="button" x-data="{ copied: false }"

@@ -43,55 +43,55 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
 <?php $this->section('content') ?>
 <div class="mx-auto max-w-6xl">
     <div>
-        <h1 class="text-xl font-semibold tracking-tight">Database migrations</h1>
-        <p class="mt-1 text-sm text-[#787774]">Applied vs pending, read-only. Run/rollback stays on the CLI (<code class="font-mono">php spark migrate</code>).</p>
+        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Database migrations</h1>
+        <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Applied vs pending, read-only. Run/rollback stays on the CLI (<code class="font-mono">php spark migrate</code>).</p>
     </div>
 
-    <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4">
+    <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[240px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Class</label>
+            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Class</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($keyword, 'attr') ?>"
                    placeholder="Migration class name"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
+            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
             </select>
         </div>
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50">Search</button>
+        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
         <button type="button" x-data @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
                 class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
     </form>
 
-    <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white">
-        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm">
+    <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
+        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
-                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774]">
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('class'), 'attr') ?>" class="hover:text-[#111111]">Class<?= esc($sortMark('class')) ?></a></th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('version'), 'attr') ?>" class="hover:text-[#111111]">Version<?= esc($sortMark('version')) ?></a></th>
+                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('class'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Class<?= esc($sortMark('class')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('version'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Version<?= esc($sortMark('version')) ?></a></th>
                     <th class="px-4 py-3">Namespace</th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('batch'), 'attr') ?>" class="hover:text-[#111111]">Batch<?= esc($sortMark('batch')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('batch'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Batch<?= esc($sortMark('batch')) ?></a></th>
                     <th class="px-4 py-3">Applied at</th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('status'), 'attr') ?>" class="hover:text-[#111111]">Status<?= esc($sortMark('status')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('status'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Status<?= esc($sortMark('status')) ?></a></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-[#EAEAEA]">
+            <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <?php foreach ($items as $row) : ?>
                     <tr>
-                        <td class="px-4 py-3 font-mono text-xs"><?= esc($row['class']) ?></td>
-                        <td class="px-4 py-3 font-mono text-xs"><?= esc($row['version']) ?></td>
-                        <td class="px-4 py-3 text-xs text-[#787774]"><?= esc($row['namespace']) ?></td>
-                        <td class="px-4 py-3"><?= $row['batch'] !== null ? esc((string) $row['batch']) : '—' ?></td>
-                        <td class="px-4 py-3 text-xs text-[#787774]">
+                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100"><?= esc($row['class']) ?></td>
+                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100"><?= esc($row['version']) ?></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400"><?= esc($row['namespace']) ?></td>
+                        <td class="px-4 py-3 dark:text-gray-100"><?= $row['batch'] !== null ? esc((string) $row['batch']) : '—' ?></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400">
                             <?= $row['applied_at'] !== null ? esc(date('Y-m-d H:i:s', (int) $row['applied_at'])) : '—' ?>
                         </td>
                         <td class="px-4 py-3">
                             <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide
-                                <?= $row['status'] === 'applied' ? 'bg-[#EDF3EC] text-[#346538]' : 'bg-[#FBF3DB] text-[#956400]' ?>">
+                                <?= $row['status'] === 'applied' ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FBF3DB] text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300' ?>">
                                 <?= esc($row['status']) ?>
                             </span>
                         </td>
@@ -99,22 +99,22 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
                 <?php endforeach ?>
                 <?php if ($items === []) : ?>
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-sm text-[#787774]">No migrations match your filters.</td>
+                        <td colspan="6" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No migrations match your filters.</td>
                     </tr>
                 <?php endif ?>
             </tbody>
         </table>
     </div>
 
-    <div class="mt-4 flex items-center justify-between text-sm text-[#787774]">
+    <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
         <p><?= esc((string) $total) ?> migration<?= $total === 1 ? '' : 's' ?> total</p>
         <div class="flex items-center gap-2">
             <?php if ($page > 1) : ?>
-                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Prev</a>
+                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
             <?php endif ?>
             <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
             <?php if ($page < $totalPages) : ?>
-                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Next</a>
+                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
             <?php endif ?>
         </div>
     </div>

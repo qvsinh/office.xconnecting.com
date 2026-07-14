@@ -36,27 +36,27 @@ $itemsForJs = array_map(static fn (object $item): array => [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">Your API access keys</h1>
-            <p class="mt-1 text-sm text-[#787774]">
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Your API access keys</h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 Bearer keys that authenticate your CNR / JPRS proxy calls. Account environment:
-                <span class="font-medium text-[#111111]"><?= esc($me->env ?? '—') ?></span>.
+                <span class="font-medium text-[#111111] dark:text-gray-100"><?= esc($me->env ?? '—') ?></span>.
             </p>
         </div>
         <button type="button" @click="openCreate()" :disabled="items.length >= maxKeys"
-                class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-40">
+                class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
             + Create key
         </button>
     </div>
 
-    <p class="mt-2 text-xs text-[#787774]">
+    <p class="mt-2 text-xs text-[#787774] dark:text-gray-400">
         <span x-text="items.length"></span> / <span x-text="maxKeys"></span> keys used
         <span x-show="items.length >= maxKeys" x-cloak> — limit reached, delete a key to create another.</span>
     </p>
 
-    <div class="mt-6 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white">
-        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm">
+    <div class="mt-6 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
+        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
-                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774]">
+                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
                     <th class="px-4 py-3">Service</th>
                     <th class="px-4 py-3">Access key</th>
                     <th class="px-4 py-3">Enabled</th>
@@ -66,25 +66,25 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-[#EAEAEA]">
+            <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <template x-for="item in items" :key="item.id">
                     <tr>
-                        <td class="px-4 py-3" x-text="item.service_label"></td>
-                        <td class="px-4 py-3 font-mono text-xs">
+                        <td class="px-4 py-3 dark:text-gray-100" x-text="item.service_label"></td>
+                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100">
                             <div class="flex items-center gap-2">
                                 <span x-text="item.revealed ? item.access_key : mask(item.access_key)"></span>
-                                <button type="button" class="text-[#787774] hover:text-[#111111]"
+                                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100"
                                         @click="item.revealed = !item.revealed">
                                     <span x-text="item.revealed ? 'Hide' : 'Reveal'"></span>
                                 </button>
-                                <button type="button" class="text-[#787774] hover:text-[#111111]"
+                                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100"
                                         @click="copy(item.access_key)">Copy</button>
                             </div>
                         </td>
                         <td class="px-4 py-3">
                             <button type="button" @click="toggleEnable(item)"
                                     class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                                    :class="item.is_enable ? 'bg-[#346538]' : 'bg-[#EAEAEA]'"
+                                    :class="item.is_enable ? 'bg-[#346538]' : 'bg-[#EAEAEA] dark:bg-gray-700'"
                                     :aria-pressed="item.is_enable ? 'true' : 'false'" aria-label="Toggle enabled">
                                 <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
                                       :class="item.is_enable ? 'translate-x-6' : 'translate-x-1'"></span>
@@ -93,21 +93,21 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         <td class="px-4 py-3">
                             <button type="button" @click="toggleLog(item)"
                                     class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                                    :class="item.enable_log ? 'bg-[#1F6C9F]' : 'bg-[#EAEAEA]'"
+                                    :class="item.enable_log ? 'bg-[#1F6C9F]' : 'bg-[#EAEAEA] dark:bg-gray-700'"
                                     :aria-pressed="item.enable_log ? 'true' : 'false'" aria-label="Toggle request logging">
                                 <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
                                       :class="item.enable_log ? 'translate-x-6' : 'translate-x-1'"></span>
                             </button>
                         </td>
-                        <td class="px-4 py-3 text-xs text-[#787774]" x-text="item.last_access || '—'"></td>
-                        <td class="max-w-[220px] truncate px-4 py-3" :title="item.description" x-text="item.description || '—'"></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="item.last_access || '—'"></td>
+                        <td class="max-w-[220px] truncate px-4 py-3 dark:text-gray-100" :title="item.description" x-text="item.description || '—'"></td>
                         <td class="px-4 py-3 text-right">
-                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline" @click="confirmDelete(item)">Delete</button>
+                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="confirmDelete(item)">Delete</button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="7" class="px-4 py-10 text-center text-sm text-[#787774]">
+                    <td colspan="7" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
                         No API access keys yet. Create one to start calling the proxy.
                     </td>
                 </tr>
@@ -120,14 +120,14 @@ $itemsForJs = array_map(static fn (object $item): array => [
          @keydown.escape.window="createOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="createOpen = false"></div>
         <div x-show="createOpen" x-transition
-             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm"
+             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
              x-trap.noscroll="createOpen" role="dialog" aria-modal="true" aria-labelledby="create-key-title">
-            <h2 id="create-key-title" class="text-base font-semibold">Create API access key</h2>
+            <h2 id="create-key-title" class="text-base font-semibold dark:text-gray-100">Create API access key</h2>
             <form @submit.prevent="submitCreate" class="mt-4 space-y-4">
                 <div>
-                    <label for="create_service_id" class="mb-1.5 block text-sm font-medium">Service</label>
+                    <label for="create_service_id" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Service</label>
                     <select id="create_service_id" x-model="createForm.service_id" required
-                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                         <option value="">Select a service…</option>
                         <?php foreach ($services as $s) : ?>
                             <option value="<?= esc((string) $s['id'], 'attr') ?>"><?= esc($s['label']) ?></option>
@@ -135,9 +135,9 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     </select>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50" @click="createOpen = false">Cancel</button>
+                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="createOpen = false">Cancel</button>
                     <button type="submit" :disabled="creating"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60">
+                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                         <span x-show="!creating">Create</span>
                         <span x-show="creating" x-cloak>Creating…</span>
                     </button>

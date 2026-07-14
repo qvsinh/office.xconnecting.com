@@ -16,59 +16,59 @@ $this->extend('layouts/app');
 
     <div class="flex items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">Security</h1>
-            <p class="mt-1 text-sm text-[#787774]">Two-factor authentication for your account.</p>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Security</h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Two-factor authentication for your account.</p>
         </div>
-        <a href="/account" class="text-sm font-medium text-[#111111] hover:underline">← Profile</a>
+        <a href="/account" class="text-sm font-medium text-[#111111] hover:underline dark:text-gray-100">← Profile</a>
     </div>
 
-    <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-white p-6">
+    <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-base font-semibold">Two-factor authentication</h2>
-                <p class="mt-1 text-sm text-[#787774]">
+                <h2 class="text-base font-semibold dark:text-gray-100">Two-factor authentication</h2>
+                <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                     Status:
                     <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
-                          :class="method === 'none' ? 'bg-[#FBF3DB] text-[#956400]' : 'bg-[#EDF3EC] text-[#346538]'"
+                          :class="method === 'none' ? 'bg-[#FBF3DB] text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300' : 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300'"
                           x-text="method === 'none' ? 'Disabled' : 'Enabled (' + method + ')'"></span>
                 </p>
             </div>
             <button type="button" x-show="method === 'none' && !enrolling" x-cloak @click="startSetup()"
                     :disabled="startingSetup"
-                    class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60">
+                    class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                 <span x-show="!startingSetup">Enable 2FA</span>
                 <span x-show="startingSetup" x-cloak>Starting…</span>
             </button>
         </div>
 
         <!-- Enrollment: QR + manual key shown once, then a code to confirm -->
-        <div x-show="enrolling" x-cloak x-transition class="mt-6 space-y-4 border-t border-[#EAEAEA] pt-6">
-            <div class="rounded-md border border-yellow-200 bg-[#FBF3DB] px-4 py-3 text-sm text-[#956400]">
+        <div x-show="enrolling" x-cloak x-transition class="mt-6 space-y-4 border-t border-[#EAEAEA] pt-6 dark:border-gray-700">
+            <div class="rounded-md border border-yellow-200 bg-[#FBF3DB] px-4 py-3 text-sm text-[#956400] dark:border-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
                 Save this key now — it will not be shown again. Scan the QR code (or enter the key
                 manually) in your authenticator app, then enter a code below to finish enabling 2FA.
             </div>
             <div class="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-                <img :src="qrCode" alt="2FA QR code" class="h-40 w-40 rounded-md border border-[#EAEAEA]">
+                <img :src="qrCode" alt="2FA QR code" class="h-40 w-40 rounded-md border border-[#EAEAEA] dark:border-gray-700">
                 <div class="flex-1">
-                    <label class="mb-1.5 block text-sm font-medium">Manual key</label>
+                    <label class="mb-1.5 block text-sm font-medium dark:text-gray-200">Manual key</label>
                     <div class="flex items-center gap-2">
-                        <code class="block flex-1 rounded-md border border-[#EAEAEA] bg-[#F7F6F3] px-3 py-2 text-xs" x-text="secret"></code>
-                        <button type="button" class="text-sm font-medium text-[#111111] hover:underline" @click="copySecret()">Copy</button>
+                        <code class="block flex-1 rounded-md border border-[#EAEAEA] bg-[#F7F6F3] px-3 py-2 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" x-text="secret"></code>
+                        <button type="button" class="text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="copySecret()">Copy</button>
                     </div>
                 </div>
             </div>
             <form @submit.prevent="verifySetup" class="space-y-2">
-                <label for="verify_code" class="mb-1.5 block text-sm font-medium">Authentication code</label>
+                <label for="verify_code" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Authentication code</label>
                 <input id="verify_code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" required
                        x-model="verifyCode" placeholder="123456"
-                       class="block w-full max-w-[200px] rounded-md border border-[#EAEAEA] px-3 py-2 text-sm tracking-widest focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                       class="block w-full max-w-[200px] rounded-md border border-[#EAEAEA] px-3 py-2 text-sm tracking-widest focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 <div class="flex gap-2 pt-2">
                     <button type="submit" :disabled="verifying"
-                            class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60">
+                            class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                         <span x-show="!verifying">Verify &amp; enable</span>
                         <span x-show="verifying" x-cloak>Verifying…</span>
                     </button>
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm hover:bg-gray-50" @click="cancelSetup()">
+                    <button type="button" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="cancelSetup()">
                         Cancel
                     </button>
                 </div>
@@ -76,26 +76,26 @@ $this->extend('layouts/app');
         </div>
 
         <!-- Disable: requires current code or account password -->
-        <div x-show="method !== 'none' && !enrolling" x-cloak class="mt-6 space-y-3 border-t border-[#EAEAEA] pt-6">
-            <h3 class="text-sm font-semibold">Disable two-factor authentication</h3>
-            <p class="text-sm text-[#787774]">Confirm with your current authentication code or your account password.</p>
+        <div x-show="method !== 'none' && !enrolling" x-cloak class="mt-6 space-y-3 border-t border-[#EAEAEA] pt-6 dark:border-gray-700">
+            <h3 class="text-sm font-semibold dark:text-gray-100">Disable two-factor authentication</h3>
+            <p class="text-sm text-[#787774] dark:text-gray-400">Confirm with your current authentication code or your account password.</p>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                    <label for="disable_code" class="mb-1.5 block text-sm font-medium">Current code</label>
+                    <label for="disable_code" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Current code</label>
                     <input id="disable_code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6"
                            x-model="disableCode" placeholder="123456"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 </div>
                 <div>
-                    <label for="disable_password" class="mb-1.5 block text-sm font-medium">Account password</label>
+                    <label for="disable_password" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Account password</label>
                     <input id="disable_password" type="password" autocomplete="current-password"
                            x-model="disablePassword"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 </div>
             </div>
             <div class="flex justify-end pt-2">
                 <button type="button" :disabled="disabling" @click="confirmDisable()"
-                        class="rounded-md bg-[#9F2F2D] px-4 py-2 text-sm font-medium text-white hover:bg-[#7f2523] disabled:cursor-not-allowed disabled:opacity-60">
+                        class="rounded-md bg-[#9F2F2D] px-4 py-2 text-sm font-medium text-white hover:bg-[#7f2523] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600">
                     <span x-show="!disabling">Disable 2FA</span>
                     <span x-show="disabling" x-cloak>Disabling…</span>
                 </button>

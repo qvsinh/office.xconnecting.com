@@ -28,45 +28,45 @@ $itemsForJs = array_map(static fn (object $item): array => [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">Notifications</h1>
-            <p class="mt-1 text-sm text-[#787774]">
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Notifications</h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 <span x-text="unread"></span> unread of <?= esc((string) $total) ?> total.
             </p>
         </div>
-        <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
                 :disabled="markingAll || unread === 0" @click="markAllRead()">
             Mark all as read
         </button>
     </div>
 
-    <div class="mt-4 divide-y divide-[#EAEAEA] rounded-lg border border-[#EAEAEA] bg-white">
+    <div class="mt-4 divide-y divide-[#EAEAEA] rounded-lg border border-[#EAEAEA] bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
         <template x-for="item in items" :key="item.id">
-            <div class="flex items-start justify-between gap-4 px-4 py-3" :class="!item.is_read ? 'bg-[#E1F3FE]/40' : ''">
+            <div class="flex items-start justify-between gap-4 px-4 py-3" :class="!item.is_read ? 'bg-[#E1F3FE]/40 dark:bg-blue-900/20' : ''">
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm" :class="!item.is_read ? 'font-medium text-[#111111]' : 'text-[#787774]'" x-text="item.message"></p>
-                    <p class="mt-1 text-xs text-[#787774]" x-text="item.created_at"></p>
+                    <p class="text-sm" :class="!item.is_read ? 'font-medium text-[#111111] dark:text-gray-100' : 'text-[#787774] dark:text-gray-400'" x-text="item.message"></p>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400" x-text="item.created_at"></p>
                 </div>
                 <button type="button" x-show="!item.is_read" x-cloak
-                        class="shrink-0 text-sm font-medium text-[#111111] hover:underline"
+                        class="shrink-0 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100"
                         @click="markRead(item)">
                     Mark read
                 </button>
             </div>
         </template>
-        <p x-show="items.length === 0" x-cloak class="px-4 py-10 text-center text-sm text-[#787774]">
+        <p x-show="items.length === 0" x-cloak class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
             You have no notifications yet.
         </p>
     </div>
 
     <?php if ($totalPages > 1) : ?>
-        <div class="mt-4 flex items-center justify-between text-sm text-[#787774]">
+        <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
             <p>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></p>
             <div class="flex items-center gap-2">
                 <?php if ($page > 1) : ?>
-                    <a href="?page=<?= esc((string) ($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Prev</a>
+                    <a href="?page=<?= esc((string) ($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
                 <?php endif ?>
                 <?php if ($page < $totalPages) : ?>
-                    <a href="?page=<?= esc((string) ($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Next</a>
+                    <a href="?page=<?= esc((string) ($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
                 <?php endif ?>
             </div>
         </div>

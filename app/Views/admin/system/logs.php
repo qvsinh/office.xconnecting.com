@@ -30,55 +30,55 @@ $itemsForJs = array_map(static fn (array $item): array => [
 <div class="mx-auto max-w-5xl" x-data="systemLogs(<?= esc(json_encode($itemsForJs), 'attr') ?>)">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">System logs</h1>
-            <p class="mt-1 text-sm text-[#787774]"><code class="font-mono">writable/logs/</code> — preview, download, or delete log files.</p>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">System logs</h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><code class="font-mono">writable/logs/</code> — preview, download, or delete log files.</p>
         </div>
         <button type="button" @click="confirmDeleteAll()" :disabled="items.length === 0 || deletingAll"
-                class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50">
+                class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30">
             Delete all
         </button>
     </div>
 
-    <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white">
-        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm">
+    <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
+        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
-                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774]">
+                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
                     <th class="px-4 py-3">Name</th>
                     <th class="px-4 py-3">Size</th>
                     <th class="px-4 py-3">Modified</th>
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-[#EAEAEA]">
+            <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <template x-for="item in items" :key="item.name">
                     <tr>
-                        <td class="px-4 py-3 font-mono text-xs" x-text="item.name"></td>
-                        <td class="px-4 py-3 text-xs text-[#787774]" x-text="formatBytes(item.size)"></td>
-                        <td class="px-4 py-3 text-xs text-[#787774]" x-text="formatDate(item.mtime)"></td>
+                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100" x-text="item.name"></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="formatBytes(item.size)"></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="formatDate(item.mtime)"></td>
                         <td class="px-4 py-3 text-right">
-                            <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline" @click="openPreview(item)">Preview</button>
-                            <a class="mr-3 text-sm font-medium text-[#111111] hover:underline"
+                            <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="openPreview(item)">Preview</button>
+                            <a class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100"
                                :href="'/admin/system/logs/download?file=' + encodeURIComponent(item.name)">Download</a>
-                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline" @click="confirmDelete(item)">Delete</button>
+                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="confirmDelete(item)">Delete</button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="4" class="px-4 py-10 text-center text-sm text-[#787774]">No log files found.</td>
+                    <td colspan="4" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No log files found.</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <div class="mt-4 flex items-center justify-between text-sm text-[#787774]">
+    <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
         <p><?= esc((string) $total) ?> file<?= $total === 1 ? '' : 's' ?> total</p>
         <div class="flex items-center gap-2">
             <?php if ($page > 1) : ?>
-                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Prev</a>
+                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
             <?php endif ?>
             <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
             <?php if ($page < $totalPages) : ?>
-                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Next</a>
+                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
             <?php endif ?>
         </div>
     </div>
@@ -88,15 +88,15 @@ $itemsForJs = array_map(static fn (array $item): array => [
          @keydown.escape.window="closePreview()">
         <div class="fixed inset-0 bg-black/40" x-show="previewOpen" x-transition.opacity @click="closePreview()"></div>
         <div x-show="previewOpen" x-transition
-             class="relative flex max-h-[80vh] w-full max-w-3xl flex-col rounded-lg border border-[#EAEAEA] bg-white shadow-sm"
+             class="relative flex max-h-[80vh] w-full max-w-3xl flex-col rounded-lg border border-[#EAEAEA] bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
              x-trap.noscroll="previewOpen" role="dialog" aria-modal="true">
-            <div class="flex items-center justify-between border-b border-[#EAEAEA] px-6 py-4">
-                <h2 class="font-mono text-sm font-semibold" x-text="previewName"></h2>
-                <button type="button" class="text-[#787774] hover:text-[#111111]" @click="closePreview()" aria-label="Close">&times;</button>
+            <div class="flex items-center justify-between border-b border-[#EAEAEA] px-6 py-4 dark:border-gray-700">
+                <h2 class="font-mono text-sm font-semibold dark:text-gray-100" x-text="previewName"></h2>
+                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100" @click="closePreview()" aria-label="Close">&times;</button>
             </div>
             <div class="overflow-y-auto p-6">
-                <p x-show="previewLoading" x-cloak class="text-sm text-[#787774]">Loading…</p>
-                <pre x-show="!previewLoading" x-cloak class="whitespace-pre-wrap break-all font-mono text-xs text-[#111111]" x-text="previewContent"></pre>
+                <p x-show="previewLoading" x-cloak class="text-sm text-[#787774] dark:text-gray-400">Loading…</p>
+                <pre x-show="!previewLoading" x-cloak class="whitespace-pre-wrap break-all font-mono text-xs text-[#111111] dark:text-gray-100" x-text="previewContent"></pre>
             </div>
         </div>
     </div>

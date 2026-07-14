@@ -60,31 +60,31 @@ $itemsForJs = array_map(static fn (array $item): array => [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">API history</h1>
-            <p class="mt-1 text-sm text-[#787774]">Your own CNR / JPRS proxy call log. Deletes are soft — rows are recoverable at the database level only.</p>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">API history</h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Your own CNR / JPRS proxy call log. Deletes are soft — rows are recoverable at the database level only.</p>
         </div>
     </div>
 
-    <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4">
+    <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[220px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Keyword</label>
+            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Keyword</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"
                    placeholder="Service, command, domain, url, params, response"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
         </div>
         <div class="min-w-[140px]">
-            <label for="service_name" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Service</label>
+            <label for="service_name" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Service</label>
             <input type="text" id="service_name" name="service_name" value="<?= esc($filters['service_name'] ?? '', 'attr') ?>"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
         </div>
         <div class="min-w-[110px]">
-            <label for="service_id" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Service ID</label>
+            <label for="service_id" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Service ID</label>
             <input type="text" id="service_id" name="service_id" value="<?= esc($filters['service_id'] ?? '', 'attr') ?>"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
         </div>
         <div>
-            <label for="env" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Env</label>
-            <select id="env" name="env" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+            <label for="env" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Env</label>
+            <select id="env" name="env" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 <option value="">Any</option>
                 <?php foreach (['LIVE', 'TESTING'] as $envOpt) : ?>
                     <option value="<?= esc($envOpt, 'attr') ?>" <?= ($filters['env'] ?? '') === $envOpt ? 'selected' : '' ?>><?= esc($envOpt) ?></option>
@@ -92,94 +92,94 @@ $itemsForJs = array_map(static fn (array $item): array => [
             </select>
         </div>
         <div>
-            <label for="status" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Status</label>
-            <select id="status" name="status" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+            <label for="status" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Status</label>
+            <select id="status" name="status" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 <option value="">Any</option>
                 <option value="1" <?= ($filters['status'] ?? '') === '1' ? 'selected' : '' ?>>Success</option>
                 <option value="0" <?= ($filters['status'] ?? '') === '0' ? 'selected' : '' ?>>Failed</option>
             </select>
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774]">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
+            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
+            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
             </select>
         </div>
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50">Search</button>
+        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
         <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
                 class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
     </form>
 
-    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4">
-        <p class="text-sm text-[#787774]"><?= esc((string) $total) ?> log<?= $total === 1 ? '' : 's' ?> match your current filters.</p>
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+        <p class="text-sm text-[#787774] dark:text-gray-400"><?= esc((string) $total) ?> log<?= $total === 1 ? '' : 's' ?> match your current filters.</p>
         <div class="flex flex-wrap items-center gap-3">
             <button type="button" @click="confirmDeleteAll()" :disabled="deletingAll"
-                    class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50">
+                    class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30">
                 Delete all (current filters)
             </button>
             <div class="flex items-center gap-2">
-                <label for="ageDays" class="text-sm text-[#787774]">Delete older than</label>
+                <label for="ageDays" class="text-sm text-[#787774] dark:text-gray-400">Delete older than</label>
                 <input type="number" id="ageDays" x-model.number="ageDays" min="1" step="1"
-                       class="w-20 rounded-md border border-[#EAEAEA] px-2 py-1.5 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]">
-                <span class="text-sm text-[#787774]">days</span>
+                       class="w-20 rounded-md border border-[#EAEAEA] px-2 py-1.5 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                <span class="text-sm text-[#787774] dark:text-gray-400">days</span>
                 <button type="button" @click="confirmDeleteByAge()" :disabled="deletingAge"
-                        class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                        class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
                     Delete
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white">
-        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm">
+    <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
+        <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
-                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774]">
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('service_name'), 'attr') ?>" class="hover:text-[#111111]">Service<?= esc($sortMark('service_name')) ?></a></th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('service_id'), 'attr') ?>" class="hover:text-[#111111]">Service ID<?= esc($sortMark('service_id')) ?></a></th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('command'), 'attr') ?>" class="hover:text-[#111111]">Command<?= esc($sortMark('command')) ?></a></th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('domain'), 'attr') ?>" class="hover:text-[#111111]">Domain<?= esc($sortMark('domain')) ?></a></th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('status'), 'attr') ?>" class="hover:text-[#111111]">Status<?= esc($sortMark('status')) ?></a></th>
-                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('created_at'), 'attr') ?>" class="hover:text-[#111111]">Created<?= esc($sortMark('created_at')) ?></a></th>
+                <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('service_name'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Service<?= esc($sortMark('service_name')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('service_id'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Service ID<?= esc($sortMark('service_id')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('command'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Command<?= esc($sortMark('command')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('domain'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Domain<?= esc($sortMark('domain')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('status'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Status<?= esc($sortMark('status')) ?></a></th>
+                    <th class="px-4 py-3"><a href="<?= esc($sortUrl('created_at'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Created<?= esc($sortMark('created_at')) ?></a></th>
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-[#EAEAEA]">
+            <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <template x-for="item in items" :key="item.id">
                     <tr>
-                        <td class="px-4 py-3" x-text="item.service_name || '—'"></td>
-                        <td class="px-4 py-3" x-text="item.service_id ?? '—'"></td>
-                        <td class="px-4 py-3 font-mono text-xs" x-text="item.command || '—'"></td>
-                        <td class="px-4 py-3" x-text="item.domain || '—'"></td>
+                        <td class="px-4 py-3 dark:text-gray-100" x-text="item.service_name || '—'"></td>
+                        <td class="px-4 py-3 dark:text-gray-100" x-text="item.service_id ?? '—'"></td>
+                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100" x-text="item.command || '—'"></td>
+                        <td class="px-4 py-3 dark:text-gray-100" x-text="item.domain || '—'"></td>
                         <td class="px-4 py-3">
                             <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
-                                  :class="item.status === 1 ? 'bg-[#EDF3EC] text-[#346538]' : 'bg-[#FDEBEC] text-[#9F2F2D]'"
+                                  :class="item.status === 1 ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-red-900/40 dark:text-red-300'"
                                   x-text="item.status === 1 ? 'Success' : 'Failed'"></span>
                         </td>
-                        <td class="px-4 py-3 text-xs text-[#787774]" x-text="item.created_at"></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="item.created_at"></td>
                         <td class="px-4 py-3 text-right">
-                            <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline" @click="openPreview(item.id)">View</button>
-                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline" @click="confirmDelete(item)">Delete</button>
+                            <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="openPreview(item.id)">View</button>
+                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="confirmDelete(item)">Delete</button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="7" class="px-4 py-10 text-center text-sm text-[#787774]">No log entries match your filters.</td>
+                    <td colspan="7" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No log entries match your filters.</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <div class="mt-4 flex items-center justify-between text-sm text-[#787774]">
+    <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
         <p><?= esc((string) $total) ?> log<?= $total === 1 ? '' : 's' ?> total</p>
         <div class="flex items-center gap-2">
             <?php if ($page > 1) : ?>
-                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Prev</a>
+                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
             <?php endif ?>
             <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
             <?php if ($page < $totalPages) : ?>
-                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50">Next</a>
+                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
             <?php endif ?>
         </div>
     </div>
