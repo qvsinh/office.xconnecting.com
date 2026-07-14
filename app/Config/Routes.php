@@ -50,6 +50,7 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('console/jprs/run', 'Admin\ConsoleJprs::run', ['filter' => 'csrf']);
 
     $routes->get('system', 'Admin\System::index');
+    $routes->post('system/opcache/reset', 'Admin\System::resetOpcache', ['filter' => 'csrf']);
     $routes->get('system/migrations', 'Admin\System::migrations');
     $routes->get('system/logs', 'Admin\SystemLogs::index');
     $routes->get('system/logs/preview', 'Admin\SystemLogs::preview');

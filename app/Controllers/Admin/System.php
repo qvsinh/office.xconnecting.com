@@ -8,6 +8,7 @@ use App\Models\ApiHistoryModel;
 use App\Models\NotificationModel;
 use App\Models\UserModel;
 use CodeIgniter\CodeIgniter;
+use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * Read-only System landing: environment/info + record counts (`index()`)
@@ -22,9 +23,28 @@ use CodeIgniter\CodeIgniter;
  */
 class System extends BaseController
 {
+    /**
+     * Allowlisted `ini_get()` directives for the PHP Configuration panel — no path/log directives.
+     */
+    private const PHP_CONFIG_ALLOWLIST = [
+        'memory_limit',
+        'max_execution_time',
+        'max_input_time',
+        'upload_max_filesize',
+        'post_max_size',
+        'max_input_vars',
+        'default_socket_timeout',
+        'date.timezone',
+        'display_errors',
+        'error_reporting',
+        'opcache.enable',
+        'opcache.memory_consumption',
+        'session.gc_maxlifetime',
+    ];
+
     public function index(): string
     {
-        return view('admin/system/info', $this->buildInfoData());
+        return view('admin/system/info', $this->buildInfoData() + ['runtime' => $this->buildRuntimeDetails()]);
     }
 
     /**
@@ -62,6 +82,124 @@ class System extends BaseController
                 'session'  => is_writable(WRITEPATH . 'session/'),
             ],
         ];
+    }
+
+    /**
+     * Runtime-introspection whitelist for the System info page — OPcache
+     * summary, PHP config, server info, loaded extensions. Same discipline as
+     * `buildInfoData()`: every value is hand-picked, nothing ever comes from
+     * iterating `$_ENV`/`$_SERVER`/`ini_get_all()`/`phpinfo()`.
+     *
+     * @return array{opcache: array<string, mixed>, php_config: array<string, mixed>, server: array<string, mixed>, extensions: list<array{name: string, version: string}>}
+     */
+    public function buildRuntimeDetails(): array
+    {
+        return [
+            'opcache'    => $this->buildOpcacheSummary(),
+            'php_config' => $this->buildPhpConfigSummary(),
+            'server'     => $this->buildServerSummary(),
+            'extensions' => $this->buildExtensionsList(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildOpcacheSummary(): array
+    {
+        if (! function_exists('opcache_get_status')) {
+            return ['available' => false];
+        }
+
+        // ponytail: pass `false` — the per-script array leaks absolute deploy paths and is never needed here.
+        $status = opcache_get_status(false);
+
+        if ($status === false) {
+            return ['available' => false];
+        }
+
+        $memory = $status['memory_usage'] ?? [];
+        $stats  = $status['opcache_statistics'] ?? [];
+
+        return [
+            'available'          => true,
+            'enabled'            => (bool) ($status['opcache_enabled'] ?? false),
+            'memory_used'        => (int) ($memory['used_memory'] ?? 0),
+            'memory_free'        => (int) ($memory['free_memory'] ?? 0),
+            'memory_wasted'      => (int) ($memory['wasted_memory'] ?? 0),
+            'memory_wasted_pct'  => (float) ($memory['current_wasted_percentage'] ?? 0.0),
+            'hit_rate'           => (float) ($stats['opcache_hit_rate'] ?? 0.0),
+            'hits'               => (int) ($stats['hits'] ?? 0),
+            'misses'             => (int) ($stats['misses'] ?? 0),
+            'num_cached_scripts' => (int) ($stats['num_cached_scripts'] ?? 0),
+            'num_cached_keys'    => (int) ($stats['num_cached_keys'] ?? 0),
+            'oom_restarts'       => (int) ($stats['oom_restarts'] ?? 0),
+            'manual_restarts'    => (int) ($stats['manual_restarts'] ?? 0),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function buildPhpConfigSummary(): array
+    {
+        $config = [];
+
+        foreach (self::PHP_CONFIG_ALLOWLIST as $directive) {
+            $value              = ini_get($directive);
+            $config[$directive] = $value === false ? '' : $value;
+        }
+
+        return $config;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function buildServerSummary(): array
+    {
+        return [
+            'php_version'     => PHP_VERSION,
+            'php_sapi'        => PHP_SAPI,
+            'os'              => php_uname('s'),
+            'os_release'      => php_uname('r'),
+            'architecture'    => php_uname('m'),
+            'server_software' => (string) ($_SERVER['SERVER_SOFTWARE'] ?? ''),
+            'server_time'     => date('Y-m-d H:i:s'),
+            'server_timezone' => date_default_timezone_get(),
+        ];
+    }
+
+    /**
+     * @return list<array{name: string, version: string}>
+     */
+    private function buildExtensionsList(): array
+    {
+        $extensions = get_loaded_extensions();
+        sort($extensions);
+
+        return array_map(
+            static fn (string $ext): array => ['name' => $ext, 'version' => (string) (phpversion($ext) ?: '')],
+            $extensions,
+        );
+    }
+
+    /**
+     * Admin-only, CSRF-guarded reset of the OPcache in-memory cache
+     * (`POST system/opcache/reset`). No-op with a clear message when OPcache
+     * isn't loaded — this must never fatal on a CLI/test SAPI.
+     */
+    public function resetOpcache(): ResponseInterface
+    {
+        if (! function_exists('opcache_reset')) {
+            return $this->jsonFailed('OPcache is not enabled.');
+        }
+
+        if (! opcache_reset()) {
+            return $this->jsonFailed('OPcache reset failed.', 500);
+        }
+
+        return $this->jsonSuccess('OPcache reset.');
     }
 
     /**
