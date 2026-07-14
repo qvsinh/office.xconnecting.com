@@ -182,17 +182,4 @@ class ApiAccessKeys extends BaseController
     {
         return in_array($serviceId, array_column(list_api_services(), 'id'), true);
     }
-
-    private function resolveLimit(): int
-    {
-        $limitGet = (int) $this->request->getGet('limit');
-
-        if ($limitGet > 0) {
-            return $limitGet;
-        }
-
-        $default = (int) getenv('app.rpp_default');
-
-        return $default > 0 ? $default : 25;
-    }
 }

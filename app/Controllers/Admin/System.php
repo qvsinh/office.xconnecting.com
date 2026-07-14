@@ -280,17 +280,4 @@ class System extends BaseController
 
         return $rows;
     }
-
-    private function resolveLimit(): int
-    {
-        $limitGet = (int) $this->request->getGet('limit');
-
-        if ($limitGet > 0) {
-            return min($limitGet, 100); // clamp: unbounded limit would let one request pull the whole list
-        }
-
-        $default = (int) getenv('app.rpp_default');
-
-        return $default > 0 ? min($default, 100) : 25;
-    }
 }

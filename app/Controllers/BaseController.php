@@ -72,4 +72,25 @@ abstract class BaseController extends Controller
             'csrf_hash' => csrf_hash(),
         ]);
     }
+
+    /**
+     * Resolve a paginated list's per-page limit from `?limit=`, falling back
+     * to the `app.rpp_default` env knob (then 25). Always clamped to 100 so a
+     * single request can never pull an unbounded result set (OOM/DoS).
+     *
+     * Shared here because every list controller needs the identical rule —
+     * keeping one copy prevents the clamp from silently drifting per caller.
+     */
+    protected function resolveLimit(): int
+    {
+        $limitGet = (int) $this->request->getGet('limit');
+
+        if ($limitGet > 0) {
+            return min($limitGet, 100);
+        }
+
+        $default = (int) env('app.rpp_default');
+
+        return $default > 0 ? min($default, 100) : 25;
+    }
 }
