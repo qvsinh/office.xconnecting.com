@@ -14,6 +14,17 @@ helper('auth');
 /** @var object|null $user */
 $user ??= session('userWorking');
 $navZone ??= is_admin() ? 'admin' : 'client';
+
+// Acting-as banner: only set when an admin has switched `userWorking` away
+// from their own `userAuthenticated` identity via Admin\Users::actAs().
+$actingAsUser = null;
+if (is_authenticated()) {
+    $workingUser = session('userWorking');
+    $authUser    = session('userAuthenticated');
+    if ($workingUser !== null && $authUser !== null && (int) $workingUser->id !== (int) $authUser->id) {
+        $actingAsUser = $workingUser;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-gray-50">
@@ -33,6 +44,20 @@ $navZone ??= is_admin() ? 'admin' : 'client';
       @toast.window="pushToast($event.detail)"
       @confirm.window="openConfirm($event.detail)"
       @alert.window="pushAlert($event.detail)">
+
+    <?php if ($actingAsUser !== null) : ?>
+        <!-- Acting-as banner: a plain form (no Alpine) so it can never
+             regress the shared appShell() toast/confirm root above. -->
+        <div class="flex items-center justify-between gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800">
+            <span>Acting as <strong><?= esc($actingAsUser->name) ?></strong> (<?= esc($actingAsUser->email) ?>) — you are viewing their data.</span>
+            <form method="post" action="/admin/users/stop-acting-as" class="shrink-0">
+                <input type="hidden" name="<?= esc(csrf_token(), 'attr') ?>" value="<?= esc(csrf_hash(), 'attr') ?>">
+                <button type="submit" class="rounded-md border border-yellow-300 bg-white px-3 py-1 text-xs font-medium text-yellow-800 hover:bg-yellow-100">
+                    Return to admin
+                </button>
+            </form>
+        </div>
+    <?php endif ?>
 
     <div class="flex h-full min-h-screen">
         <!-- Sidebar -->
@@ -58,8 +83,9 @@ $navZone ??= is_admin() ? 'admin' : 'client';
                     <a href="/admin/console/jprs" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         JPRS console
                     </a>
-                    <span class="block px-3 pt-4 text-xs font-medium uppercase tracking-wide text-[#787774]">Coming soon</span>
-                    <span class="block cursor-default rounded-md px-3 py-2 text-sm text-[#787774]">Users</span>
+                    <a href="/admin/users" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Users
+                    </a>
                 <?php else : ?>
                     <a href="/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
                         Dashboard
