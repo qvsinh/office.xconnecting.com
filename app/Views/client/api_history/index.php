@@ -6,12 +6,12 @@
  * owner-scoped server-side (Client\ApiHistory forces `user_id` from
  * `session('userWorking')->id`) — this view never sends a user id.
  *
- * @var list<array<string, mixed>> $items   searchHistory() rows (array shape, see ApiHistoryModel)
- * @var int                        $total
- * @var int                        $page
- * @var int                        $limit
- * @var string                     $sortBy
- * @var string                     $sort
+ * @var list<array<string, mixed>>                                                               $items   searchHistory() rows (array shape, see ApiHistoryModel)
+ * @var int                                                                                      $total
+ * @var int                                                                                      $page
+ * @var int                                                                                      $limit
+ * @var string                                                                                   $sortBy
+ * @var string                                                                                   $sort
  * @var array{keyword:string, service_name:string, service_id:string, env:string, status:string} $filters
  */
 $this->extend('layouts/app');
@@ -28,11 +28,11 @@ $queryBase = [
 ];
 
 $buildQuery = static fn (array $extra): string => '?' . http_build_query(
-    array_filter($queryBase + $extra, static fn ($v): bool => $v !== '' && $v !== null)
+    array_filter($queryBase + $extra, static fn ($v): bool => $v !== '' && $v !== null),
 );
 
-$pageUrl  = static fn (int $target): string => $buildQuery(['page' => $target, 'sort_by' => $sortBy, 'sort' => $sort]);
-$sortUrl  = static fn (string $col): string => $buildQuery([
+$pageUrl = static fn (int $target): string => $buildQuery(['page' => $target, 'sort_by' => $sortBy, 'sort' => $sort]);
+$sortUrl = static fn (string $col): string => $buildQuery([
     'sort_by' => $col,
     'sort'    => ($sortBy === $col && strtolower($sort) === 'asc') ? 'desc' : 'asc',
 ]);

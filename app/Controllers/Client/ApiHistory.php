@@ -116,11 +116,11 @@ class ApiHistory extends BaseController
         $limitGet = (int) $this->request->getGet('limit');
 
         if ($limitGet > 0) {
-            return $limitGet;
+            return min($limitGet, 100); // clamp: unbounded limit would let one request pull the whole table (OOM/DoS)
         }
 
         $default = (int) getenv('app.rpp_default');
 
-        return $default > 0 ? $default : 25;
+        return $default > 0 ? min($default, 100) : 25;
     }
 }

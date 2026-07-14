@@ -7,14 +7,14 @@
  * rendered — see "Backend dependency" in the frontend report), so this view
  * reads the raw value straight off the request to repopulate the field.
  *
- * @var list<array<string, mixed>> $items   searchHistory() rows + user_name/user_email
- * @var int                        $total
- * @var int                        $page
- * @var int                        $limit
- * @var string                     $sortBy
- * @var string                     $sort
+ * @var list<array<string, mixed>>                                                                             $items   searchHistory() rows + user_name/user_email
+ * @var int                                                                                                    $total
+ * @var int                                                                                                    $page
+ * @var int                                                                                                    $limit
+ * @var string                                                                                                 $sortBy
+ * @var string                                                                                                 $sort
  * @var array{keyword:string, service_name:string, service_id:string, env:string, status:string, user_id?:int} $filters
- * @var list<object>               $users   id/name/email — for the user-filter datalist
+ * @var list<object>                                                                                           $users   id/name/email — for the user-filter datalist
  */
 $this->extend('layouts/app');
 
@@ -32,11 +32,11 @@ $queryBase = [
 ];
 
 $buildQuery = static fn (array $extra): string => '?' . http_build_query(
-    array_filter($queryBase + $extra, static fn ($v): bool => $v !== '' && $v !== null)
+    array_filter($queryBase + $extra, static fn ($v): bool => $v !== '' && $v !== null),
 );
 
-$pageUrl  = static fn (int $target): string => $buildQuery(['page' => $target, 'sort_by' => $sortBy, 'sort' => $sort]);
-$sortUrl  = static fn (string $col): string => $buildQuery([
+$pageUrl = static fn (int $target): string => $buildQuery(['page' => $target, 'sort_by' => $sortBy, 'sort' => $sort]);
+$sortUrl = static fn (string $col): string => $buildQuery([
     'sort_by' => $col,
     'sort'    => ($sortBy === $col && strtolower($sort) === 'asc') ? 'desc' : 'asc',
 ]);
