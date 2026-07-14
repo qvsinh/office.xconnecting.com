@@ -86,6 +86,9 @@ if (is_authenticated()) {
                     <a href="/admin/users" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         Users
                     </a>
+                    <a href="/notifications" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Notifications
+                    </a>
                 <?php else : ?>
                     <a href="/dashboard" class="flex items-center gap-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-[#111111]">
                         Dashboard
@@ -102,6 +105,9 @@ if (is_authenticated()) {
                     <a href="/console/jprs" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
                         JPRS console
                     </a>
+                    <a href="/notifications" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100">
+                        Notifications
+                    </a>
                 <?php endif; ?>
             </nav>
         </aside>
@@ -117,6 +123,45 @@ if (is_authenticated()) {
                 </button>
 
                 <span class="text-sm font-medium text-[#787774]"><?= esc($navZone === 'admin' ? 'Admin console' : 'Client console') ?></span>
+
+                <div class="flex items-center gap-2">
+                <!-- Notification bell: isolated nested Alpine component so it
+                     never touches the shared appShell() toast/confirm/alert root. -->
+                <div class="relative" x-data="notificationBell()" x-init="init()" @click.outside="open = false">
+                    <button type="button" class="relative rounded-md p-2 text-[#787774] hover:bg-gray-100"
+                            @click="toggle()" :aria-expanded="open" aria-label="Notifications">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
+                        </svg>
+                        <span x-show="unread > 0" x-cloak x-text="unread > 99 ? '99+' : unread"
+                              class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#9F2F2D] px-1 text-[10px] font-medium leading-none text-white"></span>
+                    </button>
+                    <div x-show="open" x-transition x-cloak
+                         class="absolute right-0 z-20 mt-2 w-80 rounded-md border border-[#EAEAEA] bg-white py-1 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-[#EAEAEA] px-4 py-2">
+                            <p class="text-sm font-medium">Notifications</p>
+                            <button type="button" class="text-xs font-medium text-[#111111] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                                    :disabled="markingAll || unread === 0" @click="markAllRead()">
+                                Mark all as read
+                            </button>
+                        </div>
+                        <div class="max-h-80 overflow-y-auto">
+                            <p x-show="loading" x-cloak class="px-4 py-6 text-center text-sm text-[#787774]">Loading…</p>
+                            <template x-for="item in items" :key="item.id">
+                                <button type="button" class="block w-full px-4 py-3 text-left hover:bg-gray-50"
+                                        :class="!item.is_read ? 'bg-[#E1F3FE]/40' : ''"
+                                        @click="markRead(item)">
+                                    <p class="text-sm" :class="!item.is_read ? 'font-medium text-[#111111]' : 'text-[#787774]'" x-text="item.message"></p>
+                                    <p class="mt-0.5 text-xs text-[#787774]" x-text="item.created_at"></p>
+                                </button>
+                            </template>
+                            <p x-show="!loading && items.length === 0" x-cloak class="px-4 py-6 text-center text-sm text-[#787774]">No notifications yet.</p>
+                        </div>
+                        <a href="/notifications" class="block border-t border-[#EAEAEA] px-4 py-2 text-center text-sm font-medium text-[#111111] hover:bg-gray-50">
+                            View all
+                        </a>
+                    </div>
+                </div>
 
                 <!-- User menu -->
                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
@@ -138,6 +183,7 @@ if (is_authenticated()) {
                         </div>
                         <a href="/logout" class="block px-4 py-2 text-sm text-[#9F2F2D] hover:bg-gray-50">Log out</a>
                     </div>
+                </div>
                 </div>
             </header>
 
@@ -248,6 +294,66 @@ if (is_authenticated()) {
                     const cb = this.confirmState.onConfirm;
                     this.confirmState.open = false;
                     if (typeof cb === 'function') cb();
+                },
+            };
+        }
+
+        // Isolated topbar notification bell — its own x-data, never merged
+        // into appShell(), so this can't regress the shared toast/confirm/alert
+        // root. Loads the badge once on page load, the recent feed only when
+        // opened (no interval polling, see kanban/processing/20260713-notifications.md §7).
+        function notificationBell() {
+            return {
+                open: false,
+                loading: false,
+                markingAll: false,
+                unread: 0,
+                items: [],
+
+                init() {
+                    fetch('/notifications/unread-count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(res => res.json())
+                        .then(json => { if (json && json.status === 'success') this.unread = json.unread_count; })
+                        .catch(() => {});
+                },
+
+                toggle() {
+                    this.open = !this.open;
+                    if (this.open) this.loadFeed();
+                },
+
+                async loadFeed() {
+                    this.loading = true;
+                    try {
+                        const res = await fetch('/notifications/feed', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        const json = await res.json();
+                        if (json && json.status === 'success') {
+                            this.items = json.items;
+                            this.unread = json.unread_count;
+                        }
+                    } catch (e) {
+                        // silent — bell stays showing the last-known badge count
+                    }
+                    this.loading = false;
+                },
+
+                async markRead(item) {
+                    if (item.is_read) return;
+                    const json = await postForm('/notifications/mark-read', { id: item.id });
+                    if (json && json.status === 'success') {
+                        item.is_read = true;
+                        this.unread = json.unread_count;
+                    }
+                },
+
+                async markAllRead() {
+                    this.markingAll = true;
+                    const json = await postForm('/notifications/mark-all-read', {});
+                    this.markingAll = false;
+                    if (json && json.status === 'success') {
+                        this.items.forEach(i => { i.is_read = true; });
+                        this.unread = json.unread_count;
+                    }
                 },
             };
         }
