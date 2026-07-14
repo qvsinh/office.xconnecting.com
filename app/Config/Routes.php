@@ -71,6 +71,12 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('console/cnr/run', 'Client\ConsoleCnr::run', ['filter' => 'csrf']);
     $routes->get('console/jprs', 'Client\ConsoleJprs::index');
     $routes->post('console/jprs/run', 'Client\ConsoleJprs::run', ['filter' => 'csrf']);
+
+    $routes->get('notifications', 'Notifications::index');
+    $routes->get('notifications/feed', 'Notifications::feed');
+    $routes->get('notifications/unread-count', 'Notifications::unreadCount');
+    $routes->post('notifications/mark-read', 'Notifications::markRead', ['filter' => 'csrf']);
+    $routes->post('notifications/mark-all-read', 'Notifications::markAllRead', ['filter' => 'csrf']);
 });
 
 $routes->group('api', ['filter' => 'apiFilter'], static function (RouteCollection $routes) {
