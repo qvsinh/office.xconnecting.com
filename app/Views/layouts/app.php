@@ -40,6 +40,7 @@ $navGroups = [
         ['label' => 'History', 'href' => $navZone === 'admin' ? '/admin/api-history' : '/api-history'],
         ['label' => 'CNR Console', 'href' => $navZone === 'admin' ? '/admin/console/cnr' : '/console/cnr'],
         ['label' => 'JPRS Console', 'href' => $navZone === 'admin' ? '/admin/console/jprs' : '/console/jprs'],
+        ['label' => 'API Docs', 'href' => '/api-docs'],
     ],
     'Account' => [
         ['label' => 'Profile', 'href' => '/account'],

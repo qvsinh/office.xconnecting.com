@@ -97,6 +97,8 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->get('console/jprs', 'Client\ConsoleJprs::index');
     $routes->post('console/jprs/run', 'Client\ConsoleJprs::run', ['filter' => 'csrf']);
 
+    $routes->get('api-docs', 'ApiDocs::index');
+
     $routes->get('notifications', 'Notifications::index');
     $routes->get('notifications/feed', 'Notifications::feed');
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');
