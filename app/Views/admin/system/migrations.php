@@ -63,7 +63,8 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
             </select>
         </div>
         <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50">Search</button>
-        <a href="?limit=<?= esc((string) $limit, 'attr') ?>" class="text-sm text-[#787774] hover:text-[#111111]">Clear</a>
+        <button type="button" x-data @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
+                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
     </form>
 
     <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white">

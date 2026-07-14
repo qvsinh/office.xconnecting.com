@@ -108,7 +108,8 @@ $itemsForJs = array_map(static fn (array $item): array => [
             </select>
         </div>
         <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50">Search</button>
-        <a href="?limit=<?= esc((string) $limit, 'attr') ?>" class="text-sm text-[#787774] hover:text-[#111111]">Clear</a>
+        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
+                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
     </form>
 
     <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4">
