@@ -194,3 +194,5 @@ $this->extend('layouts/app');
         };
     }
 </script>
+
+<?php $this->endSection() ?>
