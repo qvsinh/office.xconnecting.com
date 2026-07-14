@@ -41,6 +41,14 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->get('console/jprs', 'Admin\ConsoleJprs::index');
     $routes->post('console/jprs/run', 'Admin\ConsoleJprs::run', ['filter' => 'csrf']);
 
+    $routes->get('system', 'Admin\System::index');
+    $routes->get('system/migrations', 'Admin\System::migrations');
+    $routes->get('system/logs', 'Admin\SystemLogs::index');
+    $routes->get('system/logs/preview', 'Admin\SystemLogs::preview');
+    $routes->get('system/logs/download', 'Admin\SystemLogs::download');
+    $routes->post('system/logs/delete', 'Admin\SystemLogs::delete', ['filter' => 'csrf']);
+    $routes->post('system/logs/delete-all', 'Admin\SystemLogs::deleteAll', ['filter' => 'csrf']);
+
     $routes->get('users', 'Admin\Users::index');
     $routes->post('users/create', 'Admin\Users::create', ['filter' => 'csrf']);
     $routes->get('users/edit/(:num)', 'Admin\Users::edit/$1');
