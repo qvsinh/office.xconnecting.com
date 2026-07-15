@@ -11,9 +11,10 @@
  * `service_id`/label, `env`, `is_enable`, and (admin zone) the owning user's
  * name/email. Only `key_id` is ever sent to the server.
  *
- * @var list<object> $keys     ApiAccessKeyModel::listForConsole() rows
- * @var string       $provider 'cnr'|'jprs'
- * @var string       $zone     'admin'|'client'
+ * @var list<object>                                                                            $keys     ApiAccessKeyModel::listForConsole() rows
+ * @var string                                                                                  $provider 'cnr'|'jprs'
+ * @var string                                                                                  $zone     'admin'|'client'
+ * @var array<string, list<array{name: string, description: string, example?: array|null}>>     $commands console_commands($provider) — grouped command catalog for the picker/docs panel
  */
 helper('service_config');
 
@@ -31,8 +32,21 @@ $keysForJs = array_map(static fn (object $k): array => [
     'user_name'     => $k->user_name ?? null,
     'user_email'    => $k->user_email ?? null,
 ], $keys);
+
+// Normalize the optional 'example' key to null so the JS side can always rely on it existing.
+$commandsForJs = array_map(
+    static fn (array $group): array => array_map(
+        static fn (array $cmd): array => [
+            'name'        => $cmd['name'],
+            'description' => $cmd['description'],
+            'example'     => $cmd['example'] ?? null,
+        ],
+        $group
+    ),
+    $commands
+);
 ?>
-<div x-data="apiConsole(<?= esc(json_encode($keysForJs), 'attr') ?>, <?= esc(json_encode($runUrl), 'attr') ?>, <?= $isAdmin ? 'true' : 'false' ?>)">
+<div x-data="apiConsole(<?= esc(json_encode($keysForJs), 'attr') ?>, <?= esc(json_encode($runUrl), 'attr') ?>, <?= $isAdmin ? 'true' : 'false' ?>, <?= esc(json_encode($commandsForJs), 'attr') ?>)">
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -45,100 +59,195 @@ $keysForJs = array_map(static fn (object $k): array => [
         </div>
     </div>
 
-    <div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <!-- Request builder -->
-        <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800 lg:col-span-2">
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400">Request</h2>
+    <div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <!-- Main column: request above, response below -->
+        <div class="space-y-4 lg:col-span-2">
+            <!-- Request builder -->
+            <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400">Request</h2>
+
+                <div class="mt-4">
+                    <label for="key-search" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Filter keys</label>
+                    <input type="text" id="key-search" x-model="keySearch" placeholder="Service, env, user…"
+                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                </div>
+
+                <div class="mt-4">
+                    <label for="key-select" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">API access key</label>
+                    <select id="key-select" x-model="form.key_id"
+                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <option value="">Select a key…</option>
+                        <template x-for="k in filteredKeys()" :key="k.id">
+                            <option :value="k.id" x-text="keyLabel(k)"></option>
+                        </template>
+                    </select>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400" x-show="filteredKeys().length === 0" x-cloak>
+                        No keys match your filter<?= $isAdmin ? '.' : ' — create one from "API access keys" first.' ?>
+                    </p>
+                    <template x-if="selectedKey()">
+                        <p class="mt-1.5 text-xs text-[#787774] dark:text-gray-400">
+                            <span x-text="selectedKey().service_label"></span> ·
+                            <span class="font-medium" x-text="selectedKey().env"></span>
+                            <template x-if="!selectedKey().is_enable">
+                                <span class="ml-1 rounded-full bg-[#FDEBEC] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#9F2F2D] dark:bg-red-900/40 dark:text-red-300">Disabled</span>
+                            </template>
+                        </p>
+                    </template>
+                </div>
+
+                <div class="mt-4">
+                    <label for="command" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Command</label>
+                    <input type="text" id="command" x-model="form.command" placeholder="e.g. StatusDomain, History"
+                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">
+                        Pick a command from the catalog on the right, or type one directly.
+                        <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">History</code> returns this key's own request log (params: keyword, domain, sort_by, sort, limit, offset).
+                    </p>
+                </div>
+
+                <div class="mt-4">
+                    <div class="mb-1.5 flex items-center justify-between">
+                        <span class="block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Parameters</span>
+                        <button type="button" class="text-xs font-medium text-[#111111] hover:underline dark:text-gray-100" @click="addRow()">+ Add parameter</button>
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="(row, idx) in paramRows" :key="idx">
+                            <div class="flex items-center gap-2">
+                                <input type="text" x-model="row.key" placeholder="key"
+                                       class="block w-2/5 rounded-md border border-[#EAEAEA] px-2.5 py-1.5 font-mono text-xs focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                                <input type="text" x-model="row.value" placeholder="value"
+                                       class="block flex-1 rounded-md border border-[#EAEAEA] px-2.5 py-1.5 font-mono text-xs focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                                <button type="button" class="text-[#787774] hover:text-[#9F2F2D] dark:text-gray-400 dark:hover:text-red-400" @click="removeRow(idx)" aria-label="Remove parameter">&times;</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <button type="button" @click="run()" :disabled="running"
+                        class="mt-5 w-full rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    <span x-show="!running">Run</span>
+                    <span x-show="running" x-cloak>Running…</span>
+                </button>
+            </div>
+
+            <!-- Response viewer -->
+            <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400">Response</h2>
+                    <template x-if="response">
+                        <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
+                              :class="responseOk ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-red-900/40 dark:text-red-300'"
+                              x-text="responseOk ? 'Success' : 'Error'"></span>
+                    </template>
+                </div>
+                <p class="mt-1 text-xs text-[#787774] dark:text-gray-400" x-show="response" x-text="response ? response.api_service_id : ''"></p>
+                <pre class="mt-3 max-h-[32rem] overflow-auto whitespace-pre-wrap break-all rounded-md bg-[#F7F6F3] p-4 font-mono text-xs leading-relaxed text-[#111111] dark:bg-gray-900 dark:text-gray-100"
+                     x-text="responseText || 'Run a command to see the response here.'"></pre>
+            </div>
+        </div>
+
+        <!-- Right panel: command catalog + docs (sticky, own scroll on lg+) -->
+        <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800 lg:sticky lg:top-6 lg:col-span-1 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400">Commands &amp; docs</h2>
 
             <div class="mt-4">
-                <label for="key-search" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Filter keys</label>
-                <input type="text" id="key-search" x-model="keySearch" placeholder="Service, env, user…"
+                <label for="command-search" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Search</label>
+                <input type="text" id="command-search" x-model="commandSearch" placeholder="Name or description…"
                        class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
             </div>
 
-            <div class="mt-4">
-                <label for="key-select" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">API access key</label>
-                <select id="key-select" x-model="form.key_id"
-                        class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
-                    <option value="">Select a key…</option>
-                    <template x-for="k in filteredKeys()" :key="k.id">
-                        <option :value="k.id" x-text="keyLabel(k)"></option>
-                    </template>
-                </select>
-                <p class="mt-1 text-xs text-[#787774] dark:text-gray-400" x-show="filteredKeys().length === 0" x-cloak>
-                    No keys match your filter<?= $isAdmin ? '.' : ' — create one from "API access keys" first.' ?>
-                </p>
-                <template x-if="selectedKey()">
-                    <p class="mt-1.5 text-xs text-[#787774] dark:text-gray-400">
-                        <span x-text="selectedKey().service_label"></span> ·
-                        <span class="font-medium" x-text="selectedKey().env"></span>
-                        <template x-if="!selectedKey().is_enable">
-                            <span class="ml-1 rounded-full bg-[#FDEBEC] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#9F2F2D] dark:bg-red-900/40 dark:text-red-300">Disabled</span>
-                        </template>
-                    </p>
-                </template>
-            </div>
+            <!-- Selected command's docs -->
+            <template x-if="currentCommand()">
+                <div class="mt-4 rounded-md border border-[#EAEAEA] bg-[#F7F6F3] p-3 dark:border-gray-700 dark:bg-gray-900">
+                    <p class="font-mono text-xs font-semibold text-[#111111] dark:text-gray-100" x-text="currentCommand().name"></p>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400" x-text="currentCommand().description"></p>
 
-            <div class="mt-4">
-                <label for="command" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Command</label>
-                <input type="text" id="command" x-model="form.command" placeholder="e.g. StatusDomain, History"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
-                <p class="mt-1 text-xs text-[#787774] dark:text-gray-400"><code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">History</code> returns this key's own request log (params: keyword, domain, sort_by, sort, limit, offset).</p>
-            </div>
-
-            <div class="mt-4">
-                <div class="mb-1.5 flex items-center justify-between">
-                    <span class="block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Parameters</span>
-                    <button type="button" class="text-xs font-medium text-[#111111] hover:underline dark:text-gray-100" @click="addRow()">+ Add parameter</button>
-                </div>
-                <div class="space-y-2">
-                    <template x-for="(row, idx) in paramRows" :key="idx">
-                        <div class="flex items-center gap-2">
-                            <input type="text" x-model="row.key" placeholder="key"
-                                   class="block w-2/5 rounded-md border border-[#EAEAEA] px-2.5 py-1.5 font-mono text-xs focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
-                            <input type="text" x-model="row.value" placeholder="value"
-                                   class="block flex-1 rounded-md border border-[#EAEAEA] px-2.5 py-1.5 font-mono text-xs focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
-                            <button type="button" class="text-[#787774] hover:text-[#9F2F2D] dark:text-gray-400 dark:hover:text-red-400" @click="removeRow(idx)" aria-label="Remove parameter">&times;</button>
+                    <template x-if="currentCommand().example">
+                        <div class="mt-2">
+                            <p class="text-[10px] font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Example params</p>
+                            <ul class="mt-1 space-y-0.5 font-mono text-xs text-[#111111] dark:text-gray-100">
+                                <template x-for="[k, v] in Object.entries(currentCommand().example)" :key="k">
+                                    <li><span x-text="k"></span>=<span x-text="v"></span></li>
+                                </template>
+                            </ul>
+                            <button type="button" class="mt-2 text-xs font-medium text-[#111111] hover:underline dark:text-gray-100"
+                                    @click="insertExample(currentCommand())">Insert example params</button>
                         </div>
                     </template>
+                    <template x-if="!currentCommand().example">
+                        <p class="mt-2 text-xs italic text-[#787774] dark:text-gray-400">No example available — see manual.</p>
+                    </template>
                 </div>
-            </div>
+            </template>
 
-            <button type="button" @click="run()" :disabled="running"
-                    class="mt-5 w-full rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
-                <span x-show="!running">Run</span>
-                <span x-show="running" x-cloak>Running…</span>
-            </button>
-        </div>
-
-        <!-- Response viewer -->
-        <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800 lg:col-span-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400">Response</h2>
-                <template x-if="response">
-                    <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
-                          :class="responseOk ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-red-900/40 dark:text-red-300'"
-                          x-text="responseOk ? 'Success' : 'Error'"></span>
+            <!-- Grouped command list -->
+            <div class="mt-4 space-y-4">
+                <template x-for="group in filteredGroups()" :key="group.label">
+                    <div>
+                        <h3 class="text-[10px] font-semibold uppercase tracking-wide text-[#787774] dark:text-gray-400" x-text="group.label"></h3>
+                        <div class="mt-1 space-y-0.5">
+                            <template x-for="cmd in group.commands" :key="cmd.name">
+                                <button type="button" @click="selectCommand(cmd)"
+                                        class="block w-full rounded-md px-2 py-1.5 text-left font-mono text-xs hover:bg-[#F7F6F3] dark:hover:bg-gray-700"
+                                        :class="form.command === cmd.name ? 'bg-[#F7F6F3] font-semibold text-[#111111] dark:bg-gray-700 dark:text-gray-100' : 'text-[#111111] dark:text-gray-200'">
+                                    <span x-text="cmd.name"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </template>
+                <p class="text-xs text-[#787774] dark:text-gray-400" x-show="filteredGroups().length === 0" x-cloak>No commands match your search.</p>
             </div>
-            <p class="mt-1 text-xs text-[#787774] dark:text-gray-400" x-show="response" x-text="response ? response.api_service_id : ''"></p>
-            <pre class="mt-3 max-h-[32rem] overflow-auto whitespace-pre-wrap break-all rounded-md bg-[#F7F6F3] p-4 font-mono text-xs leading-relaxed text-[#111111] dark:bg-gray-900 dark:text-gray-100"
-                 x-text="responseText || 'Run a command to see the response here.'"></pre>
         </div>
     </div>
 
     <script>
-        function apiConsole(initialKeys, runUrl, isAdmin) {
+        function apiConsole(initialKeys, runUrl, isAdmin, commandGroups) {
             return {
                 keys: initialKeys,
                 isAdmin,
+                commandGroups,
                 keySearch: '',
+                commandSearch: '',
                 form: { key_id: '', command: '' },
                 paramRows: [{ key: '', value: '' }],
                 running: false,
                 response: null,
                 responseText: '',
                 responseOk: null,
+
+                // Docs/highlight are derived from form.command rather than tracked as separate
+                // state, so typing a known command name shows its docs the same as clicking it.
+                currentCommand() {
+                    const name = this.form.command.trim();
+                    if (name === '') return null;
+                    for (const label in this.commandGroups) {
+                        const found = this.commandGroups[label].find(c => c.name === name);
+                        if (found) return found;
+                    }
+                    return null;
+                },
+
+                filteredGroups() {
+                    const q = this.commandSearch.trim().toLowerCase();
+                    return Object.entries(this.commandGroups)
+                        .map(([label, commands]) => ({
+                            label,
+                            commands: q === '' ? commands : commands.filter(c =>
+                                c.name.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q)
+                            ),
+                        }))
+                        .filter(group => group.commands.length > 0);
+                },
+
+                selectCommand(cmd) {
+                    this.form.command = cmd.name;
+                },
+
+                insertExample(cmd) {
+                    if (!cmd.example) return;
+                    this.paramRows = Object.entries(cmd.example).map(([key, value]) => ({ key, value }));
+                },
 
                 filteredKeys() {
                     const q = this.keySearch.trim().toLowerCase();
