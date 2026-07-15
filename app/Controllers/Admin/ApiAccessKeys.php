@@ -82,19 +82,8 @@ class ApiAccessKeys extends BaseController
      */
     public function update(): ResponseInterface
     {
-        helper('service_config');
-
-        if (! $this->validate([
-            'id'         => 'required|is_natural_no_zero',
-            'service_id' => 'required|is_natural_no_zero',
-        ])) {
+        if (! $this->validate(['id' => 'required|is_natural_no_zero'])) {
             return $this->jsonFailed($this->validator->getErrors());
-        }
-
-        $serviceId = (int) $this->request->getPost('service_id');
-
-        if (! $this->isKnownService($serviceId)) {
-            return $this->jsonFailed('Unknown service.');
         }
 
         $id       = (int) $this->request->getPost('id');
@@ -105,8 +94,12 @@ class ApiAccessKeys extends BaseController
             return $this->jsonFailed('Record not found.', 404);
         }
 
+        // service_id is deliberately NOT updatable: it is encoded into the
+        // Hashids access token at creation, and ApiFilter rejects the key
+        // when the row's service_id no longer matches the token. Changing it
+        // here would silently break the key (every call would 401). To point
+        // at a different service, create a new key.
         $keyModel->update($id, [
-            'service_id'  => $serviceId,
             'description' => trim((string) $this->request->getPost('description')),
             'is_enable'   => $this->resolveFlag($this->request->getPost('is_enable'), (int) $existing->is_enable),
             'enable_log'  => $this->resolveFlag($this->request->getPost('enable_log'), (int) $existing->enable_log),

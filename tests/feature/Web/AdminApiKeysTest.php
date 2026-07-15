@@ -56,7 +56,7 @@ final class AdminApiKeysTest extends CIUnitTestCase
 
         $update = $this->withSession()->post('/admin/api-access-keys/update', $this->withCsrf([
             'id'          => $row->id,
-            'service_id'  => 801,
+            'service_id'  => 801, // sent but must be IGNORED (immutable — see below)
             'description' => 'updated desc',
             'enable_log'  => 0,
             // is_enable intentionally omitted -> update() leaves it untouched (still 1)
@@ -64,12 +64,15 @@ final class AdminApiKeysTest extends CIUnitTestCase
         $update->assertStatus(200);
 
         $updated = $keyModel->find($row->id);
-        $this->assertSame(801, (int) $updated->service_id);
         $this->assertSame('updated desc', $updated->description);
         $this->assertSame(0, (int) $updated->enable_log);
         $this->assertSame(1, (int) $updated->is_enable);
         // Critical: user_id is never accepted/changed by update().
         $this->assertSame((int) $target->id, (int) $updated->user_id);
+        // Critical: service_id is IMMUTABLE — it's encoded into the access
+        // token, so changing only the row would desync it and 401 the key.
+        // The posted 801 must be ignored; the row stays 800.
+        $this->assertSame(800, (int) $updated->service_id);
 
         $toggle = $this->withSession()->post('/admin/api-access-keys/toggle', $this->withCsrf([
             'id'        => $row->id,

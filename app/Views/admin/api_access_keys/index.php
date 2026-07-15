@@ -216,13 +216,10 @@ $itemsForJs = array_map(static fn (object $item): array => [
             <h2 id="edit-key-title" class="text-base font-semibold dark:text-gray-100">Edit API access key</h2>
             <form @submit.prevent="submitEdit" class="mt-4 space-y-4">
                 <div>
-                    <label for="edit_service_id" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Service</label>
-                    <select id="edit_service_id" x-model="editForm.service_id" required
-                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
-                        <?php foreach ($services as $s) : ?>
-                            <option value="<?= esc((string) $s['id'], 'attr') ?>"><?= esc($s['label']) ?></option>
-                        <?php endforeach ?>
-                    </select>
+                    <label class="mb-1.5 block text-sm font-medium dark:text-gray-200">Service</label>
+                    <p class="rounded-md border border-[#EAEAEA] bg-[#F7F6F3] px-3 py-2 text-sm text-[#787774] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
+                       x-text="editForm.service_label"></p>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-500">Service is fixed for the life of a key (it's encoded into the token). To use a different service, create a new key.</p>
                 </div>
                 <div>
                     <label for="edit_description" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Description</label>
@@ -264,7 +261,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 createForm: { user_id: '', service_id: '', description: '' },
                 editing: false,
                 editOpen: false,
-                editForm: { id: null, service_id: '', description: '', is_enable: 1, enable_log: 1 },
+                editForm: { id: null, service_label: '', description: '', is_enable: 1, enable_log: 1 },
 
                 mask(key) {
                     if (!key || key.length <= 12) return key || '';
@@ -303,9 +300,11 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 },
 
                 openEdit(item) {
+                    // service_label is display-only: service is immutable after
+                    // creation (it's encoded into the token), so it's shown, not sent.
                     this.editForm = {
                         id: item.id,
-                        service_id: String(item.service_id),
+                        service_label: item.service_label,
                         description: item.description || '',
                         is_enable: item.is_enable,
                         enable_log: item.enable_log,
@@ -321,10 +320,10 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     if (json.status === 'success') {
                         const target = this.items.find(i => i.id === this.editForm.id);
                         if (target) {
-                            target.service_id    = parseInt(this.editForm.service_id, 10);
-                            target.description   = this.editForm.description;
-                            target.is_enable      = this.editForm.is_enable;
-                            target.enable_log     = this.editForm.enable_log;
+                            // service_id unchanged (immutable) — don't touch it.
+                            target.description = this.editForm.description;
+                            target.is_enable   = this.editForm.is_enable;
+                            target.enable_log  = this.editForm.enable_log;
                         }
                         this.editOpen = false;
                         this.$dispatch('toast', { type: 'success', text: json.message });
