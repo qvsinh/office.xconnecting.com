@@ -119,20 +119,6 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
       @confirm.window="openConfirm($event.detail)"
       @alert.window="pushAlert($event.detail)">
 
-    <?php if ($actingAsUser !== null) : ?>
-        <!-- Acting-as banner: a plain form (no Alpine) so it can never
-             regress the shared appShell() toast/confirm root above. -->
-        <div class="flex items-center justify-between gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-950/40 dark:text-yellow-300">
-            <span>Acting as <strong><?= esc($actingAsUser->name) ?></strong> (<?= esc($actingAsUser->email) ?>) — you are viewing their data.</span>
-            <form method="post" action="/admin/users/stop-acting-as" class="shrink-0">
-                <input type="hidden" name="<?= esc(csrf_token(), 'attr') ?>" value="<?= esc(csrf_hash(), 'attr') ?>">
-                <button type="submit" class="rounded-md border border-yellow-300 bg-white px-3 py-1 text-xs font-medium text-yellow-800 hover:bg-yellow-100 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300 dark:hover:bg-yellow-900">
-                    Return to admin
-                </button>
-            </form>
-        </div>
-    <?php endif ?>
-
     <div class="flex h-full min-h-screen">
         <!-- Mobile off-canvas backdrop -->
         <div class="fixed inset-0 z-40 bg-black/50 lg:hidden" x-show="sidebarMobileOpen" x-cloak
@@ -202,6 +188,20 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
 
         <div class="flex min-h-screen flex-1 flex-col transition-all duration-200 ease-linear"
              :class="sidebarExpanded ? 'lg:pl-72' : 'lg:pl-20'">
+            <?php if ($actingAsUser !== null) : ?>
+                <!-- Acting-as banner: lives INSIDE the content column (not at the
+                     body top) so the fixed sidebar can't overlap it. Plain form,
+                     no Alpine, so it never touches the shared appShell() root. -->
+                <div class="flex items-center justify-between gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 lg:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/40 dark:text-yellow-300">
+                    <span>Acting as <strong><?= esc($actingAsUser->name) ?></strong> (<?= esc($actingAsUser->email) ?>) — you are viewing their data.</span>
+                    <form method="post" action="/admin/users/stop-acting-as" class="shrink-0">
+                        <input type="hidden" name="<?= esc(csrf_token(), 'attr') ?>" value="<?= esc(csrf_hash(), 'attr') ?>">
+                        <button type="submit" class="rounded-md border border-yellow-300 bg-white px-3 py-1 text-xs font-medium text-yellow-800 hover:bg-yellow-100 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300 dark:hover:bg-yellow-900">
+                            Return to admin
+                        </button>
+                    </form>
+                </div>
+            <?php endif ?>
             <!-- Topbar -->
             <header class="flex h-16 items-center justify-between border-b border-[#EAEAEA] bg-white px-4 lg:px-6 dark:border-gray-800 dark:bg-gray-900">
                 <button type="button" class="rounded-md p-2 text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"

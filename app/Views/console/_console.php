@@ -11,10 +11,10 @@
  * `service_id`/label, `env`, `is_enable`, and (admin zone) the owning user's
  * name/email. Only `key_id` is ever sent to the server.
  *
- * @var list<object>                                                                            $keys     ApiAccessKeyModel::listForConsole() rows
- * @var string                                                                                  $provider 'cnr'|'jprs'
- * @var string                                                                                  $zone     'admin'|'client'
- * @var array<string, list<array{name: string, description: string, example?: array|null}>>     $commands console_commands($provider) — grouped command catalog for the picker/docs panel
+ * @var list<object>                                                                        $keys     ApiAccessKeyModel::listForConsole() rows
+ * @var string                                                                              $provider 'cnr'|'jprs'
+ * @var string                                                                              $zone     'admin'|'client'
+ * @var array<string, list<array{name: string, description: string, example?: array|null}>> $commands console_commands($provider) — grouped command catalog for the picker/docs panel
  */
 helper('service_config');
 
@@ -41,9 +41,9 @@ $commandsForJs = array_map(
             'description' => $cmd['description'],
             'example'     => $cmd['example'] ?? null,
         ],
-        $group
+        $group,
     ),
-    $commands
+    $commands,
 );
 ?>
 <div x-data="apiConsole(<?= esc(json_encode($keysForJs), 'attr') ?>, <?= esc(json_encode($runUrl), 'attr') ?>, <?= $isAdmin ? 'true' : 'false' ?>, <?= esc(json_encode($commandsForJs), 'attr') ?>)">
