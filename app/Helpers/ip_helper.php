@@ -1,5 +1,7 @@
 <?php
 
+use CodeIgniter\HTTP\RequestInterface;
+
 if (! function_exists('parse_ip_rules')) {
     /**
      * Split a per-key `allowed_ips` blob (newline and/or comma separated)
@@ -121,6 +123,81 @@ if (! function_exists('packed_ip_matches_prefix')) {
         $mask = (~0 << (8 - $remainderBits)) & 0xFF;
 
         return (ord($a[$fullBytes]) & $mask) === (ord($b[$fullBytes]) & $mask);
+    }
+}
+
+if (! function_exists('cloudflare_ip_ranges')) {
+    /**
+     * Cloudflare's published edge IP ranges (CIDR strings), used by
+     * `resolve_client_ip()` to decide whether `CF-Connecting-IP` can be
+     * trusted for a given request.
+     *
+     * Source: https://www.cloudflare.com/ips-v4 and https://www.cloudflare.com/ips-v6
+     * Snapshot taken 2026-07-15 — refresh this list if Cloudflare changes its
+     * edge ranges (they do so rarely; there is no live lookup here).
+     *
+     * @return list<string>
+     */
+    function cloudflare_ip_ranges(): array
+    {
+        return [
+            // IPv4
+            '173.245.48.0/20',
+            '103.21.244.0/22',
+            '103.22.200.0/22',
+            '103.31.4.0/22',
+            '141.101.64.0/18',
+            '108.162.192.0/18',
+            '190.93.240.0/20',
+            '188.114.96.0/20',
+            '197.234.240.0/22',
+            '198.41.128.0/17',
+            '162.158.0.0/15',
+            '104.16.0.0/13',
+            '104.24.0.0/14',
+            '172.64.0.0/13',
+            '131.0.72.0/22',
+            // IPv6
+            '2400:cb00::/32',
+            '2606:4700::/32',
+            '2803:f800::/32',
+            '2405:b500::/32',
+            '2405:8100::/32',
+            '2a06:98c0::/29',
+            '2c0f:f248::/32',
+        ];
+    }
+}
+
+if (! function_exists('resolve_client_ip')) {
+    /**
+     * Resolve the real client IP across both supported deployment topologies:
+     * (1) direct — the domain's A record points straight at this server, and
+     * (2) behind Cloudflare, which rewrites `REMOTE_ADDR` to its own edge IP
+     * and forwards the true client IP in `CF-Connecting-IP`.
+     *
+     * Anti-spoof rationale: `CF-Connecting-IP` is a plain client-settable
+     * header. A request that reaches the origin directly (bypassing
+     * Cloudflare) can set it to anything, so it is ONLY trusted when
+     * `REMOTE_ADDR` itself is a genuine Cloudflare edge IP — that address
+     * comes from the TCP connection, which an external attacker cannot forge.
+     * Any other topology (no proxy, or a different reverse proxy) falls back
+     * to `IncomingRequest::getIPAddress()`, which is `REMOTE_ADDR` unless
+     * `Config\App::$proxyIPs` names a trusted proxy hop.
+     */
+    function resolve_client_ip(RequestInterface $request): string
+    {
+        $remote = (string) $request->getServer('REMOTE_ADDR');
+
+        if ($remote !== '' && ip_matches_allowlist($remote, cloudflare_ip_ranges())) {
+            $cfIp = $request->getHeaderLine('CF-Connecting-IP');
+
+            if (filter_var($cfIp, FILTER_VALIDATE_IP) !== false) {
+                return $cfIp;
+            }
+        }
+
+        return $request->getIPAddress();
     }
 }
 

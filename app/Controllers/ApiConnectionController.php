@@ -25,14 +25,17 @@ abstract class ApiConnectionController extends BaseController
 
     public function index(): string
     {
+        helper('ip');
+
         $userId = $this->requireOwnKey() ? (int) session('userWorking')->id : null;
 
         return view('api_test/index', [
             'keys' => model(ApiAccessKeyModel::class)->listForConnectionTest($userId),
             'zone' => $this->requireOwnKey() ? 'client' : 'admin',
-            // The client IP the server currently sees — the same value ApiFilter
-            // checks an IP allowlist against (honors Config\App::$proxyIPs).
-            'serverSeenIp' => $this->request->getIPAddress(),
+            // The client IP the server currently sees — resolved the same way
+            // ApiFilter resolves it for the allowlist check (direct or behind
+            // Cloudflare; see resolve_client_ip() in ip_helper.php).
+            'serverSeenIp' => resolve_client_ip($this->request),
         ]);
     }
 }

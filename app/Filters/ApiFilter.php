@@ -20,11 +20,14 @@ use Throwable;
  * controller is ever instantiated on a reject path (no exit()/send() needed).
  * Stateless — no session/cookie should persist across calls.
  *
- * The per-key `allowed_ips` IP allowlist checked below relies on
- * `IncomingRequest::getIPAddress()` returning the real client address. Behind
- * a reverse proxy/load balancer that is only true when `Config\App::$proxyIPs`
- * lists the trusted proxy hop(s) — otherwise every request appears to
- * originate from the proxy and the allowlist can't do its job.
+ * The per-key `allowed_ips` IP allowlist checked below is resolved via
+ * `resolve_client_ip()` (see `ip_helper.php`), which handles both supported
+ * topologies automatically: direct (A record straight at this server) and
+ * behind Cloudflare (trusts `CF-Connecting-IP` only when `REMOTE_ADDR` is a
+ * genuine Cloudflare edge IP). For any OTHER reverse proxy in front of this
+ * app, set `Config\App::$proxyIPs` to the trusted proxy hop(s) — otherwise
+ * every request appears to originate from the proxy and the allowlist can't
+ * do its job.
  */
 class ApiFilter implements FilterInterface
 {
@@ -85,7 +88,7 @@ class ApiFilter implements FilterInterface
             helper('ip');
             $rules = parse_ip_rules($allowedIpsRaw);
 
-            if (! ip_matches_allowlist($request->getIPAddress(), $rules)) {
+            if (! ip_matches_allowlist(resolve_client_ip($request), $rules)) {
                 return $this->reject('IP not allowed', 403);
             }
         }

@@ -1,11 +1,15 @@
 <?php
 
+use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\HTTP\URI;
+use CodeIgniter\HTTP\UserAgent;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
  * `app/Helpers/ip_helper.php` — parsing/validation/matching for the
- * per-API-key IP allowlist enforced by `ApiFilter`. Pure functions, no
- * HTTP/DB dependency.
+ * per-API-key IP allowlist enforced by `ApiFilter`, plus `resolve_client_ip()`
+ * (direct vs behind-Cloudflare real-IP resolution). Pure functions / a
+ * manually-built request, no DB dependency.
  *
  * @internal
  */
@@ -15,6 +19,25 @@ final class IpHelperTest extends CIUnitTestCase
     {
         parent::setUp();
         helper('ip');
+    }
+
+    /**
+     * Builds an IncomingRequest with a pinned REMOTE_ADDR and an optional
+     * CF-Connecting-IP header, mirroring the superglobals-pinning approach
+     * used by `ApiFilterIpAllowlistTest` — CI4's request harness doesn't
+     * populate `$_SERVER['REMOTE_ADDR']` on its own under a CLI test run.
+     */
+    private function makeRequest(string $remoteAddr, ?string $cfConnectingIp = null): IncomingRequest
+    {
+        service('superglobals')->setServer('REMOTE_ADDR', $remoteAddr);
+
+        $request = new IncomingRequest(config('App'), new URI('http://example.com/'), null, new UserAgent());
+
+        if ($cfConnectingIp !== null) {
+            $request->setHeader('CF-Connecting-IP', $cfConnectingIp);
+        }
+
+        return $request;
     }
 
     public function testParseIpRulesSplitsTrimsDedupesAndDropsBlanks(): void
@@ -103,5 +126,54 @@ final class IpHelperTest extends CIUnitTestCase
         // An IPv6 client against a v4-only CIDR rule must not match.
         $this->assertFalse(ip_matches_allowlist('2001:db8::1', ['192.168.1.0/24']));
         $this->assertFalse(ip_matches_allowlist('192.168.1.5', ['2001:db8::/32']));
+    }
+
+    public function testCloudflareIpRangesIsNonEmptyAndAllValid(): void
+    {
+        $ranges = cloudflare_ip_ranges();
+
+        $this->assertNotEmpty($ranges);
+
+        foreach ($ranges as $range) {
+            $this->assertTrue(ip_rule_is_valid($range), "Invalid CIDR: {$range}");
+        }
+    }
+
+    public function testResolveClientIpDirectTopologyReturnsRemoteAddr(): void
+    {
+        $request = $this->makeRequest('203.0.113.9');
+
+        $this->assertSame('203.0.113.9', resolve_client_ip($request));
+    }
+
+    public function testResolveClientIpTrustsCfConnectingIpFromGenuineCloudflareEdge(): void
+    {
+        // 173.245.48.1 is inside the published 173.245.48.0/20 CF range.
+        $request = $this->makeRequest('173.245.48.1', '198.51.100.7');
+
+        $this->assertSame('198.51.100.7', resolve_client_ip($request));
+    }
+
+    public function testResolveClientIpIgnoresCfConnectingIpWhenRemoteAddrIsNotCloudflare(): void
+    {
+        // Anti-spoof: a direct client hitting the origin cannot forge a CF
+        // source IP, so a spoofed CF-Connecting-IP header must be ignored.
+        $request = $this->makeRequest('203.0.113.9', '10.0.0.1');
+
+        $this->assertSame('203.0.113.9', resolve_client_ip($request));
+    }
+
+    public function testResolveClientIpFallsBackToRemoteAddrOnCloudflareEdgeWithoutHeader(): void
+    {
+        $request = $this->makeRequest('173.245.48.1');
+
+        $this->assertSame('173.245.48.1', resolve_client_ip($request));
+    }
+
+    public function testResolveClientIpFallsBackToRemoteAddrOnCloudflareEdgeWithGarbageHeader(): void
+    {
+        $request = $this->makeRequest('173.245.48.1', 'not-an-ip');
+
+        $this->assertSame('173.245.48.1', resolve_client_ip($request));
     }
 }

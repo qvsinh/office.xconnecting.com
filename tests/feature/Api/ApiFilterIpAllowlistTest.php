@@ -82,4 +82,39 @@ final class ApiFilterIpAllowlistTest extends CIUnitTestCase
         $row = model(App\Models\ApiAccessKeyModel::class)->find($key['id']);
         $this->assertNull($row->last_access);
     }
+
+    /**
+     * Behind Cloudflare, REMOTE_ADDR is the CF edge IP and the real client
+     * IP arrives in CF-Connecting-IP. The allowlist must be checked against
+     * the resolved (CF-Connecting-IP) address, not the edge IP.
+     */
+    public function testCloudflareResolvedIpInAllowlistPasses(): void
+    {
+        // 173.245.48.1 is inside the published 173.245.48.0/20 CF range.
+        service('superglobals')->setServer('REMOTE_ADDR', '173.245.48.1');
+
+        $key = $this->seedApiKey(1, 0, 800, ['allowed_ips' => '198.51.100.7']);
+
+        $result = $this->withHeaders([
+            'Authorization'    => 'Bearer ' . $key['token'],
+            'CF-Connecting-IP' => '198.51.100.7',
+        ])->get('/api/cnr/testing');
+
+        $result->assertStatus(400); // reaches the controller (missing command), not 403
+    }
+
+    public function testCloudflareResolvedIpOutsideAllowlistIsRejected(): void
+    {
+        service('superglobals')->setServer('REMOTE_ADDR', '173.245.48.1');
+
+        $key = $this->seedApiKey(1, 0, 800, ['allowed_ips' => '198.51.100.7']);
+
+        $result = $this->withHeaders([
+            'Authorization'    => 'Bearer ' . $key['token'],
+            'CF-Connecting-IP' => '203.0.113.55',
+        ])->get('/api/cnr/testing');
+
+        $result->assertStatus(403);
+        $result->assertJSONExact(['status' => 'error', 'message' => 'IP not allowed']);
+    }
 }

@@ -56,10 +56,13 @@ $keysForJs = array_map(static fn (object $k): array => [
             <p class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Your IP as seen by the server</p>
             <p class="mt-1 font-mono text-sm text-[#111111] dark:text-gray-100"><?= esc($serverSeenIp) ?></p>
             <p class="mt-1.5 text-xs text-[#787774] dark:text-gray-400">
-                This is the IP an API key's IP allowlist is checked against. If it shows an internal
-                address (10.x / 172.x / 192.168.x) instead of your public IP, the server isn't seeing
-                the real client IP — configure <code class="rounded bg-white px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">Config\App::$proxyIPs</code>
-                (or your reverse proxy).
+                This is the IP an API key's IP allowlist is checked against. It's resolved
+                automatically for a direct A-record and for Cloudflare (via
+                <code class="rounded bg-white px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">CF-Connecting-IP</code>,
+                trusted only when the request arrives from a Cloudflare edge). If it shows an
+                internal address (10.x / 172.x / 192.168.x) instead of your public IP, the server
+                isn't seeing the real client IP — for any other reverse proxy, configure
+                <code class="rounded bg-white px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">Config\App::$proxyIPs</code>.
             </p>
         </div>
     </div>
