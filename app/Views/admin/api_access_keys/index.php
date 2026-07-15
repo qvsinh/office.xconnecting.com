@@ -33,6 +33,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
     'is_enable'     => (int) $item->is_enable,
     'enable_log'    => (int) $item->enable_log,
     'description'   => $item->description,
+    'allowed_ips'   => $item->allowed_ips,
     'last_access'   => $item->last_access,
     'revealed'      => false,
 ], $items);
@@ -87,6 +88,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     <th class="px-4 py-3">Log</th>
                     <th class="px-4 py-3">Last access</th>
                     <th class="px-4 py-3">Description</th>
+                    <th class="px-4 py-3">IPs</th>
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
@@ -134,6 +136,16 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         </td>
                         <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="item.last_access || '—'"></td>
                         <td class="max-w-[200px] truncate px-4 py-3 dark:text-gray-100" :title="item.description" x-text="item.description || '—'"></td>
+                        <td class="px-4 py-3">
+                            <span x-show="item.allowed_ips && item.allowed_ips.trim().length" x-cloak
+                                  :title="item.allowed_ips"
+                                  class="inline-flex items-center gap-1 rounded-full bg-[#E1F3FE] px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3">
+                                    <path fill-rule="evenodd" d="M10 1a4 4 0 00-4 4v2H5a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2h-1V5a4 4 0 00-4-4zm-2 6V5a2 2 0 114 0v2H8z" clip-rule="evenodd" />
+                                </svg>
+                                IP-restricted
+                            </span>
+                        </td>
                         <td class="px-4 py-3 text-right">
                             <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="openEdit(item)">Edit</button>
                             <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="confirmDelete(item)">Delete</button>
@@ -141,7 +153,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="9" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No API access keys match your search.</td>
+                    <td colspan="10" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No API access keys match your search.</td>
                 </tr>
             </tbody>
         </table>
@@ -194,6 +206,12 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     <input id="create_description" type="text" x-model="createForm.description" maxlength="255"
                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
                 </div>
+                <div>
+                    <label for="create_allowed_ips" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Allowed IPs</label>
+                    <textarea id="create_allowed_ips" x-model="createForm.allowed_ips" rows="3"
+                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-500">One IP or CIDR per line (or comma-separated). IPv4/IPv6. Leave blank to allow all IPs.</p>
+                </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="createOpen = false">Cancel</button>
                     <button type="submit" :disabled="creating"
@@ -225,6 +243,12 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     <label for="edit_description" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Description</label>
                     <input id="edit_description" type="text" x-model="editForm.description" maxlength="255"
                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                </div>
+                <div>
+                    <label for="edit_allowed_ips" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Allowed IPs</label>
+                    <textarea id="edit_allowed_ips" x-model="editForm.allowed_ips" rows="3"
+                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-500">One IP or CIDR per line (or comma-separated). IPv4/IPv6. Leave blank to allow all IPs.</p>
                 </div>
                 <div class="flex items-center gap-6">
                     <label class="flex items-center gap-2 text-sm dark:text-gray-200">
@@ -258,10 +282,10 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 items: initialItems,
                 creating: false,
                 createOpen: false,
-                createForm: { user_id: '', service_id: '', description: '' },
+                createForm: { user_id: '', service_id: '', description: '', allowed_ips: '' },
                 editing: false,
                 editOpen: false,
-                editForm: { id: null, service_label: '', description: '', is_enable: 1, enable_log: 1 },
+                editForm: { id: null, service_label: '', description: '', allowed_ips: '', is_enable: 1, enable_log: 1 },
 
                 mask(key) {
                     if (!key || key.length <= 12) return key || '';
@@ -277,7 +301,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 },
 
                 openCreate() {
-                    this.createForm = { user_id: '', service_id: '', description: '' };
+                    this.createForm = { user_id: '', service_id: '', description: '', allowed_ips: '' };
                     this.createOpen = true;
                 },
 
@@ -306,6 +330,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         id: item.id,
                         service_label: item.service_label,
                         description: item.description || '',
+                        allowed_ips: item.allowed_ips || '',
                         is_enable: item.is_enable,
                         enable_log: item.enable_log,
                     };
@@ -322,6 +347,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         if (target) {
                             // service_id unchanged (immutable) — don't touch it.
                             target.description = this.editForm.description;
+                            target.allowed_ips = this.editForm.allowed_ips;
                             target.is_enable   = this.editForm.is_enable;
                             target.enable_log  = this.editForm.enable_log;
                         }

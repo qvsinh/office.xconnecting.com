@@ -26,6 +26,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
     'is_enable'     => (int) $item->is_enable,
     'enable_log'    => (int) $item->enable_log,
     'description'   => $item->description,
+    'allowed_ips'   => $item->allowed_ips,
     'last_access'   => $item->last_access,
     'revealed'      => false,
 ], $items);
@@ -63,6 +64,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     <th class="px-4 py-3">Log</th>
                     <th class="px-4 py-3">Last access</th>
                     <th class="px-4 py-3">Description</th>
+                    <th class="px-4 py-3">IPs</th>
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
@@ -101,13 +103,24 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         </td>
                         <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="item.last_access || '—'"></td>
                         <td class="max-w-[220px] truncate px-4 py-3 dark:text-gray-100" :title="item.description" x-text="item.description || '—'"></td>
+                        <td class="px-4 py-3">
+                            <span x-show="item.allowed_ips && item.allowed_ips.trim().length" x-cloak
+                                  :title="item.allowed_ips"
+                                  class="inline-flex items-center gap-1 rounded-full bg-[#E1F3FE] px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3">
+                                    <path fill-rule="evenodd" d="M10 1a4 4 0 00-4 4v2H5a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2h-1V5a4 4 0 00-4-4zm-2 6V5a2 2 0 114 0v2H8z" clip-rule="evenodd" />
+                                </svg>
+                                IP-restricted
+                            </span>
+                        </td>
                         <td class="px-4 py-3 text-right">
+                            <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="openIpModal(item)">IP restrictions</button>
                             <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="confirmDelete(item)">Delete</button>
                         </td>
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="7" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
+                    <td colspan="8" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
                         No API access keys yet. Create one to start calling the proxy.
                     </td>
                 </tr>
@@ -134,12 +147,45 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         <?php endforeach ?>
                     </select>
                 </div>
+                <div>
+                    <label for="create_allowed_ips" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Allowed IPs</label>
+                    <textarea id="create_allowed_ips" x-model="createForm.allowed_ips" rows="3"
+                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-500">One IP or CIDR per line (or comma-separated). IPv4/IPv6. Leave blank to allow all IPs.</p>
+                </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="createOpen = false">Cancel</button>
                     <button type="submit" :disabled="creating"
                             class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                         <span x-show="!creating">Create</span>
                         <span x-show="creating" x-cloak>Creating…</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- IP restrictions modal (edit allowed_ips for an existing key) -->
+    <div x-show="ipModalOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
+         @keydown.escape.window="ipModalOpen = false">
+        <div class="fixed inset-0 bg-black/40" @click="ipModalOpen = false"></div>
+        <div x-show="ipModalOpen" x-transition
+             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             x-trap.noscroll="ipModalOpen" role="dialog" aria-modal="true" aria-labelledby="ip-restrictions-title">
+            <h2 id="ip-restrictions-title" class="text-base font-semibold dark:text-gray-100">IP restrictions</h2>
+            <form @submit.prevent="submitIpModal" class="mt-4 space-y-4">
+                <div>
+                    <label for="ip_modal_allowed_ips" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Allowed IPs</label>
+                    <textarea id="ip_modal_allowed_ips" x-model="ipModalForm.allowed_ips" rows="4"
+                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-500">One IP or CIDR per line (or comma-separated). IPv4/IPv6. Leave blank to allow all IPs.</p>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="ipModalOpen = false">Cancel</button>
+                    <button type="submit" :disabled="savingIps"
+                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                        <span x-show="!savingIps">Save</span>
+                        <span x-show="savingIps" x-cloak>Saving…</span>
                     </button>
                 </div>
             </form>
@@ -153,7 +199,10 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 maxKeys,
                 creating: false,
                 createOpen: false,
-                createForm: { service_id: '' },
+                createForm: { service_id: '', allowed_ips: '' },
+                savingIps: false,
+                ipModalOpen: false,
+                ipModalForm: { id: null, allowed_ips: '' },
 
                 mask(key) {
                     if (!key || key.length <= 12) return key || '';
@@ -182,7 +231,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
 
                 openCreate() {
                     if (this.items.length >= this.maxKeys) return;
-                    this.createForm = { service_id: '' };
+                    this.createForm = { service_id: '', allowed_ips: '' };
                     this.createOpen = true;
                 },
 
@@ -223,6 +272,26 @@ $itemsForJs = array_map(static fn (object $item): array => [
                         this.$dispatch('toast', { type: 'success', text: json.message });
                     } else if (json) {
                         this.$dispatch('toast', { type: 'error', text: json.message || 'Could not update.' });
+                    }
+                },
+
+                openIpModal(item) {
+                    this.ipModalForm = { id: item.id, allowed_ips: item.allowed_ips || '' };
+                    this.ipModalOpen = true;
+                },
+
+                async submitIpModal() {
+                    this.savingIps = true;
+                    const json = await postForm('/my-api-access-keys/allowed-ips', this.ipModalForm);
+                    this.savingIps = false;
+                    if (!json) return;
+                    if (json.status === 'success') {
+                        const target = this.items.find(i => i.id === this.ipModalForm.id);
+                        if (target) target.allowed_ips = this.ipModalForm.allowed_ips;
+                        this.ipModalOpen = false;
+                        this.$dispatch('toast', { type: 'success', text: json.message });
+                    } else {
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not update IP restrictions.' });
                     }
                 },
 
