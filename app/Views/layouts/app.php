@@ -492,6 +492,36 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
             };
         }
 
+        // Copy text to the clipboard, returning a Promise<bool>. The async
+        // Clipboard API only exists in a secure context (HTTPS or localhost);
+        // this app is served over plain HTTP, where navigator.clipboard is
+        // undefined — so fall back to a temporary-textarea execCommand('copy'),
+        // which works everywhere. Callers toast on the boolean result.
+        window.copyText = async function (text) {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) {
+                // fall through to the legacy path
+            }
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok;
+            } catch (e) {
+                return false;
+            }
+        };
+
         // CSRF helper for fetch() calls from any page: window.csrf.{fieldName,token,headerName}
         window.csrf = {
             fieldName: document.querySelector('meta[name="csrf-token-name"]')?.content,

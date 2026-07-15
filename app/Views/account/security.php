@@ -141,10 +141,9 @@ $this->extend('layouts/app');
             },
 
             async copySecret() {
-                try {
-                    await navigator.clipboard.writeText(this.secret);
+                if (await window.copyText(this.secret)) {
                     this.$dispatch('toast', { type: 'success', text: 'Key copied to clipboard.' });
-                } catch (e) {
+                } else {
                     this.$dispatch('toast', { type: 'error', text: 'Could not copy — copy it manually.' });
                 }
             },

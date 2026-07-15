@@ -272,10 +272,9 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 },
 
                 async copy(key) {
-                    try {
-                        await navigator.clipboard.writeText(key);
+                    if (await window.copyText(key)) {
                         this.$dispatch('toast', { type: 'success', text: 'Access key copied to clipboard.' });
-                    } catch (e) {
+                    } else {
                         this.$dispatch('toast', { type: 'error', text: 'Could not copy — copy it manually.' });
                     }
                 },

@@ -189,7 +189,7 @@ $jprsError = <<<'JSON'
         <div class="relative mt-2">
             <pre class="overflow-x-auto whitespace-pre rounded-md bg-[#F7F6F3] p-4 font-mono text-xs leading-relaxed dark:bg-gray-900"><code><?= esc($cnrCurl) ?></code></pre>
             <button type="button" x-data="{ copied: false }"
-                    @click="navigator.clipboard.writeText(<?= esc(json_encode($cnrCurl), 'attr') ?>).then(() => { copied = true; $dispatch('toast', { type: 'success', text: 'Copied to clipboard.' }); setTimeout(() => copied = false, 1500); }).catch(() => $dispatch('toast', { type: 'error', text: 'Could not copy — select and copy manually.' }))"
+                    @click="window.copyText(<?= esc(json_encode($cnrCurl), 'attr') ?>).then(ok => ok ? (copied = true, $dispatch('toast', { type: 'success', text: 'Copied to clipboard.' }), setTimeout(() => copied = false, 1500)) : $dispatch('toast', { type: 'error', text: 'Could not copy — select and copy manually.' }))"
                     class="absolute right-3 top-3 rounded-md border border-[#EAEAEA] bg-white px-2 py-1 text-xs font-medium text-[#787774] hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700">
                 <span x-show="!copied">Copy</span>
                 <span x-show="copied" x-cloak>Copied!</span>
@@ -210,7 +210,7 @@ $jprsError = <<<'JSON'
         <div class="relative mt-2">
             <pre class="overflow-x-auto whitespace-pre rounded-md bg-[#F7F6F3] p-4 font-mono text-xs leading-relaxed dark:bg-gray-900"><code><?= esc($jprsCurl) ?></code></pre>
             <button type="button" x-data="{ copied: false }"
-                    @click="navigator.clipboard.writeText(<?= esc(json_encode($jprsCurl), 'attr') ?>).then(() => { copied = true; $dispatch('toast', { type: 'success', text: 'Copied to clipboard.' }); setTimeout(() => copied = false, 1500); }).catch(() => $dispatch('toast', { type: 'error', text: 'Could not copy — select and copy manually.' }))"
+                    @click="window.copyText(<?= esc(json_encode($jprsCurl), 'attr') ?>).then(ok => ok ? (copied = true, $dispatch('toast', { type: 'success', text: 'Copied to clipboard.' }), setTimeout(() => copied = false, 1500)) : $dispatch('toast', { type: 'error', text: 'Could not copy — select and copy manually.' }))"
                     class="absolute right-3 top-3 rounded-md border border-[#EAEAEA] bg-white px-2 py-1 text-xs font-medium text-[#787774] hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700">
                 <span x-show="!copied">Copy</span>
                 <span x-show="copied" x-cloak>Copied!</span>
