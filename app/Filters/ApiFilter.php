@@ -19,6 +19,12 @@ use Throwable;
  * short-circuits the request when `before()` returns a response, so no
  * controller is ever instantiated on a reject path (no exit()/send() needed).
  * Stateless — no session/cookie should persist across calls.
+ *
+ * The per-key `allowed_ips` IP allowlist checked below relies on
+ * `IncomingRequest::getIPAddress()` returning the real client address. Behind
+ * a reverse proxy/load balancer that is only true when `Config\App::$proxyIPs`
+ * lists the trusted proxy hop(s) — otherwise every request appears to
+ * originate from the proxy and the allowlist can't do its job.
  */
 class ApiFilter implements FilterInterface
 {
@@ -73,6 +79,17 @@ class ApiFilter implements FilterInterface
             return $this->reject('Invalid endpoint');
         }
 
+        $allowedIpsRaw = trim((string) ($keyRow->allowed_ips ?? ''));
+
+        if ($allowedIpsRaw !== '') {
+            helper('ip');
+            $rules = parse_ip_rules($allowedIpsRaw);
+
+            if (! ip_matches_allowlist($request->getIPAddress(), $rules)) {
+                return $this->reject('IP not allowed', 403);
+            }
+        }
+
         $keyModel->touchLastAccess($accessToken);
 
         $context               = service('apiAuthContext');
@@ -106,10 +123,10 @@ class ApiFilter implements FilterInterface
             || ($env === 'TESTING' && $envSegment === 'testing');
     }
 
-    private function reject(string $message): ResponseInterface
+    private function reject(string $message, int $status = 401): ResponseInterface
     {
         return service('response')
             ->setJSON(['status' => 'error', 'message' => $message])
-            ->setStatusCode(401);
+            ->setStatusCode($status);
     }
 }

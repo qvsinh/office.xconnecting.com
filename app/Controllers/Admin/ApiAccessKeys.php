@@ -54,6 +54,12 @@ class ApiAccessKeys extends BaseController
             return $this->jsonFailed('Unknown service.');
         }
 
+        [$allowedIps, $ipError] = $this->normalizeAllowedIps((string) $this->request->getPost('allowed_ips'));
+
+        if ($ipError !== null) {
+            return $this->jsonFailed($ipError);
+        }
+
         $user = model(UserModel::class)->find((int) $this->request->getPost('user_id'));
 
         if (! $user) {
@@ -65,6 +71,7 @@ class ApiAccessKeys extends BaseController
                 $user,
                 $serviceId,
                 trim((string) $this->request->getPost('description')),
+                $allowedIps,
             );
         } catch (RuntimeException $e) {
             return $this->jsonFailed($e->getMessage());
@@ -94,6 +101,12 @@ class ApiAccessKeys extends BaseController
             return $this->jsonFailed('Record not found.', 404);
         }
 
+        [$allowedIps, $ipError] = $this->normalizeAllowedIps((string) $this->request->getPost('allowed_ips'));
+
+        if ($ipError !== null) {
+            return $this->jsonFailed($ipError);
+        }
+
         // service_id is deliberately NOT updatable: it is encoded into the
         // Hashids access token at creation, and ApiFilter rejects the key
         // when the row's service_id no longer matches the token. Changing it
@@ -103,6 +116,7 @@ class ApiAccessKeys extends BaseController
             'description' => trim((string) $this->request->getPost('description')),
             'is_enable'   => $this->resolveFlag($this->request->getPost('is_enable'), (int) $existing->is_enable),
             'enable_log'  => $this->resolveFlag($this->request->getPost('enable_log'), (int) $existing->enable_log),
+            'allowed_ips' => $allowedIps,
         ]);
 
         return $this->jsonSuccess('API access key has been updated successfully.');
@@ -174,5 +188,19 @@ class ApiAccessKeys extends BaseController
     private function isKnownService(int $serviceId): bool
     {
         return in_array($serviceId, array_column(list_api_services(), 'id'), true);
+    }
+
+    /**
+     * Parse + validate a raw `allowed_ips` textarea blob (newline/comma
+     * separated IPs and/or CIDRs) into the normalized, newline-joined form
+     * stored on the row. Blank input means "no restriction" (allow all).
+     *
+     * @return array{0: string, 1: ?string} [normalized value, error message or null]
+     */
+    private function normalizeAllowedIps(string $raw): array
+    {
+        helper('ip');
+
+        return normalize_ip_rules($raw);
     }
 }

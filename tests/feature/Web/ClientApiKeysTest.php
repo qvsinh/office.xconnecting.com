@@ -182,6 +182,85 @@ final class ClientApiKeysTest extends CIUnitTestCase
         $this->assertCount(0, $items);
     }
 
+    public function testCreateWithValidAllowedIpsStoresNormalizedList(): void
+    {
+        $user = $this->seedWebUser(['email' => 'ip-create@example.com', 'zone' => 'client']);
+        $this->loginAs($user);
+
+        $create = $this->withSession()->post('/my-api-access-keys/create', $this->withCsrf([
+            'service_id'  => 800,
+            'allowed_ips' => "192.168.1.1, 10.0.0.0/8\n192.168.1.1",
+        ]));
+
+        $create->assertStatus(200);
+        $json = json_decode($create->getJSON(), true);
+        $row  = model(ApiAccessKeyModel::class)->findByAccessKey($json['access_key']);
+
+        $this->assertSame("192.168.1.1\n10.0.0.0/8", $row->allowed_ips);
+    }
+
+    public function testCreateWithInvalidAllowedIpsIsRejected(): void
+    {
+        $user = $this->seedWebUser(['email' => 'ip-create-bad@example.com', 'zone' => 'client']);
+        $this->loginAs($user);
+
+        $result = $this->withSession()->post('/my-api-access-keys/create', $this->withCsrf([
+            'service_id'  => 800,
+            'allowed_ips' => 'garbage-rule',
+        ]));
+
+        $result->assertStatus(400);
+        $this->assertSame(0, model(ApiAccessKeyModel::class)->countForUser((int) $user->id));
+    }
+
+    public function testUpdateAllowedIpsHappyPath(): void
+    {
+        $user      = $this->seedWebUser(['email' => 'ip-update@example.com', 'zone' => 'client']);
+        $keyModel  = model(ApiAccessKeyModel::class);
+        $accessKey = $keyModel->createForUser($user, 800);
+        $key       = $keyModel->findByAccessKey($accessKey);
+
+        $this->loginAs($user);
+        $result = $this->withSession()->post('/my-api-access-keys/allowed-ips', $this->withCsrf([
+            'id'          => $key->id,
+            'allowed_ips' => '203.0.113.0/24',
+        ]));
+
+        $result->assertStatus(200);
+        $this->assertSame('203.0.113.0/24', $keyModel->find($key->id)->allowed_ips);
+    }
+
+    public function testUpdateAllowedIpsRejectsInvalidRule(): void
+    {
+        $user      = $this->seedWebUser(['email' => 'ip-update-bad@example.com', 'zone' => 'client']);
+        $keyModel  = model(ApiAccessKeyModel::class);
+        $accessKey = $keyModel->createForUser($user, 800, '', '203.0.113.0/24');
+        $key       = $keyModel->findByAccessKey($accessKey);
+
+        $this->loginAs($user);
+        $result = $this->withSession()->post('/my-api-access-keys/allowed-ips', $this->withCsrf([
+            'id'          => $key->id,
+            'allowed_ips' => 'not-an-ip/99',
+        ]));
+
+        $result->assertStatus(400);
+        $this->assertSame('203.0.113.0/24', $keyModel->find($key->id)->allowed_ips);
+    }
+
+    public function testUpdateAllowedIpsRejectsAnotherUsersKeyWith404(): void
+    {
+        [$userA, $userB, $keyA] = $this->seedTwoUsersAndAKeyForA();
+
+        $this->loginAs($userB);
+        $result = $this->withSession()->post('/my-api-access-keys/allowed-ips', $this->withCsrf([
+            'id'          => $keyA->id,
+            'allowed_ips' => '203.0.113.0/24',
+        ]));
+
+        $result->assertStatus(404);
+        $this->assertSame('', (string) model(ApiAccessKeyModel::class)->find($keyA->id)->allowed_ips);
+    }
+
     public function testGuestIsRedirectedToLoginFromSelfServiceMutation(): void
     {
         $this->withSession(['basicAuthAuthenticated' => 1]);

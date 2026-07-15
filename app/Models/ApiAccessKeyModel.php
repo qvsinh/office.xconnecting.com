@@ -29,6 +29,7 @@ class ApiAccessKeyModel extends Model
         'is_enable',
         'enable_log',
         'description',
+        'allowed_ips',
         'last_access',
     ];
     protected $useTimestamps  = false;
@@ -75,7 +76,7 @@ class ApiAccessKeyModel extends Model
      *
      * @throws RuntimeException when the user is already at the key cap.
      */
-    public function createForUser(object $user, int $serviceId, string $description = ''): string
+    public function createForUser(object $user, int $serviceId, string $description = '', string $allowedIps = ''): string
     {
         helper('app'); // get_hashids()
 
@@ -96,6 +97,7 @@ class ApiAccessKeyModel extends Model
             'is_enable'   => 1,
             'enable_log'  => 1,
             'description' => $description,
+            'allowed_ips' => $allowedIps,
         ]);
 
         return $accessKey;
@@ -140,7 +142,7 @@ class ApiAccessKeyModel extends Model
         // Never load access_key here: the console only needs display fields and must
         // never expose the secret to the view (defense-in-depth — the view already omits it).
         if ($userId !== null) {
-            return $this->select('id, user_id, user_status, service_id, is_enable, enable_log, description, last_access')
+            return $this->select('id, user_id, user_status, service_id, is_enable, enable_log, description, allowed_ips, last_access')
                 ->where('user_id', $userId)
                 ->where('is_enable', 1)
                 ->whereIn('service_id', $serviceIds)
@@ -149,7 +151,7 @@ class ApiAccessKeyModel extends Model
         }
 
         return $this->db->table($this->table . ' uak')
-            ->select('uak.id, uak.user_id, uak.user_status, uak.service_id, uak.is_enable, uak.enable_log, uak.description, uak.last_access, u.name AS user_name, u.email AS user_email')
+            ->select('uak.id, uak.user_id, uak.user_status, uak.service_id, uak.is_enable, uak.enable_log, uak.description, uak.allowed_ips, uak.last_access, u.name AS user_name, u.email AS user_email')
             ->join('users u', 'u.id = uak.user_id', 'left')
             ->whereIn('uak.service_id', $serviceIds)
             ->orderBy('uak.id', 'DESC')
@@ -172,14 +174,14 @@ class ApiAccessKeyModel extends Model
         // Never load access_key here: the probe fetches the token itself via
         // findKey() server-side — the view/response must never see the secret.
         if ($userId !== null) {
-            return $this->select('id, service_id, user_status, is_enable, description, last_access')
+            return $this->select('id, service_id, user_status, is_enable, description, allowed_ips, last_access')
                 ->where('user_id', $userId)
                 ->orderBy('id', 'DESC')
                 ->findAll();
         }
 
         return $this->db->table($this->table . ' uak')
-            ->select('uak.id, uak.user_id, uak.service_id, uak.user_status, uak.is_enable, uak.description, uak.last_access, u.name AS user_name, u.email AS user_email')
+            ->select('uak.id, uak.user_id, uak.service_id, uak.user_status, uak.is_enable, uak.description, uak.allowed_ips, uak.last_access, u.name AS user_name, u.email AS user_email')
             ->join('users u', 'u.id = uak.user_id', 'left')
             ->orderBy('uak.id', 'DESC')
             ->get()

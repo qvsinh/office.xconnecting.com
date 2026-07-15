@@ -42,13 +42,47 @@ class ApiAccessKeys extends BaseController
             return $this->jsonFailed('Unknown service.');
         }
 
+        [$allowedIps, $ipError] = $this->normalizeAllowedIps((string) $this->request->getPost('allowed_ips'));
+
+        if ($ipError !== null) {
+            return $this->jsonFailed($ipError);
+        }
+
         try {
-            $accessKey = model(ApiAccessKeyModel::class)->createForUser(session('userWorking'), $serviceId);
+            $accessKey = model(ApiAccessKeyModel::class)->createForUser(session('userWorking'), $serviceId, '', $allowedIps);
         } catch (RuntimeException $e) {
             return $this->jsonFailed($e->getMessage());
         }
 
         return $this->jsonSuccess('Your new API access key has been created.', ['access_key' => $accessKey]);
+    }
+
+    /**
+     * Update the IP allowlist ("restrict IP usage") on the caller's own key.
+     * Ownership scoped via `ownedKeyOrNull()` — the same no-existence-leak
+     * 404 as every other mutation on this controller.
+     */
+    public function updateAllowedIps(): ResponseInterface
+    {
+        if (! $this->validate(['id' => 'required|is_natural_no_zero'])) {
+            return $this->jsonFailed($this->validator->getErrors());
+        }
+
+        $key = $this->ownedKeyOrNull();
+
+        if (! $key) {
+            return $this->jsonFailed('Record not found.', 404);
+        }
+
+        [$allowedIps, $ipError] = $this->normalizeAllowedIps((string) $this->request->getPost('allowed_ips'));
+
+        if ($ipError !== null) {
+            return $this->jsonFailed($ipError);
+        }
+
+        model(ApiAccessKeyModel::class)->update($key->id, ['allowed_ips' => $allowedIps]);
+
+        return $this->jsonSuccess('IP allowlist has been updated.');
     }
 
     public function toggle(): ResponseInterface
@@ -112,5 +146,19 @@ class ApiAccessKeys extends BaseController
             ->where('id', $id)
             ->where('user_id', (int) $me->id)
             ->first();
+    }
+
+    /**
+     * Parse + validate a raw `allowed_ips` textarea blob (newline/comma
+     * separated IPs and/or CIDRs) into the normalized, newline-joined form
+     * stored on the row. Blank input means "no restriction" (allow all).
+     *
+     * @return array{0: string, 1: ?string} [normalized value, error message or null]
+     */
+    private function normalizeAllowedIps(string $raw): array
+    {
+        helper('ip');
+
+        return normalize_ip_rules($raw);
     }
 }

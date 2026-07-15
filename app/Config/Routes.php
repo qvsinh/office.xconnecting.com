@@ -119,6 +119,7 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('my-api-access-keys/toggle', 'Client\ApiAccessKeys::toggle', ['filter' => 'csrf']);
     $routes->post('my-api-access-keys/toggle-log', 'Client\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
     $routes->post('my-api-access-keys/remove', 'Client\ApiAccessKeys::remove', ['filter' => 'csrf']);
+    $routes->post('my-api-access-keys/allowed-ips', 'Client\ApiAccessKeys::updateAllowedIps', ['filter' => 'csrf']);
 
     $routes->get('api-history', 'Client\ApiHistory::logs');
     $routes->get('api-history/preview', 'Client\ApiHistory::preview');
