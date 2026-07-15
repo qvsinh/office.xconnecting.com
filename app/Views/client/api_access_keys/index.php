@@ -58,12 +58,10 @@ $itemsForJs = array_map(static fn (object $item): array => [
         <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
-                    <th class="px-4 py-3">Service</th>
-                    <th class="px-4 py-3">Access key</th>
+                    <th class="px-4 py-3">Service / Key</th>
                     <th class="px-4 py-3">Enabled</th>
                     <th class="px-4 py-3">Log</th>
                     <th class="px-4 py-3">Last access</th>
-                    <th class="px-4 py-3">Description</th>
                     <th class="px-4 py-3">IPs</th>
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -71,15 +69,15 @@ $itemsForJs = array_map(static fn (object $item): array => [
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <template x-for="item in items" :key="item.id">
                     <tr>
-                        <td class="px-4 py-3 dark:text-gray-100" x-text="item.service_label"></td>
-                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100">
-                            <div class="flex items-center gap-2">
+                        <td class="px-4 py-3">
+                            <span class="font-medium dark:text-gray-100" x-text="item.service_label"></span>
+                            <div class="mt-1 flex items-center gap-2 font-mono text-xs text-[#787774] dark:text-gray-400">
                                 <span x-text="item.revealed ? item.access_key : mask(item.access_key)"></span>
-                                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100"
+                                <button type="button" class="hover:text-[#111111] dark:hover:text-gray-100"
                                         @click="item.revealed = !item.revealed">
                                     <span x-text="item.revealed ? 'Hide' : 'Reveal'"></span>
                                 </button>
-                                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100"
+                                <button type="button" class="hover:text-[#111111] dark:hover:text-gray-100"
                                         @click="copy(item.access_key)">Copy</button>
                             </div>
                         </td>
@@ -102,7 +100,6 @@ $itemsForJs = array_map(static fn (object $item): array => [
                             </button>
                         </td>
                         <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="item.last_access || '—'"></td>
-                        <td class="max-w-[220px] truncate px-4 py-3 dark:text-gray-100" :title="item.description" x-text="item.description || '—'"></td>
                         <td class="px-4 py-3">
                             <span x-show="item.allowed_ips && item.allowed_ips.trim().length" x-cloak
                                   :title="item.allowed_ips"
@@ -120,7 +117,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="8" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
+                    <td colspan="6" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
                         No API access keys yet. Create one to start calling the proxy.
                     </td>
                 </tr>

@@ -81,13 +81,10 @@ $itemsForJs = array_map(static fn (object $item): array => [
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
                     <th class="px-4 py-3">User</th>
-                    <th class="px-4 py-3">Service</th>
-                    <th class="px-4 py-3">Env</th>
-                    <th class="px-4 py-3">Access key</th>
+                    <th class="px-4 py-3">Service / Key</th>
                     <th class="px-4 py-3">Enabled</th>
                     <th class="px-4 py-3">Log</th>
                     <th class="px-4 py-3">Last access</th>
-                    <th class="px-4 py-3">Description</th>
                     <th class="px-4 py-3">IPs</th>
                     <th class="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -99,20 +96,20 @@ $itemsForJs = array_map(static fn (object $item): array => [
                             <p class="font-medium dark:text-gray-100" x-text="item.user_name || ('User #' + item.user_id)"></p>
                             <p class="text-xs text-[#787774] dark:text-gray-400" x-text="item.user_email || ''"></p>
                         </td>
-                        <td class="px-4 py-3 dark:text-gray-100" x-text="item.service_label"></td>
                         <td class="px-4 py-3">
-                            <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
-                                  :class="item.user_env === 'LIVE' ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FBF3DB] text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300'"
-                                  x-text="item.user_env || '—'"></span>
-                        </td>
-                        <td class="px-4 py-3 font-mono text-xs dark:text-gray-100">
                             <div class="flex items-center gap-2">
+                                <span class="font-medium dark:text-gray-100" x-text="item.service_label"></span>
+                                <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
+                                      :class="item.user_env === 'LIVE' ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FBF3DB] text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300'"
+                                      x-text="item.user_env || '—'"></span>
+                            </div>
+                            <div class="mt-1 flex items-center gap-2 font-mono text-xs text-[#787774] dark:text-gray-400">
                                 <span x-text="item.revealed ? item.access_key : mask(item.access_key)"></span>
-                                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100"
+                                <button type="button" class="hover:text-[#111111] dark:hover:text-gray-100"
                                         @click="item.revealed = !item.revealed">
                                     <span x-text="item.revealed ? 'Hide' : 'Reveal'"></span>
                                 </button>
-                                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100"
+                                <button type="button" class="hover:text-[#111111] dark:hover:text-gray-100"
                                         @click="copy(item.access_key)">Copy</button>
                             </div>
                         </td>
@@ -135,7 +132,6 @@ $itemsForJs = array_map(static fn (object $item): array => [
                             </button>
                         </td>
                         <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400" x-text="item.last_access || '—'"></td>
-                        <td class="max-w-[200px] truncate px-4 py-3 dark:text-gray-100" :title="item.description" x-text="item.description || '—'"></td>
                         <td class="px-4 py-3">
                             <span x-show="item.allowed_ips && item.allowed_ips.trim().length" x-cloak
                                   :title="item.allowed_ips"
@@ -153,7 +149,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                     </tr>
                 </template>
                 <tr x-show="items.length === 0" x-cloak>
-                    <td colspan="10" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No API access keys match your search.</td>
+                    <td colspan="7" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">No API access keys match your search.</td>
                 </tr>
             </tbody>
         </table>
