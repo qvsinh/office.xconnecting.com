@@ -158,6 +158,35 @@ class ApiAccessKeyModel extends Model
     }
 
     /**
+     * Key list for the API connection self-test tool, spanning ALL
+     * providers (unlike `listForConsole()`, which is scoped to one
+     * provider). `$userId === null` is the admin zone (every user's keys,
+     * joined with the owner's name/email); a non-null `$userId` is the
+     * client zone (that user's own keys). Disabled keys are included on
+     * purpose — showing the resulting 401 is the point of the self-test.
+     *
+     * @return list<object>
+     */
+    public function listForConnectionTest(?int $userId): array
+    {
+        // Never load access_key here: the probe fetches the token itself via
+        // findKey() server-side — the view/response must never see the secret.
+        if ($userId !== null) {
+            return $this->select('id, service_id, user_status, is_enable, description, last_access')
+                ->where('user_id', $userId)
+                ->orderBy('id', 'DESC')
+                ->findAll();
+        }
+
+        return $this->db->table($this->table . ' uak')
+            ->select('uak.id, uak.user_id, uak.service_id, uak.user_status, uak.is_enable, uak.description, uak.last_access, u.name AS user_name, u.email AS user_email')
+            ->join('users u', 'u.id = uak.user_id', 'left')
+            ->orderBy('uak.id', 'DESC')
+            ->get()
+            ->getResult();
+    }
+
+    /**
      * Admin list joined with the owning user, keyword-searchable
      * (email exact / numeric id-or-user-or-service / name LIKE).
      *

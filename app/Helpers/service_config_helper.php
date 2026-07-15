@@ -91,6 +91,26 @@ if (! function_exists('list_api_services')) {
     }
 }
 
+if (! function_exists('provider_of_service')) {
+    /**
+     * Reverse-lookup a numeric `service_id` to its provider ('cnr'|'jprs')
+     * via `list_api_services()`. Returns null for an unknown/orphaned id —
+     * shared by `ConsoleController` (provider-scoped consoles) and
+     * `ApiConnectionController` (all-provider self-test) so the lookup
+     * can't drift between the two callers.
+     */
+    function provider_of_service(int $serviceId): ?string
+    {
+        foreach (list_api_services() as $service) {
+            if ($service['id'] === $serviceId) {
+                return $service['provider'];
+            }
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('get_service_config')) {
     /**
      * Auto-detect provider (JPRS then CNR) by numeric id and return its config.

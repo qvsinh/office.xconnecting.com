@@ -105,7 +105,7 @@ abstract class ConsoleController extends BaseController
 
         $key = model(ApiAccessKeyModel::class)->findKey($id);
 
-        if ($key === null || $this->providerOfService((int) $key->service_id) !== $this->provider()) {
+        if ($key === null || provider_of_service((int) $key->service_id) !== $this->provider()) {
             return null;
         }
 
@@ -114,17 +114,6 @@ abstract class ConsoleController extends BaseController
         }
 
         return $key;
-    }
-
-    private function providerOfService(int $serviceId): ?string
-    {
-        foreach (list_api_services() as $service) {
-            if ($service['id'] === $serviceId) {
-                return $service['provider'];
-            }
-        }
-
-        return null;
     }
 
     /**

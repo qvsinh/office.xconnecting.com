@@ -9,12 +9,17 @@ namespace Tests\Support\Api;
  */
 class FakeCurlResponse
 {
-    public function __construct(private readonly string $body)
+    public function __construct(private readonly string $body, private readonly int $statusCode = 200)
     {
     }
 
     public function getBody(): string
     {
         return $this->body;
+    }
+
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
     }
 }
