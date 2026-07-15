@@ -167,6 +167,23 @@ class ApiHistoryModel extends Model
     }
 
     /**
+     * Count non-soft-deleted history rows created at/after `$sinceDatetime`
+     * ('Y-m-d H:i:s'), optionally scoped to one user. Backs the dashboard
+     * "API calls (24h)" widgets. Soft-delete filter is applied automatically
+     * by the model builder.
+     */
+    public function countSince(string $sinceDatetime, ?int $userId = null): int
+    {
+        $builder = $this->where('created_at >=', $sinceDatetime);
+
+        if ($userId !== null) {
+            $builder->where('user_id', $userId);
+        }
+
+        return $builder->countAllResults();
+    }
+
+    /**
      * Filtered/sorted/paginated read scoped to one user's single service —
      * the exact query behind the Bearer proxy's `command=History` shortcut
      * (`Api\ApiController::fetchHistory()`) and the web console's `History`

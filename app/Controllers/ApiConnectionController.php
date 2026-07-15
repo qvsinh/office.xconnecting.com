@@ -30,6 +30,9 @@ abstract class ApiConnectionController extends BaseController
         return view('api_test/index', [
             'keys' => model(ApiAccessKeyModel::class)->listForConnectionTest($userId),
             'zone' => $this->requireOwnKey() ? 'client' : 'admin',
+            // The client IP the server currently sees — the same value ApiFilter
+            // checks an IP allowlist against (honors Config\App::$proxyIPs).
+            'serverSeenIp' => $this->request->getIPAddress(),
         ]);
     }
 }

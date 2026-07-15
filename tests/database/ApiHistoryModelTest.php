@@ -214,4 +214,22 @@ final class ApiHistoryModelTest extends CIUnitTestCase
         $this->assertNull($model->find($idA));
         $this->assertNull($model->find($idB));
     }
+
+    public function testCountSinceCountsRecentRowsOptionallyScopedByUser(): void
+    {
+        $model = new ApiHistoryModel();
+
+        $this->seedRow(['user_id' => 1]); // recent
+        $this->seedRow(['user_id' => 2]); // recent
+        $old = $this->seedRow(['user_id' => 1]);
+        // Backdate one row past the 24h window (bypass useTimestamps on insert).
+        $model->builder()->where('id', $old)->update(['created_at' => date('Y-m-d H:i:s', time() - (2 * 86400))]);
+
+        $since = date('Y-m-d H:i:s', time() - 86400);
+
+        $this->assertSame(2, $model->countSince($since));            // both recent, old excluded
+        $this->assertSame(1, $model->countSince($since, 1));          // user 1: only the recent one
+        $this->assertSame(1, $model->countSince($since, 2));          // user 2: recent
+        $this->assertSame(3, $model->countSince(date('Y-m-d H:i:s', time() - (10 * 86400)))); // wide window: all
+    }
 }
