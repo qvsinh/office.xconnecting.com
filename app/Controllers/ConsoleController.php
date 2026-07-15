@@ -19,7 +19,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 abstract class ConsoleController extends BaseController
 {
-    protected $helpers = ['service_config'];
+    protected $helpers = ['service_config', 'console_commands'];
 
     abstract protected function provider(): string;
 

@@ -22,7 +22,8 @@ class ConsoleCnr extends CnrConsoleController
         $me = session('userWorking');
 
         return view('client/api_console/cnr/index', [
-            'keys' => model(ApiAccessKeyModel::class)->listForConsole((int) $me->id, 'cnr'),
+            'keys'     => model(ApiAccessKeyModel::class)->listForConsole((int) $me->id, 'cnr'),
+            'commands' => console_commands('cnr'),
         ]);
     }
 }

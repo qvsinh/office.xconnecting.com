@@ -22,7 +22,8 @@ class ConsoleJprs extends JprsConsoleController
         $me = session('userWorking');
 
         return view('client/api_console/jprs/index', [
-            'keys' => model(ApiAccessKeyModel::class)->listForConsole((int) $me->id, 'jprs'),
+            'keys'     => model(ApiAccessKeyModel::class)->listForConsole((int) $me->id, 'jprs'),
+            'commands' => console_commands('jprs'),
         ]);
     }
 }

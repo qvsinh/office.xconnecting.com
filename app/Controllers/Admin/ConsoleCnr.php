@@ -20,7 +20,8 @@ class ConsoleCnr extends CnrConsoleController
     public function index(): string
     {
         return view('admin/api_console/cnr/index', [
-            'keys' => model(ApiAccessKeyModel::class)->listForConsole(null, 'cnr'),
+            'keys'     => model(ApiAccessKeyModel::class)->listForConsole(null, 'cnr'),
+            'commands' => console_commands('cnr'),
         ]);
     }
 }

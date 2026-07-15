@@ -20,7 +20,8 @@ class ConsoleJprs extends JprsConsoleController
     public function index(): string
     {
         return view('admin/api_console/jprs/index', [
-            'keys' => model(ApiAccessKeyModel::class)->listForConsole(null, 'jprs'),
+            'keys'     => model(ApiAccessKeyModel::class)->listForConsole(null, 'jprs'),
+            'commands' => console_commands('jprs'),
         ]);
     }
 }
