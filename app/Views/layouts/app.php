@@ -158,13 +158,14 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
             <nav class="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
                 <?php foreach ($navGroups as $groupLabel => $groupItems) :
                     $groupActive = false;
+
                     foreach ($groupItems as $item) {
                         if (url_is($item['href'])) {
                             $groupActive = true;
                             break;
                         }
                     }
-                ?>
+                    ?>
                     <div x-data="{ open: <?= $groupActive ? 'true' : 'false' ?> }">
                         <button type="button"
                                 class="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -186,8 +187,8 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                                     <?php foreach ($groupItems as $item) : $active = url_is($item['href']); ?>
                                         <a href="<?= esc($item['href'], 'attr') ?>" @click="sidebarMobileOpen = false"
                                            class="block whitespace-nowrap rounded-md py-2 pl-11 pr-3 text-sm font-medium <?= $active
-                                                ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
-                                                : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
+                                                    ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
+                                                    : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
                                             <?= esc($item['label']) ?>
                                         </a>
                                     <?php endforeach ?>
