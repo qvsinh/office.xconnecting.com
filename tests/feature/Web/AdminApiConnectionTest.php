@@ -1,19 +1,19 @@
 <?php
 
-use CodeIgniter\Config\Services;
+use App\Models\ApiAccessKeyModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\Api\ApiKeyFixture;
-use Tests\Support\Api\FakeCurlRequest;
-use Tests\Support\Api\FakeCurlResponse;
 use Tests\Support\Web\WebAuthFixture;
 
 /**
  * Admin-zone API connection self-test (`Admin\ApiConnectionTest`), run
- * through real routing + filters (`authFilter`/`adminFilter`) + CSRF. The
- * loopback HTTP call is mocked via `service('curlrequest')`
- * (`FakeCurlRequest`) — no real network call is ever made.
+ * through real routing + filters (`authFilter`/`adminFilter`). The actual
+ * probe now runs as a `fetch()` from the caller's own browser against the
+ * public `/api/{provider}/{env}/` proxy — there is no server-side `run()`
+ * step left to test here, only that `index()` renders with the right key
+ * scope and the zone is gated correctly.
  *
  * @internal
  */
@@ -33,7 +33,6 @@ final class AdminApiConnectionTest extends CIUnitTestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        Services::resetSingle('curlrequest');
         session()->destroy();
     }
 
@@ -41,33 +40,16 @@ final class AdminApiConnectionTest extends CIUnitTestCase
     {
         $admin = $this->seedWebUser(['email' => 'api-test-admin-index@example.com', 'zone' => 'global']);
         $owner = $this->seedWebUser(['email' => 'api-test-admin-owner@example.com', 'zone' => 'client']);
-        $this->seedApiKey($owner->id, 0, self::JPRS_SERVICE_ID);
+        $key   = $this->seedApiKey($owner->id, 0, self::JPRS_SERVICE_ID);
 
         $this->loginAs($admin);
         $result = $this->withSession()->get('/admin/api-test');
 
         $result->assertStatus(200);
-    }
 
-    public function testAdminCanRunAnotherUsersKeyAndReceivesTheProbeEnvelope(): void
-    {
-        $admin = $this->seedWebUser(['email' => 'api-test-admin-run@example.com', 'zone' => 'global']);
-        $owner = $this->seedWebUser(['email' => 'api-test-admin-run-owner@example.com', 'zone' => 'client']);
-        $key   = $this->seedApiKey($owner->id, 1, self::JPRS_SERVICE_ID, ['user_status' => 1]);
-
-        $fake = new FakeCurlRequest();
-        $fake->queue(new FakeCurlResponse(json_encode(['status' => 'success', 'data' => ['rows' => []]]), 200));
-        Services::injectMock('curlrequest', $fake);
-
-        $this->loginAs($admin);
-        $result = $this->withSession()->post('/admin/api-test/run', $this->withCsrf(['key_id' => $key['id']]));
-
-        $result->assertStatus(200);
-        $json = json_decode($result->getJSON(), true);
-        $this->assertSame('success', $json['status']);
-        $this->assertTrue($json['result']['ok']);
-        $this->assertStringContainsString('/api/jprs/live/', $json['result']['endpoint']);
-        $this->assertStringNotContainsString($key['token'], $result->getJSON());
+        // Admin zone lists every user's keys (unlike the client zone).
+        $keys = model(ApiAccessKeyModel::class)->listForConnectionTest(null);
+        $this->assertContains($key['token'], array_column($keys, 'access_key'));
     }
 
     public function testNonAdminSessionIsRedirectedToDashboard(): void

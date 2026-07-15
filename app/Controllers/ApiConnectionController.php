@@ -2,23 +2,20 @@
 
 namespace App\Controllers;
 
-use App\Libraries\ApiConnectionTester;
 use App\Models\ApiAccessKeyModel;
-use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * Shared API connection self-test flow behind both zones (admin/client):
- * resolves the target key row with the same ownership scoping as
- * `ConsoleController`, derives provider/env FROM THE RESOLVED KEY ROW
- * (never from request input), and runs the `History`-command loopback
- * probe (`App\Libraries\ApiConnectionTester`). Unlike `ConsoleController`
- * this isn't provider-specific — one controller covers CNR and JPRS keys
- * alike — so the zone split is only `requireOwnKey()`.
+ * lists the caller's testable keys (scoped by `requireOwnKey()`) so the
+ * view can run the actual probe as a `fetch()` FROM THE CALLER'S OWN
+ * BROWSER — real client IP + origin, so it also exercises the per-key IP
+ * allowlist — straight against the public `/api/{provider}/{env}/` proxy
+ * route. There is no server-side run step: the browser holds the token
+ * (`listForConnectionTest()` now includes `access_key`) and calls the
+ * existing authenticated proxy directly.
  */
 abstract class ApiConnectionController extends BaseController
 {
-    protected $helpers = ['service_config'];
-
     /**
      * True for the client zone (caller may only test its own keys); false
      * for the admin zone (any key, identity is still always taken from the
@@ -34,57 +31,5 @@ abstract class ApiConnectionController extends BaseController
             'keys' => model(ApiAccessKeyModel::class)->listForConnectionTest($userId),
             'zone' => $this->requireOwnKey() ? 'client' : 'admin',
         ]);
-    }
-
-    public function run(): ResponseInterface
-    {
-        if (! $this->validate(['key_id' => 'required|is_natural_no_zero'])) {
-            return $this->jsonFailed($this->validator->getErrors(), 400);
-        }
-
-        $key = $this->resolveKey((int) $this->request->getPost('key_id'));
-
-        if ($key === null) {
-            return $this->jsonFailed('Record not found.', 404);
-        }
-
-        $provider = provider_of_service((int) $key->service_id);
-
-        if ($provider === null) {
-            return $this->jsonFailed('Record not found.', 404);
-        }
-
-        $env = (int) $key->user_status === 1 ? 'LIVE' : 'TESTING';
-
-        // Probe runs regardless of is_enable/is_disable — surfacing the real
-        // 401 a disabled/misconfigured key gets from ApiFilter IS the result.
-        $result = (new ApiConnectionTester())->probe($key, $provider, $env);
-
-        return $this->jsonSuccess('Connection test completed.', ['result' => $result]);
-    }
-
-    /**
-     * Fetch the key named by `id`, scoped (for the client zone) to the
-     * session user. Returns null — indistinguishable from "doesn't exist"
-     * — when the id is missing or (client zone only) belongs to someone
-     * else. No IDOR, no existence leak.
-     */
-    private function resolveKey(int $id): ?object
-    {
-        if ($id <= 0) {
-            return null;
-        }
-
-        $key = model(ApiAccessKeyModel::class)->findKey($id);
-
-        if ($key === null) {
-            return null;
-        }
-
-        if ($this->requireOwnKey() && (int) $key->user_id !== (int) session('userWorking')->id) {
-            return null;
-        }
-
-        return $key;
     }
 }

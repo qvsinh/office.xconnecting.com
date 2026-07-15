@@ -2,15 +2,19 @@
 /**
  * API connection self-test — lets a user prove one of their API access keys
  * authenticates against the REAL public proxy endpoint (base URL + Bearer +
- * env), end-to-end. The probe always runs the `History` command (handled
- * locally by the proxy), so it never reaches the upstream registrar — it
- * only proves key + endpoint + auth work. The access-key string itself is
- * never present in `$keys` (see `ApiAccessKeyModel::listForConnectionTest()`)
- * and must never be rendered here.
+ * env), end-to-end. The probe runs entirely in the browser via fetch() (no
+ * server-side runner) so it exercises the caller's actual client IP/origin,
+ * including any IP allowlist on the key. It always calls the `History`
+ * command (handled locally by the proxy), so it never reaches the upstream
+ * registrar — it only proves key + endpoint + auth work.
  *
- * @var list<object> $keys ApiAccessKeyModel::listForConnectionTest() rows — id, service_id,
- *                   user_status, is_enable, description, last_access, and (admin zone
- *                   only) user_name/user_email. No access_key.
+ * The access key string is embedded in x-data (same exposure as the keys
+ * pages' copy-to-clipboard) purely to build the Authorization header in JS —
+ * it must never be rendered into the visible DOM/result.
+ *
+ * @var list<object> $keys ApiAccessKeyModel::listForConnectionTest() rows — id, access_key,
+ *                   service_id, user_status, is_enable, description, allowed_ips, last_access,
+ *                   and (admin zone only) user_id/user_name/user_email.
  * @var string       $zone 'admin'|'client'
  */
 helper('service_config');
@@ -19,7 +23,6 @@ $this->extend('layouts/app');
 $pageTitle = 'Connection test';
 
 $isAdmin = $zone === 'admin';
-$runUrl  = ($isAdmin ? '/admin' : '') . '/api-test/run';
 
 $serviceLabels = array_column(list_api_services(), 'label', 'id');
 
@@ -28,22 +31,24 @@ $keysForJs = array_map(static fn (object $k): array => [
     'service_label' => $serviceLabels[(int) $k->service_id] ?? ('Service #' . $k->service_id),
     'provider'      => provider_of_service((int) $k->service_id) ?? '—',
     'env'           => (int) $k->user_status === 1 ? 'LIVE' : 'TESTING',
+    'access_key'    => $k->access_key,
     'is_enable'     => (int) $k->is_enable,
+    'allowed_ips'   => $k->allowed_ips ?? '',
+    'user_id'       => $k->user_id ?? null,
     'user_name'     => $k->user_name ?? null,
     'user_email'    => $k->user_email ?? null,
 ], $keys);
 ?>
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-5xl" x-data="apiConnectionTest(<?= esc(json_encode($keysForJs), 'attr') ?>, <?= esc(json_encode($runUrl), 'attr') ?>, <?= $isAdmin ? 'true' : 'false' ?>)">
+<div class="mx-auto max-w-5xl" x-data="apiConnectionTest(<?= esc(json_encode($keysForJs), 'attr') ?>, <?= $isAdmin ? 'true' : 'false' ?>)">
 
     <div>
         <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Connection test</h1>
         <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
-            Verify that one of <?= $isAdmin ? 'any user\'s' : 'your own' ?> API access keys authenticates
-            against the real public API endpoint — base URL, Bearer token, and environment segment,
-            end-to-end. The probe uses the <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">History</code>
-            command, which is handled locally and never reaches the upstream registrar — it only
-            proves your key + endpoint + auth work. The key string itself is never shown.
+            Runs from your browser against the real API endpoint, so it tests your actual client
+            IP + origin (and any IP allowlist on the key). Uses the
+            <code class="rounded bg-[#F7F6F3] px-1 py-0.5 dark:bg-gray-700 dark:text-gray-200">History</code>
+            command — verifies your key + endpoint, not upstream registrar connectivity.
         </p>
     </div>
 
@@ -77,11 +82,14 @@ $keysForJs = array_map(static fn (object $k): array => [
                         <template x-if="!selectedKey().is_enable">
                             <span class="ml-1 rounded-full bg-[#FDEBEC] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#9F2F2D] dark:bg-red-900/40 dark:text-red-300">Disabled</span>
                         </template>
+                        <template x-if="selectedKey().allowed_ips">
+                            <span class="ml-1 rounded-full bg-[#FBF3DB] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300">IP-restricted</span>
+                        </template>
                     </p>
                 </template>
             </div>
 
-            <button type="button" @click="run()" :disabled="running || !form.key_id"
+            <button type="button" @click="test()" :disabled="running || !form.key_id"
                     class="mt-5 w-full rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                 <span x-show="!running">Test connection</span>
                 <span x-show="running" x-cloak>Testing…</span>
@@ -143,7 +151,7 @@ $keysForJs = array_map(static fn (object $k): array => [
 </div>
 
 <script>
-    function apiConnectionTest(initialKeys, runUrl, isAdmin) {
+    function apiConnectionTest(initialKeys, isAdmin) {
         return {
             keys: initialKeys,
             isAdmin,
@@ -161,7 +169,7 @@ $keysForJs = array_map(static fn (object $k): array => [
 
             keyLabel(k) {
                 let label = k.service_label + ' — ' + k.env;
-                if (this.isAdmin) label += ' — ' + (k.user_name || k.user_email || 'unknown user');
+                if (this.isAdmin) label += ' — ' + (k.user_name || k.user_email || ('User #' + k.user_id));
                 if (!k.is_enable) label += ' [disabled]';
                 return label;
             },
@@ -170,33 +178,60 @@ $keysForJs = array_map(static fn (object $k): array => [
                 return this.keys.find(k => String(k.id) === String(this.form.key_id)) || null;
             },
 
-            async run() {
-                if (!this.form.key_id) {
+            // Runs entirely client-side: builds the real public endpoint URL and
+            // sends the Bearer token straight from the browser (no server round
+            // trip), so the caller's real IP/origin is what gets tested.
+            async test() {
+                const k = this.selectedKey();
+                if (!k) {
                     this.$dispatch('toast', { type: 'error', text: 'Select an API access key.' });
                     return;
                 }
+
+                const base = window.location.origin;
+                const url = base + '/api/' + k.provider + '/' + k.env.toLowerCase() + '/?command=History&limit=1';
 
                 this.running = true;
                 this.result = null;
                 this.resultText = '';
 
-                const json = await postForm(runUrl, { key_id: this.form.key_id });
-                this.running = false;
-                if (!json) return;
-
-                if (json.status !== 'success') {
-                    this.$dispatch('toast', { type: 'error', text: json.message || 'Connection test failed.' });
-                    return;
+                const t0 = performance.now();
+                let res = null, parsed = null, netErr = null, bodyText = '';
+                try {
+                    res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + k.access_key } });
+                    bodyText = await res.text();
+                    try {
+                        parsed = JSON.parse(bodyText);
+                    } catch (e) {
+                        parsed = null;
+                    }
+                } catch (e) {
+                    netErr = 'Network error — endpoint unreachable from your browser.';
                 }
+                const latency = Math.round(performance.now() - t0);
+                this.running = false;
 
-                this.result = json.result;
-                this.resultText = JSON.stringify(json.result.response, null, 2);
+                const ok = !!res && res.ok && parsed !== null && parsed.status === 'success';
+                this.result = {
+                    base_url: base,
+                    endpoint: url,
+                    http_status: res ? res.status : 0,
+                    ok,
+                    latency_ms: latency,
+                    response: parsed !== null ? parsed : bodyText,
+                    error: netErr,
+                };
+                this.resultText = typeof this.result.response === 'string'
+                    ? this.result.response
+                    : JSON.stringify(this.result.response, null, 2);
+
                 this.$dispatch('toast', {
-                    type: this.result.ok ? 'success' : 'error',
-                    text: this.result.ok ? 'Reachable and authenticated.' : (this.result.error || 'Key did not authenticate — see result.'),
+                    type: ok ? 'success' : 'error',
+                    text: ok ? 'Reachable and authenticated.' : (netErr || ('HTTP ' + this.result.http_status)),
                 });
             },
         };
     }
 </script>
 <?php $this->endSection() ?>
+</content>

@@ -50,7 +50,6 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('console/jprs/run', 'Admin\ConsoleJprs::run', ['filter' => 'csrf']);
 
     $routes->get('api-test', 'Admin\ApiConnectionTest::index');
-    $routes->post('api-test/run', 'Admin\ApiConnectionTest::run', ['filter' => 'csrf']);
 
     $routes->get('system', 'Admin\System::index');
     $routes->post('system/opcache/reset', 'Admin\System::resetOpcache', ['filter' => 'csrf']);
@@ -133,7 +132,6 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('console/jprs/run', 'Client\ConsoleJprs::run', ['filter' => 'csrf']);
 
     $routes->get('api-test', 'Client\ApiConnectionTest::index');
-    $routes->post('api-test/run', 'Client\ApiConnectionTest::run', ['filter' => 'csrf']);
 
     $routes->get('api-docs', 'ApiDocs::index');
 

@@ -167,21 +167,24 @@ class ApiAccessKeyModel extends Model
      * client zone (that user's own keys). Disabled keys are included on
      * purpose — showing the resulting 401 is the point of the self-test.
      *
+     * `access_key` IS included: the test now runs as a real `fetch()` from
+     * the caller's OWN browser (so it exercises the real client IP + the
+     * new per-key IP allowlist), so the token has to reach the page — same
+     * exposure as the keys list, which already does `copy(item.access_key)`.
+     *
      * @return list<object>
      */
     public function listForConnectionTest(?int $userId): array
     {
-        // Never load access_key here: the probe fetches the token itself via
-        // findKey() server-side — the view/response must never see the secret.
         if ($userId !== null) {
-            return $this->select('id, service_id, user_status, is_enable, description, allowed_ips, last_access')
+            return $this->select('id, access_key, service_id, user_status, is_enable, description, allowed_ips, last_access')
                 ->where('user_id', $userId)
                 ->orderBy('id', 'DESC')
                 ->findAll();
         }
 
         return $this->db->table($this->table . ' uak')
-            ->select('uak.id, uak.user_id, uak.service_id, uak.user_status, uak.is_enable, uak.description, uak.allowed_ips, uak.last_access, u.name AS user_name, u.email AS user_email')
+            ->select('uak.id, uak.user_id, uak.access_key, uak.service_id, uak.user_status, uak.is_enable, uak.description, uak.allowed_ips, uak.last_access, u.name AS user_name, u.email AS user_email')
             ->join('users u', 'u.id = uak.user_id', 'left')
             ->orderBy('uak.id', 'DESC')
             ->get()

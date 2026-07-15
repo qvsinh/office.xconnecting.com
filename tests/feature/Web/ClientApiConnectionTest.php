@@ -1,19 +1,19 @@
 <?php
 
-use CodeIgniter\Config\Services;
+use App\Models\ApiAccessKeyModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\Api\ApiKeyFixture;
-use Tests\Support\Api\FakeCurlRequest;
-use Tests\Support\Api\FakeCurlResponse;
 use Tests\Support\Web\WebAuthFixture;
 
 /**
  * Client-zone API connection self-test (`Client\ApiConnectionTest`), run
- * through real routing + filters (`authFilter`) + CSRF. The loopback HTTP
- * call is mocked via `service('curlrequest')` (`FakeCurlRequest`) — no real
- * network call is ever made.
+ * through real routing + filters (`authFilter`). The actual probe now runs
+ * as a `fetch()` from the caller's own browser against the public
+ * `/api/{provider}/{env}/` proxy — there is no server-side `run()` step
+ * left to test here, only that `index()` renders with the right key scope
+ * (own keys only, never another user's) and the zone is gated correctly.
  *
  * @internal
  */
@@ -33,7 +33,6 @@ final class ClientApiConnectionTest extends CIUnitTestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        Services::resetSingle('curlrequest');
         session()->destroy();
     }
 
@@ -48,77 +47,25 @@ final class ClientApiConnectionTest extends CIUnitTestCase
         $result->assertStatus(200);
     }
 
-    public function testRunReturnsTheProbeEnvelopeAndNeverLeaksTheToken(): void
+    public function testIndexKeyListIsScopedToOwnKeysOnly(): void
     {
-        $user = $this->seedWebUser(['email' => 'api-test-client-run@example.com', 'zone' => 'client']);
-        $key  = $this->seedApiKey($user->id, 0, self::CNR_SERVICE_ID);
+        $owner   = $this->seedWebUser(['email' => 'api-test-owner-scope@example.com', 'zone' => 'client']);
+        $another = $this->seedWebUser(['email' => 'api-test-another-scope@example.com', 'zone' => 'client']);
+        $mine    = $this->seedApiKey($owner->id, 0, self::CNR_SERVICE_ID);
+        $theirs  = $this->seedApiKey($another->id, 0, self::CNR_SERVICE_ID);
 
-        $fake = new FakeCurlRequest();
-        $fake->queue(new FakeCurlResponse(json_encode(['status' => 'success', 'data' => ['rows' => []]]), 200));
-        Services::injectMock('curlrequest', $fake);
+        $this->loginAs($owner);
+        $this->withSession()->get('/api-test')->assertStatus(200);
 
-        $this->loginAs($user);
-        $result = $this->withSession()->post('/api-test/run', $this->withCsrf(['key_id' => $key['id']]));
-
-        $result->assertStatus(200);
-        $json = json_decode($result->getJSON(), true);
-        $this->assertSame('success', $json['status']);
-        $this->assertTrue($json['result']['ok']);
-        $this->assertSame(200, $json['result']['http_status']);
-        $this->assertArrayHasKey('csrf_hash', $json);
-
-        $this->assertStringNotContainsString($key['token'], $result->getJSON());
-        $this->assertSame(1, count($fake->calls));
-        $this->assertSame('Bearer ' . $key['token'], $fake->calls[0]['options']['headers']['Authorization']);
-    }
-
-    public function testRunReportsA401ForADisabledKeyWithoutTreatingItAsNotFound(): void
-    {
-        $user = $this->seedWebUser(['email' => 'api-test-client-disabled@example.com', 'zone' => 'client']);
-        $key  = $this->seedApiKey($user->id, 0, self::CNR_SERVICE_ID, ['is_enable' => 0]);
-
-        $fake = new FakeCurlRequest();
-        $fake->queue(new FakeCurlResponse(json_encode(['status' => 'error', 'message' => 'Unauthorized']), 401));
-        Services::injectMock('curlrequest', $fake);
-
-        $this->loginAs($user);
-        $result = $this->withSession()->post('/api-test/run', $this->withCsrf(['key_id' => $key['id']]));
-
-        $result->assertStatus(200);
-        $json = json_decode($result->getJSON(), true);
-        $this->assertSame('success', $json['status']); // the self-test itself ran fine
-        $this->assertFalse($json['result']['ok']);
-        $this->assertSame(401, $json['result']['http_status']);
-    }
-
-    public function testClientCannotRunAnotherUsersKey(): void
-    {
-        $owner    = $this->seedWebUser(['email' => 'api-test-owner@example.com', 'zone' => 'client']);
-        $intruder = $this->seedWebUser(['email' => 'api-test-intruder@example.com', 'zone' => 'client']);
-        $key      = $this->seedApiKey($owner->id, 0, self::CNR_SERVICE_ID);
-
-        $this->loginAs($intruder);
-        $result = $this->withSession()->post('/api-test/run', $this->withCsrf(['key_id' => $key['id']]));
-
-        $result->assertStatus(404);
-    }
-
-    public function testMissingKeyIdReturns400(): void
-    {
-        $user = $this->seedWebUser(['email' => 'api-test-client-missing@example.com', 'zone' => 'client']);
-
-        $this->loginAs($user);
-        $result = $this->withSession()->post('/api-test/run', $this->withCsrf([]));
-
-        $result->assertStatus(400);
+        $keys       = model(ApiAccessKeyModel::class)->listForConnectionTest((int) $owner->id);
+        $accessKeys = array_column($keys, 'access_key');
+        $this->assertContains($mine['token'], $accessKeys);
+        $this->assertNotContains($theirs['token'], $accessKeys);
     }
 
     public function testGuestIsRedirectedToLogin(): void
     {
         $this->withSession(['basicAuthAuthenticated' => 1]);
         $this->get('/api-test')->assertRedirectTo('/login');
-
-        $this->withSession(['basicAuthAuthenticated' => 1]);
-        $this->post('/api-test/run', $this->withCsrf(['key_id' => 1]))->assertRedirectTo('/login');
     }
 }

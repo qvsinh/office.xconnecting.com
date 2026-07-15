@@ -199,4 +199,40 @@ final class ApiAccessKeyModelTest extends CIUnitTestCase
         $this->assertCount(2, $keys);
         $this->assertSame('Console Owner', $keys[0]->user_name);
     }
+
+    public function testListForConnectionTestClientZoneScopesToOwnKeysAndIncludesTheAccessKey(): void
+    {
+        $model = new ApiAccessKeyModel();
+
+        $mine  = $model->createForUser((object) ['id' => 1, 'env' => 'TESTING'], 800);
+        $model->insert(['user_id' => 2, 'access_key' => 'other-user-key', 'service_id' => 800, 'is_enable' => 1, 'enable_log' => 1]);
+
+        $keys = $model->listForConnectionTest(1);
+
+        $this->assertCount(1, $keys);
+        $this->assertSame($mine, $keys[0]->access_key);
+    }
+
+    public function testListForConnectionTestAdminZoneReturnsEveryUsersKeysWithAccessKeyAndOwnerInfo(): void
+    {
+        $userModel = model(UserModel::class);
+        $userId    = $userModel->insert([
+            'name' => 'Test Owner', 'email' => 'test-owner@example.com',
+            'password' => 'unused-hash', 'zone' => 'client', 'env' => 'TESTING',
+        ], true);
+
+        $model     = new ApiAccessKeyModel();
+        $accessKey = $model->createForUser((object) ['id' => $userId, 'env' => 'TESTING'], 800);
+        // Disabled keys are included on purpose — the browser surfacing the
+        // real 401 is the point of the self-test.
+        $model->insert(['user_id' => $userId, 'access_key' => 'disabled-test-key', 'service_id' => 800, 'is_enable' => 0, 'enable_log' => 1]);
+
+        $keys = $model->listForConnectionTest(null);
+
+        $this->assertCount(2, $keys);
+        $this->assertSame('Test Owner', $keys[0]->user_name);
+        $accessKeys = array_column($keys, 'access_key');
+        $this->assertContains($accessKey, $accessKeys);
+        $this->assertContains('disabled-test-key', $accessKeys);
+    }
 }
