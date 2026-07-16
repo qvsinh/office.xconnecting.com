@@ -8,8 +8,8 @@ use Config\Database;
 
 /**
  * `php spark schedule:run` — real routing through the command layer, real
- * `emails`/`notifications`/`api_history` rows, and the security-critical
- * unknown-handler error path (plan §5 Phase 3.3).
+ * `emails`/`notifications` rows, and the security-critical unknown-handler
+ * error path (plan §5 Phase 3.3).
  *
  * @internal
  */
@@ -61,7 +61,7 @@ final class RunScheduledTasksCommandTest extends CIUnitTestCase
         $this->assertGreaterThan(time(), strtotime($task->next_run_at));
     }
 
-    public function testCommandPurgesOldNotificationsAndApiHistory(): void
+    public function testCommandPurgesOldNotifications(): void
     {
         $db = Database::connect();
         $old    = date('Y-m-d H:i:s', time() - (40 * 86400));
@@ -69,19 +69,14 @@ final class RunScheduledTasksCommandTest extends CIUnitTestCase
 
         $db->table('notifications')->insert(['message' => 'old', 'created_at' => $old]);
         $db->table('notifications')->insert(['message' => 'recent', 'created_at' => $recent]);
-        $db->table('api_history')->insert(['command' => 'old', 'created_at' => $old]);
-        $db->table('api_history')->insert(['command' => 'recent', 'created_at' => $recent]);
 
         $model = new ScheduledTaskModel();
         $model->insert(['name' => 'Purge notifications', 'handler' => 'notifications.purge', 'interval_minutes' => 60, 'enabled' => 1, 'next_run_at' => null]);
-        $model->insert(['name' => 'Purge history', 'handler' => 'api_history.purge', 'interval_minutes' => 60, 'enabled' => 1, 'next_run_at' => null]);
 
         command('schedule:run');
 
         $this->assertSame(0, $db->table('notifications')->where('message', 'old')->countAllResults());
         $this->assertSame(1, $db->table('notifications')->where('message', 'recent')->countAllResults());
-        $this->assertSame(0, $db->table('api_history')->where('command', 'old')->countAllResults());
-        $this->assertSame(1, $db->table('api_history')->where('command', 'recent')->countAllResults());
     }
 
     public function testCommandSkipsFutureAndDisabledTasks(): void

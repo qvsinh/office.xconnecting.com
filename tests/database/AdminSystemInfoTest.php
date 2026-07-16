@@ -1,8 +1,6 @@
 <?php
 
 use App\Controllers\Admin\System;
-use App\Models\ApiAccessKeyModel;
-use App\Models\ApiHistoryModel;
 use App\Models\NotificationModel;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -35,8 +33,6 @@ final class AdminSystemInfoTest extends CIUnitTestCase
         $data = (new System())->buildInfoData();
 
         $this->assertSame(model(UserModel::class)->countAllResults(), $data['counts']['users']);
-        $this->assertSame(model(ApiAccessKeyModel::class)->countAllResults(), $data['counts']['api_access_keys']);
-        $this->assertSame(model(ApiHistoryModel::class)->countAllResults(), $data['counts']['api_history']);
         $this->assertSame(model(NotificationModel::class)->countAllResults(), $data['counts']['notifications']);
         $this->assertGreaterThanOrEqual(1, $data['counts']['users']);
         $this->assertGreaterThanOrEqual(1, $data['counts']['notifications']);

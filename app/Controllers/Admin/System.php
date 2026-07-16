@@ -3,8 +3,6 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
-use App\Models\ApiAccessKeyModel;
-use App\Models\ApiHistoryModel;
 use App\Models\NotificationModel;
 use App\Models\UserModel;
 use CodeIgniter\CodeIgniter;
@@ -77,10 +75,8 @@ class System extends BaseController
             'db_driver'   => $db->DBDriver,
             'db_database' => $db->database,
             'counts'      => [
-                'users'           => model(UserModel::class)->countAllResults(),
-                'api_access_keys' => model(ApiAccessKeyModel::class)->countAllResults(),
-                'api_history'     => model(ApiHistoryModel::class)->countAllResults(),
-                'notifications'   => model(NotificationModel::class)->countAllResults(),
+                'users'         => model(UserModel::class)->countAllResults(),
+                'notifications' => model(NotificationModel::class)->countAllResults(),
             ],
             'writable' => [
                 'writable' => is_writable(WRITEPATH),

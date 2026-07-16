@@ -6,14 +6,12 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 // Site gate: precedes app login (BasicAuthFilter, registered as a global
-// before-filter with `except => ['basic-auth', 'api/*']`), so these routes
-// must not sit behind authFilter/guestFilter/adminFilter.
+// before-filter with `except => ['basic-auth']`), so this route must not
+// sit behind authFilter/guestFilter/adminFilter.
 $routes->get('basic-auth', 'BasicAuth::index');
 $routes->post('basic-auth', 'BasicAuth::authenticate', ['filter' => 'csrf']);
 
-// Login is guest-only; CSRF is scoped to this web POST only, never to
-// the stateless `api` group below (its ApiFilter::after() destroys the
-// session, so a session-based CSRF token would never survive there).
+// Login is guest-only.
 $routes->group('', ['filter' => 'guestFilter'], static function (RouteCollection $routes) {
     $routes->get('login', 'Auth::showLogin');
     $routes->post('login', 'Auth::login', ['filter' => 'csrf']);
@@ -31,25 +29,6 @@ $routes->post('verify-2fa', 'Auth::verify2fa', ['filter' => 'csrf']);
 
 $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static function (RouteCollection $routes) {
     $routes->get('dashboard', 'Admin\Dashboard::index');
-
-    $routes->get('api-access-keys', 'Admin\ApiAccessKeys::index');
-    $routes->post('api-access-keys/create', 'Admin\ApiAccessKeys::create', ['filter' => 'csrf']);
-    $routes->post('api-access-keys/update', 'Admin\ApiAccessKeys::update', ['filter' => 'csrf']);
-    $routes->post('api-access-keys/toggle', 'Admin\ApiAccessKeys::toggle', ['filter' => 'csrf']);
-    $routes->post('api-access-keys/toggle-log', 'Admin\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
-    $routes->post('api-access-keys/delete', 'Admin\ApiAccessKeys::delete', ['filter' => 'csrf']);
-
-    $routes->get('api-history', 'Admin\ApiHistory::logs');
-    $routes->get('api-history/preview', 'Admin\ApiHistory::preview');
-    $routes->post('api-history/delete', 'Admin\ApiHistory::delete', ['filter' => 'csrf']);
-    $routes->post('api-history/delete-all', 'Admin\ApiHistory::deleteAll', ['filter' => 'csrf']);
-
-    $routes->get('console/cnr', 'Admin\ConsoleCnr::index');
-    $routes->post('console/cnr/run', 'Admin\ConsoleCnr::run', ['filter' => 'csrf']);
-    $routes->get('console/jprs', 'Admin\ConsoleJprs::index');
-    $routes->post('console/jprs/run', 'Admin\ConsoleJprs::run', ['filter' => 'csrf']);
-
-    $routes->get('api-test', 'Admin\ApiConnectionTest::index');
 
     $routes->get('system', 'Admin\System::index');
     $routes->post('system/opcache/reset', 'Admin\System::resetOpcache', ['filter' => 'csrf']);
@@ -117,36 +96,9 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('account/2fa/verify', 'Account::verifyGoogle2fa', ['filter' => 'csrf']);
     $routes->post('account/2fa/disable', 'Account::disable2fa', ['filter' => 'csrf']);
 
-    $routes->get('my-api-access-keys', 'Client\ApiAccessKeys::index');
-    $routes->post('my-api-access-keys/create', 'Client\ApiAccessKeys::create', ['filter' => 'csrf']);
-    $routes->post('my-api-access-keys/toggle', 'Client\ApiAccessKeys::toggle', ['filter' => 'csrf']);
-    $routes->post('my-api-access-keys/toggle-log', 'Client\ApiAccessKeys::toggleLog', ['filter' => 'csrf']);
-    $routes->post('my-api-access-keys/remove', 'Client\ApiAccessKeys::remove', ['filter' => 'csrf']);
-    $routes->post('my-api-access-keys/allowed-ips', 'Client\ApiAccessKeys::updateAllowedIps', ['filter' => 'csrf']);
-
-    $routes->get('api-history', 'Client\ApiHistory::logs');
-    $routes->get('api-history/preview', 'Client\ApiHistory::preview');
-    $routes->post('api-history/delete', 'Client\ApiHistory::delete', ['filter' => 'csrf']);
-    $routes->post('api-history/delete-all', 'Client\ApiHistory::deleteAll', ['filter' => 'csrf']);
-    $routes->post('api-history/delete-by-age', 'Client\ApiHistory::deleteByAge', ['filter' => 'csrf']);
-
-    $routes->get('console/cnr', 'Client\ConsoleCnr::index');
-    $routes->post('console/cnr/run', 'Client\ConsoleCnr::run', ['filter' => 'csrf']);
-    $routes->get('console/jprs', 'Client\ConsoleJprs::index');
-    $routes->post('console/jprs/run', 'Client\ConsoleJprs::run', ['filter' => 'csrf']);
-
-    $routes->get('api-test', 'Client\ApiConnectionTest::index');
-
-    $routes->get('api-docs', 'ApiDocs::index');
-
     $routes->get('notifications', 'Notifications::index');
     $routes->get('notifications/feed', 'Notifications::feed');
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');
     $routes->post('notifications/mark-read', 'Notifications::markRead', ['filter' => 'csrf']);
     $routes->post('notifications/mark-all-read', 'Notifications::markAllRead', ['filter' => 'csrf']);
-});
-
-$routes->group('api', ['filter' => 'apiFilter'], static function (RouteCollection $routes) {
-    $routes->get('cnr/(:any)', 'Api\CnrApi::proxy');
-    $routes->match(['get', 'post'], 'jprs/(:any)', 'Api\JprsApi::proxy');
 });

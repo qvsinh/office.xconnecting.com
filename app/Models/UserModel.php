@@ -77,7 +77,7 @@ class UserModel extends Model
     /**
      * Typed wrapper over `find()` (whose generic signature phpstan can't
      * narrow to `object` from `$returnType`) for callers that need property
-     * access on the result — mirrors `ApiAccessKeyModel::findKey()`.
+     * access on the result.
      */
     public function findUser(int $id): ?object
     {
@@ -113,9 +113,8 @@ class UserModel extends Model
      * Admin list search (`Admin\Users::index()`): keyword LIKE across
      * name/email/company, optional `zone`/`status` filters. `id` is always a
      * secondary sort key in the same direction so ties (e.g. many rows
-     * sharing a NULL `login_at`) resolve deterministically across pages —
-     * mirrors `ApiHistoryModel::searchHistory()`. Soft-deleted rows are
-     * excluded automatically by `useSoftDeletes`.
+     * sharing a NULL `login_at`) resolve deterministically across pages.
+     * Soft-deleted rows are excluded automatically by `useSoftDeletes`.
      *
      * @param array{keyword?: string, zone?: string, status?: int|string} $filters
      *

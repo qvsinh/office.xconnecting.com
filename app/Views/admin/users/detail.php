@@ -1,8 +1,7 @@
 <?php
 /**
  * Admin user detail: read-only profile + a link to the admin note editor +
- * act-as. API-key management for this user lives at /admin/api-access-keys
- * (link only — not rebuilt here, see kanban plan §2).
+ * act-as.
  *
  * @var object $user full users row (id/name/email/company/zone/env/status/
  *             language/timezone/login_at/note/...) — only the fields
@@ -72,10 +71,6 @@ $this->extend('layouts/app');
     </dl>
 
     <div class="mt-6 flex flex-wrap gap-3" x-data="{ actAsName: <?= esc(json_encode($user->name), 'attr') ?> }">
-        <a href="/admin/api-access-keys?keyword=<?= esc(urlencode($user->email), 'attr') ?>"
-           class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
-            Manage API access keys
-        </a>
         <button type="button"
                 @click="$dispatch('confirm', {
                     title: 'Act as this user',

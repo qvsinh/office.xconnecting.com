@@ -121,7 +121,6 @@ final class UiOverhaulTest extends CIUnitTestCase
 
         $result->assertStatus(200);
         $result->assertSee('Dashboard');
-        $result->assertSee('API');
         $result->assertSee('Account');
         $result->assertSee('Admin');
     }
@@ -135,7 +134,6 @@ final class UiOverhaulTest extends CIUnitTestCase
 
         $result->assertStatus(200);
         $result->assertSee('Dashboard');
-        $result->assertSee('API');
         $result->assertSee('Account');
         $body = (string) $result->response()->getBody();
         $this->assertStringNotContainsString('>Admin<', $body);
@@ -184,19 +182,6 @@ final class UiOverhaulTest extends CIUnitTestCase
         $this->assertDoesNotMatchRegularExpression('/<a[^>]*>\s*Clear\s*<\/a>/', $body);
     }
 
-    public function testClientApiHistoryFilterClearIsARealButtonNotALink(): void
-    {
-        $client = $this->seedWebUser(['email' => 'ui-clear-client@example.com', 'zone' => 'client']);
-        $this->loginAs($client);
-
-        $result = $this->withSession()->get('/api-history');
-
-        $result->assertStatus(200);
-        $body = (string) $result->response()->getBody();
-        $this->assertMatchesRegularExpression('/<button[^>]*>\s*Clear\s*<\/button>/', $body);
-        $this->assertDoesNotMatchRegularExpression('/<a[^>]*>\s*Clear\s*<\/a>/', $body);
-    }
-
     public function testGuestIsStillRedirectedToLoginFromDashboard(): void
     {
         $this->withSession(['basicAuthAuthenticated' => 1]);
@@ -204,15 +189,5 @@ final class UiOverhaulTest extends CIUnitTestCase
         $result = $this->get('/dashboard');
 
         $result->assertRedirectTo('/login');
-    }
-
-    public function testAdminApiHistoryAndConsoleStillRenderAfterTheLayoutRewrite(): void
-    {
-        $admin = $this->seedWebUser(['email' => 'ui-regress-admin@example.com', 'zone' => 'global']);
-        $this->loginAs($admin);
-
-        $this->withSession()->get('/admin/api-history')->assertStatus(200);
-        $this->withSession()->get('/admin/console/cnr')->assertStatus(200);
-        $this->withSession()->get('/admin/console/jprs')->assertStatus(200);
     }
 }

@@ -53,11 +53,9 @@ final class AdminActAsTest extends CIUnitTestCase
         $this->withSession()->post('/admin/users/act-as/' . $target->id, $this->withCsrf([]));
 
         // is_admin() reads userAuthenticated (unaffected) -> the admin area
-        // must still be reachable, not redirected away. Uses the already-
-        // built admin/api-access-keys page (admin/users' own views don't
-        // exist yet — frontend-coder builds them next) purely as an
-        // adminFilter probe.
-        $adminStillReachable = $this->withSession()->get('/admin/api-access-keys');
+        // must still be reachable, not redirected away. Uses admin/users
+        // purely as an adminFilter probe.
+        $adminStillReachable = $this->withSession()->get('/admin/users');
         $adminStillReachable->assertStatus(200);
 
         // The client-scoped dashboard reads userWorking -> reflects the target.

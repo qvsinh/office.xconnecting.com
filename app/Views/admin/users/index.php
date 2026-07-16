@@ -1,9 +1,7 @@
 <?php
 /**
  * Admin user management: search + paginate every account, create/edit via a
- * shared Alpine modal, and act-as impersonation. API-key management for a
- * user lives at /admin/api-access-keys (link only — see detail.php, not
- * rebuilt here).
+ * shared Alpine modal, and act-as impersonation.
  *
  * @var list<object>                                      $items   searchAdmin() rows (id/name/email/company/zone/env/status/login_at/created_at — no password)
  * @var int                                               $total

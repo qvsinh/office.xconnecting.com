@@ -9,10 +9,10 @@ use CodeIgniter\Test\FeatureTestTrait;
 /**
  * End-to-end HTTP-stack coverage for the basic-auth site gate
  * (`BasicAuthFilter` + `BasicAuth` controller): gate redirect when enabled
- * and unpassed, no redirect once passed, `api/*` exemption, valid/invalid
- * gate credentials, CSRF enforcement, and the full gate -> app-login ->
- * dashboard chain. See `AuthWebFlowTest` for the app-login flow itself
- * (it pre-passes this gate in its own setUp()).
+ * and unpassed, no redirect once passed, valid/invalid gate credentials,
+ * CSRF enforcement, and the full gate -> app-login -> dashboard chain. See
+ * `AuthWebFlowTest` for the app-login flow itself (it pre-passes this gate
+ * in its own setUp()).
  *
  * @internal
  */
@@ -64,14 +64,6 @@ final class BasicAuthGateTest extends CIUnitTestCase
         $result = $this->withSession(['basicAuthAuthenticated' => 1])->get('/dashboard');
 
         $result->assertRedirectTo('/login');
-    }
-
-    public function testApiRouteIsNeverRedirectedToGateEvenWithoutGateSession(): void
-    {
-        $result = $this->get('/api/cnr/testing');
-
-        $result->assertStatus(401);
-        $result->assertJSONExact(['status' => 'error', 'message' => 'Unauthorized']);
     }
 
     public function testGetGateRendersTheGateForm(): void

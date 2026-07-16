@@ -3,7 +3,6 @@
 namespace Config;
 
 use App\Filters\AdminFilter;
-use App\Filters\ApiFilter;
 use App\Filters\AuthFilter;
 use App\Filters\BasicAuthFilter;
 use App\Filters\GuestFilter;
@@ -39,7 +38,6 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
-        'apiFilter'     => ApiFilter::class,
         'authFilter'    => AuthFilter::class,
         'adminFilter'   => AdminFilter::class,
         'guestFilter'   => GuestFilter::class,
@@ -85,7 +83,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
-            'basicauth' => ['except' => ['basic-auth', 'api/*']],
+            'basicauth' => ['except' => ['basic-auth']],
         ],
         'after' => [
             // 'honeypot',

@@ -100,10 +100,10 @@ class CreateScheduledTasks extends Migration
     }
 
     /**
-     * Pre-create the three in-scope purge jobs, disabled, only on a fresh
-     * table (never re-run — `up()` already returned early if the table
-     * existed). Discoverable defaults for a fresh install; admins opt in via
-     * the `toggle` action. See plan §7.
+     * Pre-create the in-scope purge jobs, disabled, only on a fresh table
+     * (never re-run — `up()` already returned early if the table existed).
+     * Discoverable defaults for a fresh install; admins opt in via the
+     * `toggle` action. See plan §7.
      */
     private function seedDefaultPurgeJobs(BaseConnection $db): void
     {
@@ -127,16 +127,6 @@ class CreateScheduledTasks extends Migration
                 'interval_minutes' => 1440,
                 'enabled'          => 0,
                 'description'      => 'Deletes rows from `notifications` older than the configured number of days.',
-                'created_at'       => $now,
-                'updated_at'       => $now,
-            ],
-            [
-                'name'             => 'Purge old API call history',
-                'handler'          => 'api_history.purge',
-                'params'           => json_encode(['days' => 7], JSON_THROW_ON_ERROR),
-                'interval_minutes' => 1440,
-                'enabled'          => 0,
-                'description'      => 'Deletes rows from `api_history` older than the configured number of days.',
                 'created_at'       => $now,
                 'updated_at'       => $now,
             ],

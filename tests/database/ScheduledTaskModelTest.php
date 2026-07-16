@@ -54,7 +54,7 @@ final class ScheduledTaskModelTest extends CIUnitTestCase
         $model = new ScheduledTaskModel();
         $model->insert(['name' => 'A', 'handler' => 'emails.purge', 'interval_minutes' => 60, 'enabled' => 1]);
         $model->insert(['name' => 'B', 'handler' => 'emails.purge', 'interval_minutes' => 60, 'enabled' => 0]);
-        $model->insert(['name' => 'C', 'handler' => 'api_history.purge', 'interval_minutes' => 60, 'enabled' => 1]);
+        $model->insert(['name' => 'C', 'handler' => 'other.task', 'interval_minutes' => 60, 'enabled' => 1]);
 
         $this->assertCount(2, $model->searchAdmin(['handler' => 'emails.purge']));
         $this->assertCount(2, $model->searchAdmin(['enabled' => '1']));

@@ -40,10 +40,6 @@ class ScheduledTaskRunner
                 'label' => 'Purge old notifications',
                 'run'   => fn (array $params): string => $this->purgeTable('notifications', 'created_at', $this->days($params, 30)),
             ],
-            'api_history.purge' => [
-                'label' => 'Purge old API call history',
-                'run'   => fn (array $params): string => $this->purgeTable('api_history', 'created_at', $this->days($params, 7)),
-            ],
         ];
     }
 
@@ -131,11 +127,11 @@ class ScheduledTaskRunner
      * every purge handler here, so a purge job actually reclaims storage
      * regardless of a table's own soft-delete convention.
      *
-     * ponytail: a plain single-statement DELETE — `emails`/`notifications`/
-     * `api_history` are maintenance-log tables pruned to a bounded recent
-     * window, not multi-million-row tables needing chunked deletes. Revisit
-     * with `ApiHistoryModel`'s chunked delete pattern if row counts grow large
-     * enough to make one DELETE a lock/replication concern.
+     * ponytail: a plain single-statement DELETE — `emails`/`notifications`
+     * are maintenance-log tables pruned to a bounded recent window, not
+     * multi-million-row tables needing chunked deletes. Revisit with a
+     * chunked delete pattern if row counts grow large enough to make one
+     * DELETE a lock/replication concern.
      */
     private function purgeTable(string $table, string $dateColumn, int $days): string
     {

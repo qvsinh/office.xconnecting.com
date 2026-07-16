@@ -61,8 +61,6 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
         $result->assertStatus(200);
         $result->assertSee('Act as this user');
-        $body = (string) $result->response()->getBody();
-        $this->assertStringContainsString('/admin/api-access-keys?keyword=', $body);
     }
 
     public function testNoteViewRendersTheNoteEditor(): void

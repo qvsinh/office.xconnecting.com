@@ -39,14 +39,6 @@ if (is_authenticated()) {
 $dashboardHref = $navZone === 'admin' ? '/admin/dashboard' : '/dashboard';
 
 $navGroups = [
-    'API' => [
-        ['label' => 'Access Keys', 'href' => $navZone === 'admin' ? '/admin/api-access-keys' : '/my-api-access-keys'],
-        ['label' => 'History', 'href' => $navZone === 'admin' ? '/admin/api-history' : '/api-history'],
-        ['label' => 'CNR Console', 'href' => $navZone === 'admin' ? '/admin/console/cnr' : '/console/cnr'],
-        ['label' => 'JPRS Console', 'href' => $navZone === 'admin' ? '/admin/console/jprs' : '/console/jprs'],
-        ['label' => 'Connection test', 'href' => $navZone === 'admin' ? '/admin/api-test' : '/api-test'],
-        ['label' => 'API Docs', 'href' => '/api-docs'],
-    ],
     'Account' => [
         ['label' => 'Profile', 'href' => '/account'],
         ['label' => 'Security', 'href' => '/account/security'],
@@ -72,7 +64,6 @@ if ($navZone === 'admin') {
 // Static developer-authored markup, not user data — no esc() needed on these.
 $navIcons = [
     'Dashboard' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>',
-    'API'       => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8l-4 4 4 4m8-8l4 4-4 4m-3-11l-2 14" /></svg>',
     'Account'   => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" /></svg>',
     'Admin'     => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /></svg>',
 ];
