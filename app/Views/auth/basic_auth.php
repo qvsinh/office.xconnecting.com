@@ -26,11 +26,11 @@
 <body class="flex h-full min-h-screen items-center justify-center bg-gray-50 px-4 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100">
     <div class="w-full max-w-sm" x-data="basicAuthForm()">
         <div class="mb-8 text-center">
-            <span class="text-xl font-semibold tracking-tight">proxyv2</span>
+            <span class="text-xl font-semibold tracking-tight">Basic Authentication</span>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Authentication required</p>
         </div>
 
-        <div class="rounded-lg border border-[#EAEAEA] bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div class="rounded-lg border-2 border-yellow-400 bg-white p-8 shadow-sm dark:border-yellow-600/70 dark:bg-gray-800">
             <div x-show="errorMessage" x-cloak x-transition
                  class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300" role="alert">
                 <div class="flex items-start justify-between gap-3">
