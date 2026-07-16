@@ -119,7 +119,7 @@ final class UiOverhaulTest extends CIUnitTestCase
         $result = $this->withSession()->get('/dashboard');
 
         $result->assertStatus(200);
-        $result->assertSee('Menu');
+        $result->assertSee('Dashboard');
         $result->assertSee('API');
         $result->assertSee('Account');
         $result->assertSee('Admin');
@@ -133,7 +133,7 @@ final class UiOverhaulTest extends CIUnitTestCase
         $result = $this->withSession()->get('/dashboard');
 
         $result->assertStatus(200);
-        $result->assertSee('Menu');
+        $result->assertSee('Dashboard');
         $result->assertSee('API');
         $result->assertSee('Account');
         $body = (string) $result->response()->getBody();

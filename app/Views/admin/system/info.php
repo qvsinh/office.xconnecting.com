@@ -12,6 +12,7 @@
  * @var array<string, int>                                                                                                                                             $counts    users/api_access_keys/api_history/notifications
  * @var array<string, bool>                                                                                                                                            $writable  writable/logs/cache/session
  * @var array{opcache: array<string, mixed>, php_config: array<string, string>, server: array<string, string>, extensions: list<array{name: string, version: string}>} $runtime
+ * @var array{driver: string, is_database: bool, table: string|null, rows: int|null}                                                                                   $session
  */
 $this->extend('layouts/app');
 
@@ -91,6 +92,65 @@ $writableLabels = [
                     <dd class="font-mono font-medium dark:text-gray-100"><?= esc($db_database) ?></dd>
                 </div>
             </dl>
+        </div>
+
+        <div class="rounded-lg border border-[#EAEAEA] bg-white p-6 sm:col-span-2 dark:border-gray-700 dark:bg-gray-800" x-data="sessionActions()">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Sessions</h2>
+                <?php if ($session['is_database']) : ?>
+                    <button type="button" @click="confirmReset()" :disabled="running"
+                            class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-xs font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40">
+                        Reset sessions
+                    </button>
+                <?php endif ?>
+            </div>
+            <dl class="mt-4 space-y-3 text-sm">
+                <div class="flex items-center justify-between">
+                    <dt class="text-[#787774] dark:text-gray-400">Driver</dt>
+                    <dd class="font-mono font-medium dark:text-gray-100"><?= esc($session['driver']) ?></dd>
+                </div>
+                <?php if ($session['is_database']) : ?>
+                    <div class="flex items-center justify-between">
+                        <dt class="text-[#787774] dark:text-gray-400">Table</dt>
+                        <dd class="font-mono font-medium dark:text-gray-100"><?= esc((string) $session['table']) ?></dd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <dt class="text-[#787774] dark:text-gray-400">Active sessions</dt>
+                        <dd class="font-mono font-medium dark:text-gray-100"><?= esc($session['rows'] !== null ? (string) $session['rows'] : '—') ?></dd>
+                    </div>
+                <?php else : ?>
+                    <p class="text-xs text-[#787774] dark:text-gray-400">Row count and reset are available only with the database session handler.</p>
+                <?php endif ?>
+            </dl>
+
+            <script>
+                function sessionActions() {
+                    return {
+                        running: false,
+
+                        confirmReset() {
+                            this.$dispatch('confirm', {
+                                title: 'Reset sessions',
+                                body: 'Reset all sessions? This clears the entire session store and logs EVERYONE out — including you (you\'ll need to sign in again). Proceed?',
+                                variant: 'danger',
+                                confirmLabel: 'Reset',
+                                onConfirm: () => this.doReset(),
+                            });
+                        },
+
+                        async doReset() {
+                            this.running = true;
+                            const json = await postForm('/admin/system/sessions/reset', {});
+                            this.running = false;
+                            if (!json) return;
+                            this.$dispatch('toast', { type: json.status === 'success' ? 'success' : 'error', text: json.message || 'Unexpected response.' });
+                            if (json.status === 'success') {
+                                window.location = '/login';
+                            }
+                        },
+                    };
+                }
+            </script>
         </div>
 
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-6 sm:col-span-2 dark:border-gray-700 dark:bg-gray-800">

@@ -34,10 +34,11 @@ if (is_authenticated()) {
 // Sidebar nav, grouped TailAdmin-style. Same group shape for both zones so
 // admin-as-client and real-client render identical Account links; the Admin
 // group only exists when $navZone === 'admin'.
+// Dashboard is a top-level link (not wrapped in a group); the rest are
+// collapsible accordion groups.
+$dashboardHref = $navZone === 'admin' ? '/admin/dashboard' : '/dashboard';
+
 $navGroups = [
-    'Menu' => [
-        ['label' => 'Dashboard', 'href' => $navZone === 'admin' ? '/admin/dashboard' : '/dashboard'],
-    ],
     'API' => [
         ['label' => 'Access Keys', 'href' => $navZone === 'admin' ? '/admin/api-access-keys' : '/my-api-access-keys'],
         ['label' => 'History', 'href' => $navZone === 'admin' ? '/admin/api-history' : '/api-history'],
@@ -70,10 +71,10 @@ if ($navZone === 'admin') {
 // Inline icon-per-group map (heroicons-outline style, stroke="currentColor").
 // Static developer-authored markup, not user data — no esc() needed on these.
 $navIcons = [
-    'Menu'    => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>',
-    'API'     => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8l-4 4 4 4m8-8l4 4-4 4m-3-11l-2 14" /></svg>',
-    'Account' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" /></svg>',
-    'Admin'   => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /></svg>',
+    'Dashboard' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>',
+    'API'       => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8l-4 4 4 4m8-8l4 4-4 4m-3-11l-2 14" /></svg>',
+    'Account'   => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" /></svg>',
+    'Admin'     => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /></svg>',
 ];
 $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="8" /></svg>';
 ?>
@@ -146,6 +147,14 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                 <span class="text-lg font-semibold tracking-tight" x-show="!navLabelsVisible()" x-cloak><?= esc(mb_strtoupper(mb_substr($siteName, 0, 1))) ?></span>
             </div>
             <nav class="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
+                <?php $dashboardActive = url_is($dashboardHref); ?>
+                <a href="<?= esc($dashboardHref, 'attr') ?>" @click="sidebarMobileOpen = false"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium <?= $dashboardActive
+                        ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
+                        : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
+                    <?= $navIcons['Dashboard'] ?? $navIconDefault ?>
+                    <span class="whitespace-nowrap" x-show="navLabelsVisible()">Dashboard</span>
+                </a>
                 <?php foreach ($navGroups as $groupLabel => $groupItems) :
                     $groupActive = false;
 
