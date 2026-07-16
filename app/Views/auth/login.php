@@ -113,7 +113,11 @@ helper('setting');
                     try {
                         json = await res.json();
                     } catch (e) {
-                        this.errorMessage = 'Network error. Please try again.';
+                        // A non-JSON response after a form POST is almost always a
+                        // CSRF/security-token failure (302 redirect or 403 HTML) or a
+                        // cached/challenge page from a proxy/CDN — not a real network
+                        // drop. Tell the user to reload so they get a fresh token.
+                        this.errorMessage = 'Security check failed (token expired or page cached). Please reload the page and try again.';
                         this.submitting = false;
                         return;
                     }

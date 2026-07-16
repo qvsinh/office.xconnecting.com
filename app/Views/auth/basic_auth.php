@@ -113,7 +113,9 @@ helper('setting');
                     try {
                         json = await res.json();
                     } catch (e) {
-                        this.errorMessage = 'Network error. Please try again.';
+                        // Non-JSON response = CSRF/token failure or a cached/challenge
+                        // page from a proxy/CDN, not a real network drop.
+                        this.errorMessage = 'Security check failed (token expired or page cached). Please reload the page and try again.';
                         this.submitting = false;
                         return;
                     }
