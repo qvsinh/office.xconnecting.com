@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\RoleModel;
 use App\Models\UserModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -54,11 +55,14 @@ class Users extends BaseController
             $password = bin2hex(random_bytes(8));
         }
 
+        $zone = (string) $this->request->getPost('zone');
+
         model(UserModel::class)->insert([
             'name'     => trim((string) $this->request->getPost('name')),
             'email'    => trim((string) $this->request->getPost('email')),
             'password' => $this->hashPassword($password),
-            'zone'     => (string) $this->request->getPost('zone'),
+            'zone'     => $zone,
+            'role_id'  => $this->roleIdForZone($zone),
             'env'      => (string) $this->request->getPost('env'),
             'status'   => (int) $this->request->getPost('status'),
             'language' => trim((string) $this->request->getPost('language')) ?: 'en',
@@ -119,6 +123,7 @@ class Users extends BaseController
             'name'     => trim((string) $this->request->getPost('name')),
             'email'    => trim((string) $this->request->getPost('email')),
             'zone'     => $newZone,
+            'role_id'  => $this->roleIdForZone($newZone),
             'env'      => (string) $this->request->getPost('env'),
             'status'   => $newStatus,
             'language' => trim((string) $this->request->getPost('language')) ?: $existing->language,
@@ -279,5 +284,19 @@ class Users extends BaseController
         $authConfig = config('Auth');
 
         return hash($authConfig->password_algorithm, $plain . $authConfig->password_salt);
+    }
+
+    /**
+     * Default role for a user given its `zone`: `global` -> the `admin`
+     * role, anything else -> the `user` role. Null-safe: returns null (no
+     * role assigned) if the corresponding role hasn't been seeded yet,
+     * rather than failing the create/update.
+     */
+    private function roleIdForZone(string $zone): ?int
+    {
+        $roleName = $zone === 'global' ? 'admin' : 'user';
+        $role     = model(RoleModel::class)->findByName($roleName);
+
+        return $role->id ?? null;
     }
 }

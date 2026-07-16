@@ -52,6 +52,7 @@ class UserModel extends Model
         'timezone',
         'login_at',
         'note',
+        'created_at',
     ];
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

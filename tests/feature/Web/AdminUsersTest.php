@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\RoleModel;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -74,6 +75,37 @@ final class AdminUsersTest extends CIUnitTestCase
         $this->assertNotNull($row);
         $this->assertNotSame('', $row->password);
         $this->assertSame(32, strlen($row->password)); // md5 hex length
+    }
+
+    public function testCreateAssignsAdminRoleIdForGlobalZoneAndUserRoleIdForClientZone(): void
+    {
+        $admin    = $this->seedWebUser(['email' => 'role-creator@example.com', 'zone' => 'global']);
+        $roleModel = new RoleModel();
+        $adminRole = $roleModel->findByName('admin');
+        $userRole  = $roleModel->findByName('user');
+        $this->loginAs($admin);
+
+        $createGlobal = $this->withSession()->post('/admin/users/create', $this->withCsrf([
+            'name'   => 'New Global User',
+            'email'  => 'new-global@example.com',
+            'zone'   => 'global',
+            'env'    => 'TESTING',
+            'status' => 1,
+        ]));
+        $createGlobal->assertStatus(200);
+        $globalRow = model(UserModel::class)->findActiveByEmail('new-global@example.com');
+        $this->assertSame((int) $adminRole->id, (int) $globalRow->role_id);
+
+        $createClient = $this->withSession()->post('/admin/users/create', $this->withCsrf([
+            'name'   => 'New Client User',
+            'email'  => 'new-client@example.com',
+            'zone'   => 'client',
+            'env'    => 'TESTING',
+            'status' => 1,
+        ]));
+        $createClient->assertStatus(200);
+        $clientRow = model(UserModel::class)->findActiveByEmail('new-client@example.com');
+        $this->assertSame((int) $userRole->id, (int) $clientRow->role_id);
     }
 
     public function testCreateRejectsDuplicateEmail(): void
@@ -156,6 +188,28 @@ final class AdminUsersTest extends CIUnitTestCase
         $reloaded = model(UserModel::class)->find($target->id);
         $this->assertSame(hash('md5', 'BrandNewPass1'), $reloaded->password);
         $this->assertNotSame($target->password, $reloaded->password);
+    }
+
+    public function testUpdateReassignsRoleIdWhenZoneChanges(): void
+    {
+        $admin  = $this->seedWebUser(['email' => 'role-updater@example.com', 'zone' => 'global']);
+        $target = $this->seedWebUser(['email' => 'role-target@example.com', 'zone' => 'client']);
+        $this->loginAs($admin);
+
+        $adminRole = (new RoleModel())->findByName('admin');
+
+        $update = $this->withSession()->post('/admin/users/update', $this->withCsrf([
+            'id'     => $target->id,
+            'name'   => $target->name,
+            'email'  => $target->email,
+            'zone'   => 'global',
+            'env'    => 'TESTING',
+            'status' => 1,
+        ]));
+
+        $update->assertStatus(200);
+        $reloaded = model(UserModel::class)->find($target->id);
+        $this->assertSame((int) $adminRole->id, (int) $reloaded->role_id);
     }
 
     public function testUpdateAllowsKeepingOwnEmailButRejectsDuplicateOfAnother(): void
