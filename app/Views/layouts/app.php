@@ -17,6 +17,9 @@ helper(['auth', 'url', 'setting']);
 $user ??= session('userWorking');
 $navZone ??= is_working_admin() ? 'admin' : 'client';
 
+// Admin-editable brand name (site_name setting; falls back in site_name()).
+$siteName = site_name();
+
 // Acting-as banner: only set when an admin has switched `userWorking` away
 // from their own `userAuthenticated` identity via Admin\Users::actAs().
 $actingAsUser = null;
@@ -86,7 +89,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
         if (localStorage.getItem('sidebarExpanded') === 'false') document.documentElement.classList.add('sidebar-collapsed');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= isset($pageTitle) ? esc($pageTitle) . ' — ' : '' ?><?= esc(site_name()) ?></title>
+    <title><?= isset($pageTitle) ? esc($pageTitle) . ' — ' : '' ?><?= esc($siteName) ?></title>
     <meta name="csrf-token-name" content="<?= esc(csrf_token(), 'attr') ?>">
     <meta name="csrf-token" content="<?= esc(csrf_hash(), 'attr') ?>">
     <meta name="csrf-header-name" content="<?= esc(csrf_header(), 'attr') ?>">
@@ -139,8 +142,8 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                @mouseenter="sidebarHovered = true" @mouseleave="sidebarHovered = false"
                x-trap.noscroll="sidebarMobileOpen">
             <div class="flex h-16 shrink-0 items-center overflow-hidden border-b border-[#EAEAEA] px-6 dark:border-gray-800">
-                <span class="text-lg font-semibold tracking-tight" x-show="navLabelsVisible()">proxyv2</span>
-                <span class="text-lg font-semibold tracking-tight" x-show="!navLabelsVisible()" x-cloak>P</span>
+                <span class="text-lg font-semibold tracking-tight" x-show="navLabelsVisible()"><?= esc($siteName) ?></span>
+                <span class="text-lg font-semibold tracking-tight" x-show="!navLabelsVisible()" x-cloak><?= esc(mb_strtoupper(mb_substr($siteName, 0, 1))) ?></span>
             </div>
             <nav class="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
                 <?php foreach ($navGroups as $groupLabel => $groupItems) :
