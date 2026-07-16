@@ -158,6 +158,15 @@ class UserModel extends Model
     }
 
     /**
+     * Count non-soft-deleted users in the given environment (`env` column,
+     * e.g. 'LIVE'/'TESTING') — backs the admin dashboard users-by-env widget.
+     */
+    public function countByEnv(string $env): int
+    {
+        return $this->where('env', $env)->countAllResults();
+    }
+
+    /**
      * The one place `keyword`/`zone`/`status` get translated into WHERE
      * clauses for the admin list — shared by `searchAdmin()`/`countAdmin()`
      * so the paginated rows and the total can't drift apart.

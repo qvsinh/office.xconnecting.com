@@ -109,6 +109,31 @@ class ApiAccessKeyModel extends Model
     }
 
     /**
+     * Count keys by environment flag (`user_status`: 1 = LIVE, 0 = TESTING) —
+     * backs the admin dashboard token-by-env widget.
+     */
+    public function countByEnv(int $userStatus): int
+    {
+        return $this->where('user_status', $userStatus)->countAllResults();
+    }
+
+    /**
+     * Number of distinct services that have at least one key in the given
+     * environment (`user_status`) — the admin dashboard "services in use per
+     * env" metric.
+     */
+    public function distinctServiceCountByEnv(int $userStatus): int
+    {
+        $row = $this->db->table($this->table)
+            ->select('COUNT(DISTINCT service_id) AS c')
+            ->where('user_status', $userStatus)
+            ->get()
+            ->getRow();
+
+        return (int) ($row->c ?? 0);
+    }
+
+    /**
      * @return list<object>
      */
     public function listForUser(int $userId): array

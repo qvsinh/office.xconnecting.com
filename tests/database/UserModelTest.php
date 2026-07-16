@@ -170,4 +170,15 @@ final class UserModelTest extends CIUnitTestCase
         $this->assertSame('none', $user->two_factor_method);
         $this->assertNull($user->google2fa_secret);
     }
+
+    public function testCountByEnv(): void
+    {
+        $model = new UserModel();
+        $model->insert(['name' => 'L1', 'email' => 'l1@example.com', 'password' => 'x', 'zone' => 'client', 'env' => 'LIVE', 'status' => 1]);
+        $model->insert(['name' => 'L2', 'email' => 'l2@example.com', 'password' => 'x', 'zone' => 'client', 'env' => 'LIVE', 'status' => 1]);
+        $model->insert(['name' => 'T1', 'email' => 't1@example.com', 'password' => 'x', 'zone' => 'client', 'env' => 'TESTING', 'status' => 1]);
+
+        $this->assertSame(2, $model->countByEnv('LIVE'));
+        $this->assertSame(1, $model->countByEnv('TESTING'));
+    }
 }

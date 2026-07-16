@@ -235,4 +235,20 @@ final class ApiAccessKeyModelTest extends CIUnitTestCase
         $this->assertContains($accessKey, $accessKeys);
         $this->assertContains('disabled-test-key', $accessKeys);
     }
+
+    public function testCountByEnvAndDistinctServiceCountByEnv(): void
+    {
+        $model = new ApiAccessKeyModel();
+        // LIVE (user_status=1): 2 keys on service 800, 1 on 801 -> 3 keys, 2 services.
+        $model->insert(['user_id' => 1, 'access_key' => 'live-1', 'user_status' => 1, 'service_id' => 800, 'is_enable' => 1, 'enable_log' => 1]);
+        $model->insert(['user_id' => 1, 'access_key' => 'live-2', 'user_status' => 1, 'service_id' => 800, 'is_enable' => 1, 'enable_log' => 1]);
+        $model->insert(['user_id' => 2, 'access_key' => 'live-3', 'user_status' => 1, 'service_id' => 801, 'is_enable' => 1, 'enable_log' => 1]);
+        // TESTING (user_status=0): 1 key on service 800 -> 1 key, 1 service.
+        $model->insert(['user_id' => 3, 'access_key' => 'test-1', 'user_status' => 0, 'service_id' => 800, 'is_enable' => 1, 'enable_log' => 1]);
+
+        $this->assertSame(3, $model->countByEnv(1));
+        $this->assertSame(1, $model->countByEnv(0));
+        $this->assertSame(2, $model->distinctServiceCountByEnv(1));
+        $this->assertSame(1, $model->distinctServiceCountByEnv(0));
+    }
 }
