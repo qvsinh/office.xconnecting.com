@@ -1,9 +1,9 @@
 <?php
 /**
- * Read-only migration status: every defined migration merged with the
- * applied history from the framework `migrations` table (see
- * Admin\System::buildMigrationRows()). No run/rollback controls here by
- * design — destructive migration actions stay on the CLI (kanban plan §7).
+ * Migration status: every defined migration merged with the applied history
+ * from the framework `migrations` table (see Admin\System::buildMigrationRows()).
+ * "Run migrations" / "Rollback last batch" post to Admin\System::runMigrations()
+ * / rollbackMigrations() via the shared postForm()/confirm/toast components.
  *
  * @var list<array{class:string, version:string, namespace:string, batch:int|null, applied_at:int|null, status:string}> $items
  * @var int                                                                                                             $total
@@ -41,10 +41,23 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-6xl">
-    <div>
-        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Database migrations</h1>
-        <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Applied vs pending, read-only. Run/rollback stays on the CLI (<code class="font-mono">php spark migrate</code>).</p>
+<div class="mx-auto max-w-6xl" x-data="migrationsActions()">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Database migrations</h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Applied vs pending status below. Use the actions to run pending migrations or roll back the last batch.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button" :disabled="running" @click="confirmRollback()"
+                    class="rounded-md border border-[#9F2F2D]/40 px-4 py-2 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-400/40 dark:text-red-400 dark:hover:bg-red-900/20">
+                Rollback last batch
+            </button>
+            <button type="button" :disabled="running" @click="confirmRun()"
+                    class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                <span x-show="!running">Run migrations</span>
+                <span x-show="running" x-cloak>Running…</span>
+            </button>
+        </div>
     </div>
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -118,5 +131,59 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
             <?php endif ?>
         </div>
     </div>
+
+    <script>
+        function migrationsActions() {
+            return {
+                running: false,
+
+                confirmRun() {
+                    this.$dispatch('confirm', {
+                        title: 'Run pending migrations',
+                        body: 'Run pending migrations? This applies any new schema changes to the database.',
+                        variant: 'primary',
+                        confirmLabel: 'Run',
+                        onConfirm: () => this.runMigrations(),
+                    });
+                },
+
+                confirmRollback() {
+                    this.$dispatch('confirm', {
+                        title: 'Rollback last batch',
+                        body: "Roll back the most recent migration batch? On this app, migration down() methods are guarded to run only on the tests database, so on live this un-records the last batch WITHOUT dropping tables or data — re-run 'Run migrations' to re-apply. Proceed?",
+                        variant: 'danger',
+                        confirmLabel: 'Rollback',
+                        onConfirm: () => this.rollback(),
+                    });
+                },
+
+                async runMigrations() {
+                    this.running = true;
+                    const json = await postForm('/admin/system/migrations/run', {});
+                    this.running = false;
+                    if (!json) return;
+                    if (json.status === 'success') {
+                        this.$dispatch('toast', { type: 'success', text: json.message });
+                        window.location.reload();
+                    } else {
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not run migrations.' });
+                    }
+                },
+
+                async rollback() {
+                    this.running = true;
+                    const json = await postForm('/admin/system/migrations/rollback', {});
+                    this.running = false;
+                    if (!json) return;
+                    if (json.status === 'success') {
+                        this.$dispatch('toast', { type: 'success', text: json.message });
+                        window.location.reload();
+                    } else {
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not roll back the last batch.' });
+                    }
+                },
+            };
+        }
+    </script>
 </div>
 <?php $this->endSection() ?>
