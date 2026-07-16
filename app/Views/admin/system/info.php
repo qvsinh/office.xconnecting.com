@@ -98,8 +98,7 @@ $writableLabels = [
             <div class="flex items-center justify-between">
                 <h2 class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Sessions</h2>
                 <?php if ($session['is_database']) : ?>
-                    <button type="button" @click="confirmReset()" :disabled="running"
-                            class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-xs font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40">
+                    <button type="button" @click="confirmReset()" :disabled="running" class="btn-danger">
                         Reset sessions
                     </button>
                 <?php endif ?>
@@ -185,13 +184,11 @@ $writableLabels = [
             <div class="flex items-center justify-between">
                 <h2 class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">OPcache</h2>
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="confirmClearCache()" :disabled="clearingCache"
-                            class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-xs font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40">
+                    <button type="button" @click="confirmClearCache()" :disabled="clearingCache" class="btn-danger">
                         Clear cache
                     </button>
                     <?php if ($runtime['opcache']['available'] ?? false) : ?>
-                        <button type="button" @click="confirmResetOpcache()" :disabled="resettingOpcache"
-                                class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-xs font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40">
+                        <button type="button" @click="confirmResetOpcache()" :disabled="resettingOpcache" class="btn-danger">
                             Reset OPcache
                         </button>
                     <?php endif ?>

@@ -72,15 +72,13 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[220px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Search</label>
+            <label for="keyword" class="form-label">Search</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"
-                   placeholder="Recipient, subject or template name"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                   placeholder="Recipient, subject or template name" class="form-input">
         </div>
         <div>
-            <label for="status" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Status</label>
-            <select id="status" name="status"
-                    class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="status" class="form-label">Status</label>
+            <select id="status" name="status" class="form-select">
                 <option value="">All statuses</option>
                 <?php foreach ($statusLabels as $value => $label) : ?>
                     <option value="<?= esc((string) $value, 'attr') ?>" <?= ($filters['status'] ?? '') === (string) $value ? 'selected' : '' ?>><?= esc($label) ?></option>
@@ -88,8 +86,8 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
             </select>
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="limit" class="form-label">Per page</label>
+            <select id="limit" name="limit" class="form-select">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
@@ -97,9 +95,8 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
         </div>
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
-        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
-                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
+        <button type="submit" class="btn-secondary">Search</button>
+        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'" class="btn-secondary">Clear</button>
     </form>
 
     <div class="mt-6 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -152,9 +149,15 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
          @keydown.escape.window="showOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="showOpen = false"></div>
         <div x-show="showOpen" x-transition
-             class="relative max-h-full w-full max-w-2xl overflow-y-auto rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-h-full max-w-2xl overflow-y-auto"
              x-trap.noscroll="showOpen" role="dialog" aria-modal="true" aria-labelledby="show-email-title">
-            <h2 id="show-email-title" class="text-base font-semibold dark:text-gray-100">Sent email</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="showOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="show-email-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Sent email</h2>
             <p x-show="showLoading" x-cloak class="mt-4 text-sm text-[#787774] dark:text-gray-400">Loading…</p>
             <div x-show="!showLoading" class="mt-4 space-y-3 text-sm">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
@@ -193,7 +196,7 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
                 </div>
             </div>
             <div class="mt-6 flex justify-end">
-                <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="showOpen = false">Close</button>
+                <button type="button" class="btn-secondary" @click="showOpen = false">Close</button>
             </div>
         </div>
     </div>

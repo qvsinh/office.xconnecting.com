@@ -33,7 +33,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
                 <span x-text="unread"></span> unread of <?= esc((string) $total) ?> total.
             </p>
         </div>
-        <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
+        <button type="button" class="btn-secondary"
                 :disabled="markingAll || unread === 0" @click="markAllRead()">
             Mark all as read
         </button>

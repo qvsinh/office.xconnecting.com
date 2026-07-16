@@ -64,23 +64,20 @@ $sortMark = static function (string $col) use ($sort, $order): string {
             <h1 class="text-xl font-semibold tracking-tight">Email Templates</h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Manage the HTML subject/body templates the platform sends, per language.</p>
         </div>
-        <button type="button" @click="openCreate()"
-                class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+        <button type="button" @click="openCreate()" class="btn-primary">
             + Add template
         </button>
     </div>
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[220px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Search</label>
+            <label for="keyword" class="form-label">Search</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"
-                   placeholder="Name or subject"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                   placeholder="Name or subject" class="form-input">
         </div>
         <div>
-            <label for="lang_code" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Language</label>
-            <select id="lang_code" name="lang_code"
-                    class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="lang_code" class="form-label">Language</label>
+            <select id="lang_code" name="lang_code" class="form-select">
                 <option value="">All languages</option>
                 <?php foreach ($langCodes as $code) : ?>
                     <option value="<?= esc((string) $code, 'attr') ?>" <?= ($filters['lang_code'] ?? '') === $code ? 'selected' : '' ?>><?= esc((string) $code) ?></option>
@@ -88,8 +85,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
             </select>
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="limit" class="form-label">Per page</label>
+            <select id="limit" name="limit" class="form-select">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
@@ -97,9 +94,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
         </div>
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
-        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
-                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
+        <button type="submit" class="btn-secondary">Search</button>
+        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'" class="btn-secondary">Clear</button>
     </form>
 
     <div class="mt-6 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -164,37 +160,39 @@ $sortMark = static function (string $col) use ($sort, $order): string {
          @keydown.escape.window="createOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="createOpen = false"></div>
         <div x-show="createOpen" x-transition
-             class="relative max-h-full w-full max-w-2xl overflow-y-auto rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-h-full max-w-2xl overflow-y-auto"
              x-trap.noscroll="createOpen" role="dialog" aria-modal="true" aria-labelledby="create-template-title">
-            <h2 id="create-template-title" class="text-base font-semibold dark:text-gray-100">Add email template</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="createOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="create-template-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Add email template</h2>
             <form @submit.prevent="submitCreate" class="mt-4 space-y-4">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label for="create_name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
-                        <input id="create_name" type="text" x-model="createForm.name" required maxlength="255"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="create_name" class="form-label">Name</label>
+                        <input id="create_name" type="text" x-model="createForm.name" required maxlength="255" class="form-input">
                     </div>
                     <div>
-                        <label for="create_lang_code" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Language code</label>
-                        <input id="create_lang_code" type="text" x-model="createForm.lang_code" required maxlength="5" list="lang-code-suggestions"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="create_lang_code" class="form-label">Language code</label>
+                        <input id="create_lang_code" type="text" x-model="createForm.lang_code" required maxlength="5" list="lang-code-suggestions" class="form-input">
                     </div>
                 </div>
                 <p class="text-xs text-[#787774] dark:text-gray-400">Name + language together must stay unique.</p>
                 <div>
-                    <label for="create_subject" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Subject</label>
-                    <input id="create_subject" type="text" x-model="createForm.subject" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_subject" class="form-label">Subject</label>
+                    <input id="create_subject" type="text" x-model="createForm.subject" required maxlength="255" class="form-input">
                 </div>
                 <div>
                     <div class="mb-1.5 flex items-center justify-between">
-                        <label for="create_content" class="block text-sm font-medium dark:text-gray-200">Content (HTML)</label>
+                        <label for="create_content" class="form-label mb-0">Content (HTML)</label>
                         <button type="button" class="text-xs font-medium text-[#111111] hover:underline dark:text-gray-100" @click="createPreview = !createPreview">
                             <span x-text="createPreview ? 'Hide preview' : 'Preview'"></span>
                         </button>
                     </div>
-                    <textarea id="create_content" x-model="createForm.content" rows="10" required
-                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-xs focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <textarea id="create_content" x-model="createForm.content" rows="10" required class="form-textarea font-mono text-xs"></textarea>
                     <!-- Sandboxed preview: srcdoc bound via Alpine attribute binding
                          (never x-html), no allow-scripts so the trusted-but-untrusted
                          admin HTML can render without ever executing in this page. -->
@@ -207,9 +205,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                     Active
                 </label>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="createOpen = false">Cancel</button>
-                    <button type="submit" :disabled="creating"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    <button type="button" class="btn-secondary" @click="createOpen = false">Cancel</button>
+                    <button type="submit" :disabled="creating" class="btn-primary">
                         <span x-show="!creating">Create</span>
                         <span x-show="creating" x-cloak>Creating…</span>
                     </button>
@@ -223,38 +220,40 @@ $sortMark = static function (string $col) use ($sort, $order): string {
          @keydown.escape.window="editOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="editOpen = false"></div>
         <div x-show="editOpen" x-transition
-             class="relative max-h-full w-full max-w-2xl overflow-y-auto rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-h-full max-w-2xl overflow-y-auto"
              x-trap.noscroll="editOpen" role="dialog" aria-modal="true" aria-labelledby="edit-template-title">
-            <h2 id="edit-template-title" class="text-base font-semibold dark:text-gray-100">Edit email template</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="editOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="edit-template-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Edit email template</h2>
             <p x-show="editLoading" x-cloak class="mt-4 text-sm text-[#787774] dark:text-gray-400">Loading…</p>
             <form x-show="!editLoading" @submit.prevent="submitEdit" class="mt-4 space-y-4">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label for="edit_name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
-                        <input id="edit_name" type="text" x-model="editForm.name" required maxlength="255"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="edit_name" class="form-label">Name</label>
+                        <input id="edit_name" type="text" x-model="editForm.name" required maxlength="255" class="form-input">
                     </div>
                     <div>
-                        <label for="edit_lang_code" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Language code</label>
-                        <input id="edit_lang_code" type="text" x-model="editForm.lang_code" required maxlength="5" list="lang-code-suggestions"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="edit_lang_code" class="form-label">Language code</label>
+                        <input id="edit_lang_code" type="text" x-model="editForm.lang_code" required maxlength="5" list="lang-code-suggestions" class="form-input">
                     </div>
                 </div>
                 <p class="text-xs text-[#787774] dark:text-gray-400">Name + language together must stay unique.</p>
                 <div>
-                    <label for="edit_subject" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Subject</label>
-                    <input id="edit_subject" type="text" x-model="editForm.subject" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_subject" class="form-label">Subject</label>
+                    <input id="edit_subject" type="text" x-model="editForm.subject" required maxlength="255" class="form-input">
                 </div>
                 <div>
                     <div class="mb-1.5 flex items-center justify-between">
-                        <label for="edit_content" class="block text-sm font-medium dark:text-gray-200">Content (HTML)</label>
+                        <label for="edit_content" class="form-label mb-0">Content (HTML)</label>
                         <button type="button" class="text-xs font-medium text-[#111111] hover:underline dark:text-gray-100" @click="editPreview = !editPreview">
                             <span x-text="editPreview ? 'Hide preview' : 'Preview'"></span>
                         </button>
                     </div>
-                    <textarea id="edit_content" x-model="editForm.content" rows="10" required
-                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-xs focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <textarea id="edit_content" x-model="editForm.content" rows="10" required class="form-textarea font-mono text-xs"></textarea>
                     <iframe x-show="editPreview" x-cloak :srcdoc="editForm.content" sandbox=""
                             class="mt-2 h-64 w-full rounded-md border border-[#EAEAEA] bg-white dark:border-gray-700"
                             title="Template preview"></iframe>
@@ -264,9 +263,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                     Active
                 </label>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="editOpen = false">Cancel</button>
-                    <button type="submit" :disabled="editing"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    <button type="button" class="btn-secondary" @click="editOpen = false">Cancel</button>
+                    <button type="submit" :disabled="editing" class="btn-primary">
                         <span x-show="!editing">Save</span>
                         <span x-show="editing" x-cloak>Saving…</span>
                     </button>

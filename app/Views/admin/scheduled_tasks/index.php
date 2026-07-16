@@ -63,23 +63,20 @@ $statusBadgeClass = static function (?string $status): string {
             <h1 class="text-xl font-semibold tracking-tight">Scheduled Tasks</h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Manage recurring maintenance jobs run by <code class="rounded bg-[#F7F6F3] px-1 py-0.5 text-xs dark:bg-gray-700">php spark schedule:run</code>.</p>
         </div>
-        <button type="button" @click="openCreate()"
-                class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+        <button type="button" @click="openCreate()" class="btn-primary">
             + Add task
         </button>
     </div>
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[220px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Search</label>
+            <label for="keyword" class="form-label">Search</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"
-                   placeholder="Name, handler or description"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                   placeholder="Name, handler or description" class="form-input">
         </div>
         <div>
-            <label for="handler" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Handler</label>
-            <select id="handler" name="handler"
-                    class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="handler" class="form-label">Handler</label>
+            <select id="handler" name="handler" class="form-select">
                 <option value="">All handlers</option>
                 <?php foreach ($handlerKeys as $key) : ?>
                     <option value="<?= esc($key, 'attr') ?>" <?= ($filters['handler'] ?? '') === $key ? 'selected' : '' ?>><?= esc($key) ?></option>
@@ -87,17 +84,16 @@ $statusBadgeClass = static function (?string $status): string {
             </select>
         </div>
         <div>
-            <label for="enabled" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Status</label>
-            <select id="enabled" name="enabled"
-                    class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="enabled" class="form-label">Status</label>
+            <select id="enabled" name="enabled" class="form-select">
                 <option value="">All</option>
                 <option value="1" <?= ($filters['enabled'] ?? '') === '1' ? 'selected' : '' ?>>Enabled</option>
                 <option value="0" <?= ($filters['enabled'] ?? '') === '0' ? 'selected' : '' ?>>Disabled</option>
             </select>
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="limit" class="form-label">Per page</label>
+            <select id="limit" name="limit" class="form-select">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
@@ -105,9 +101,8 @@ $statusBadgeClass = static function (?string $status): string {
         </div>
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
-        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
-                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
+        <button type="submit" class="btn-secondary">Search</button>
+        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'" class="btn-secondary">Clear</button>
     </form>
 
     <div class="mt-6 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -189,19 +184,23 @@ $statusBadgeClass = static function (?string $status): string {
          @keydown.escape.window="createOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="createOpen = false"></div>
         <div x-show="createOpen" x-transition
-             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-w-md"
              x-trap.noscroll="createOpen" role="dialog" aria-modal="true" aria-labelledby="create-task-title">
-            <h2 id="create-task-title" class="text-base font-semibold dark:text-gray-100">Add scheduled task</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="createOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="create-task-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Add scheduled task</h2>
             <form @submit.prevent="submitCreate" class="mt-4 space-y-4">
                 <div>
-                    <label for="create_name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
-                    <input id="create_name" type="text" x-model="createForm.name" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_name" class="form-label">Name</label>
+                    <input id="create_name" type="text" x-model="createForm.name" required maxlength="255" class="form-input">
                 </div>
                 <div>
-                    <label for="create_handler" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Handler</label>
-                    <select id="create_handler" x-model="createForm.handler" required
-                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_handler" class="form-label">Handler</label>
+                    <select id="create_handler" x-model="createForm.handler" required class="form-select">
                         <option value="">Choose a handler…</option>
                         <?php foreach ($handlerKeys as $key) : ?>
                             <option value="<?= esc($key, 'attr') ?>"><?= esc($key) ?></option>
@@ -209,25 +208,21 @@ $statusBadgeClass = static function (?string $status): string {
                     </select>
                 </div>
                 <div>
-                    <label for="create_interval" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Interval (minutes)</label>
-                    <input id="create_interval" type="number" min="1" x-model="createForm.interval_minutes" required
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_interval" class="form-label">Interval (minutes)</label>
+                    <input id="create_interval" type="number" min="1" x-model="createForm.interval_minutes" required class="form-input">
                 </div>
                 <div>
-                    <label for="create_params" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Params <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
-                    <textarea id="create_params" x-model="createForm.params" rows="3" placeholder='{"days": 30}'
-                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <label for="create_params" class="form-label">Params <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
+                    <textarea id="create_params" x-model="createForm.params" rows="3" placeholder='{"days": 30}' class="form-textarea font-mono text-sm"></textarea>
                     <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">JSON, e.g. {"days": 30}</p>
                 </div>
                 <div>
-                    <label for="create_description" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Description <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
-                    <textarea id="create_description" x-model="createForm.description" rows="2"
-                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <label for="create_description" class="form-label">Description <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
+                    <textarea id="create_description" x-model="createForm.description" rows="2" class="form-textarea"></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="createOpen = false">Cancel</button>
-                    <button type="submit" :disabled="creating"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    <button type="button" class="btn-secondary" @click="createOpen = false">Cancel</button>
+                    <button type="submit" :disabled="creating" class="btn-primary">
                         <span x-show="!creating">Create</span>
                         <span x-show="creating" x-cloak>Creating…</span>
                     </button>
@@ -241,20 +236,24 @@ $statusBadgeClass = static function (?string $status): string {
          @keydown.escape.window="editOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="editOpen = false"></div>
         <div x-show="editOpen" x-transition
-             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-w-md"
              x-trap.noscroll="editOpen" role="dialog" aria-modal="true" aria-labelledby="edit-task-title">
-            <h2 id="edit-task-title" class="text-base font-semibold dark:text-gray-100">Edit scheduled task</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="editOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="edit-task-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Edit scheduled task</h2>
             <p x-show="editLoading" x-cloak class="mt-4 text-sm text-[#787774] dark:text-gray-400">Loading…</p>
             <form x-show="!editLoading" @submit.prevent="submitEdit" class="mt-4 space-y-4">
                 <div>
-                    <label for="edit_name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
-                    <input id="edit_name" type="text" x-model="editForm.name" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_name" class="form-label">Name</label>
+                    <input id="edit_name" type="text" x-model="editForm.name" required maxlength="255" class="form-input">
                 </div>
                 <div>
-                    <label for="edit_handler" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Handler</label>
-                    <select id="edit_handler" x-model="editForm.handler" required
-                            class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_handler" class="form-label">Handler</label>
+                    <select id="edit_handler" x-model="editForm.handler" required class="form-select">
                         <option value="">Choose a handler…</option>
                         <?php foreach ($handlerKeys as $key) : ?>
                             <option value="<?= esc($key, 'attr') ?>"><?= esc($key) ?></option>
@@ -262,20 +261,17 @@ $statusBadgeClass = static function (?string $status): string {
                     </select>
                 </div>
                 <div>
-                    <label for="edit_interval" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Interval (minutes)</label>
-                    <input id="edit_interval" type="number" min="1" x-model="editForm.interval_minutes" required
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_interval" class="form-label">Interval (minutes)</label>
+                    <input id="edit_interval" type="number" min="1" x-model="editForm.interval_minutes" required class="form-input">
                 </div>
                 <div>
-                    <label for="edit_params" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Params <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
-                    <textarea id="edit_params" x-model="editForm.params" rows="3" placeholder='{"days": 30}'
-                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 font-mono text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <label for="edit_params" class="form-label">Params <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
+                    <textarea id="edit_params" x-model="editForm.params" rows="3" placeholder='{"days": 30}' class="form-textarea font-mono text-sm"></textarea>
                     <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">JSON, e.g. {"days": 30}</p>
                 </div>
                 <div>
-                    <label for="edit_description" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Description <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
-                    <textarea id="edit_description" x-model="editForm.description" rows="2"
-                              class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400"></textarea>
+                    <label for="edit_description" class="form-label">Description <span class="font-normal text-[#787774] dark:text-gray-400">(optional)</span></label>
+                    <textarea id="edit_description" x-model="editForm.description" rows="2" class="form-textarea"></textarea>
                 </div>
                 <div class="rounded-md border border-[#EAEAEA] bg-[#F7F6F3] p-3 text-xs text-[#787774] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
                     <p>Last run: <span x-text="editForm.last_run_at || '—'"></span> · Next run: <span x-text="editForm.next_run_at || '—'"></span></p>
@@ -283,9 +279,8 @@ $statusBadgeClass = static function (?string $status): string {
                     <p x-show="editForm.last_result" x-cloak class="mt-1 break-words" x-text="editForm.last_result"></p>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="editOpen = false">Cancel</button>
-                    <button type="submit" :disabled="editing"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    <button type="button" class="btn-secondary" @click="editOpen = false">Cancel</button>
+                    <button type="submit" :disabled="editing" class="btn-primary">
                         <span x-show="!editing">Save</span>
                         <span x-show="editing" x-cloak>Saving…</span>
                     </button>

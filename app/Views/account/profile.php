@@ -27,45 +27,39 @@ $this->extend('layouts/app');
         <h2 class="text-base font-semibold dark:text-gray-100">Profile</h2>
         <form @submit.prevent="submitProfile" class="mt-4 space-y-4">
             <div>
-                <label class="mb-1.5 block text-sm font-medium text-[#787774] dark:text-gray-400">Email</label>
+                <label class="form-label">Email</label>
                 <input type="email" value="<?= esc($user['email'], 'attr') ?>" disabled
-                       class="block w-full cursor-not-allowed rounded-md border border-[#EAEAEA] bg-gray-50 px-3 py-2 text-sm text-[#787774] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+                       class="form-input cursor-not-allowed bg-gray-50 dark:bg-gray-900/40">
             </div>
             <div>
-                <label for="name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
+                <label for="name" class="form-label">Name</label>
                 <input id="name" name="name" type="text" required maxlength="255"
-                       x-model="form.name"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                       x-model="form.name" class="form-input">
             </div>
             <div>
-                <label for="company" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Company</label>
+                <label for="company" class="form-label">Company</label>
                 <input id="company" name="company" type="text" maxlength="255"
-                       x-model="form.company"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                       x-model="form.company" class="form-input">
             </div>
             <div>
-                <label for="phone_number" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Phone number</label>
+                <label for="phone_number" class="form-label">Phone number</label>
                 <input id="phone_number" name="phone_number" type="text" maxlength="20"
-                       x-model="form.phone_number"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                       x-model="form.phone_number" class="form-input">
             </div>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label for="language" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Language</label>
+                    <label for="language" class="form-label">Language</label>
                     <input id="language" name="language" type="text" maxlength="5" placeholder="en"
-                           x-model="form.language"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                           x-model="form.language" class="form-input">
                 </div>
                 <div>
-                    <label for="timezone" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Timezone</label>
+                    <label for="timezone" class="form-label">Timezone</label>
                     <input id="timezone" name="timezone" type="text" maxlength="30" placeholder="Asia/Ho_Chi_Minh"
-                           x-model="form.timezone"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                           x-model="form.timezone" class="form-input">
                 </div>
             </div>
             <div class="flex justify-end pt-2">
-                <button type="submit" :disabled="savingProfile"
-                        class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                <button type="submit" :disabled="savingProfile" class="btn-primary">
                     <span x-show="!savingProfile">Save profile</span>
                     <span x-show="savingProfile" x-cloak>Saving…</span>
                 </button>
@@ -78,27 +72,23 @@ $this->extend('layouts/app');
         <h2 class="text-base font-semibold dark:text-gray-100">Change password</h2>
         <form @submit.prevent="submitPassword" class="mt-4 space-y-4">
             <div>
-                <label for="current_password" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Current password</label>
+                <label for="current_password" class="form-label">Current password</label>
                 <input id="current_password" name="current_password" type="password" required autocomplete="current-password"
-                       x-model="passwordForm.current_password"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                       x-model="passwordForm.current_password" class="form-input">
             </div>
             <div>
-                <label for="password" class="mb-1.5 block text-sm font-medium dark:text-gray-200">New password</label>
+                <label for="password" class="form-label">New password</label>
                 <input id="password" name="password" type="password" required minlength="5" autocomplete="new-password"
-                       x-model="passwordForm.password"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                       x-model="passwordForm.password" class="form-input">
             </div>
             <div>
-                <label for="password_confirm" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Confirm new password</label>
+                <label for="password_confirm" class="form-label">Confirm new password</label>
                 <input id="password_confirm" name="password_confirm" type="password" required minlength="5" autocomplete="new-password"
-                       x-model="passwordForm.password_confirm"
-                       class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                       x-model="passwordForm.password_confirm" class="form-input">
                 <p x-show="passwordMismatch" x-cloak class="mt-1 text-xs text-red-700 dark:text-red-400">Passwords do not match.</p>
             </div>
             <div class="flex justify-end pt-2">
-                <button type="submit" :disabled="savingPassword"
-                        class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                <button type="submit" :disabled="savingPassword" class="btn-primary">
                     <span x-show="!savingPassword">Change password</span>
                     <span x-show="savingPassword" x-cloak>Changing…</span>
                 </button>

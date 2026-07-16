@@ -48,12 +48,10 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Applied vs pending status below. Use the actions to run pending migrations or roll back the last batch.</p>
         </div>
         <div class="flex items-center gap-2">
-            <button type="button" :disabled="running" @click="confirmRollback()"
-                    class="rounded-md border border-[#9F2F2D]/40 px-4 py-2 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-400/40 dark:text-red-400 dark:hover:bg-red-900/20">
+            <button type="button" :disabled="running" @click="confirmRollback()" class="btn-danger">
                 Rollback last batch
             </button>
-            <button type="button" :disabled="running" @click="confirmRun()"
-                    class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+            <button type="button" :disabled="running" @click="confirmRun()" class="btn-primary">
                 <span x-show="!running">Run migrations</span>
                 <span x-show="running" x-cloak>Running…</span>
             </button>
@@ -62,22 +60,20 @@ $sortMark = static function (string $col) use ($sortBy, $sort): string {
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[240px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Class</label>
+            <label for="keyword" class="form-label">Class</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($keyword, 'attr') ?>"
-                   placeholder="Migration class name"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                   placeholder="Migration class name" class="form-input">
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="limit" class="form-label">Per page</label>
+            <select id="limit" name="limit" class="form-select">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
             </select>
         </div>
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
-        <button type="button" x-data @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
-                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
+        <button type="submit" class="btn-secondary">Search</button>
+        <button type="button" x-data @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'" class="btn-secondary">Clear</button>
     </form>
 
     <div class="mt-4 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">

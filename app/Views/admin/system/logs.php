@@ -33,8 +33,7 @@ $itemsForJs = array_map(static fn (array $item): array => [
             <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">System logs</h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><code class="font-mono">writable/logs/</code> — preview, download, or delete log files.</p>
         </div>
-        <button type="button" @click="confirmDeleteAll()" :disabled="items.length === 0 || deletingAll"
-                class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-sm font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30">
+        <button type="button" @click="confirmDeleteAll()" :disabled="items.length === 0 || deletingAll" class="btn-danger">
             Delete all
         </button>
     </div>
@@ -88,12 +87,17 @@ $itemsForJs = array_map(static fn (array $item): array => [
          @keydown.escape.window="closePreview()">
         <div class="fixed inset-0 bg-black/40" x-show="previewOpen" x-transition.opacity @click="closePreview()"></div>
         <div x-show="previewOpen" x-transition
-             class="relative flex max-h-[80vh] w-full max-w-3xl flex-col rounded-lg border border-[#EAEAEA] bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
-             x-trap.noscroll="previewOpen" role="dialog" aria-modal="true">
+             class="modal-panel relative flex max-h-[80vh] max-w-3xl flex-col overflow-hidden p-0"
+             x-trap.noscroll="previewOpen" role="dialog" aria-modal="true" aria-labelledby="log-preview-title">
             <div class="flex items-center justify-between border-b border-[#EAEAEA] px-6 py-4 dark:border-gray-700">
-                <h2 class="font-mono text-sm font-semibold dark:text-gray-100" x-text="previewName"></h2>
-                <button type="button" class="text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100" @click="closePreview()" aria-label="Close">&times;</button>
+                <h2 id="log-preview-title" class="pr-8 font-mono text-sm font-semibold text-gray-800 dark:text-white/90" x-text="previewName"></h2>
             </div>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="closePreview()" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
             <div class="overflow-y-auto p-6">
                 <p x-show="previewLoading" x-cloak class="text-sm text-[#787774] dark:text-gray-400">Loading…</p>
                 <pre x-show="!previewLoading" x-cloak class="whitespace-pre-wrap break-all font-mono text-xs text-[#111111] dark:text-gray-100" x-text="previewContent"></pre>
