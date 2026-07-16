@@ -26,3 +26,6 @@ writable/session/*
 
 # Vendor registrar API reference manuals (CNR/JPRS) — kept locally, not in repo (12M of PDFs/zips)
 /docs/
+
+# Node / asset build
+/node_modules/

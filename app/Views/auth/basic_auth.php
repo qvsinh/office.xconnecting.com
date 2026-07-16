@@ -20,8 +20,7 @@ helper('setting');
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="alternate icon" href="/favicon.ico">
     <style>[x-cloak] { display: none !important; }</style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class' };</script>
+    <link rel="stylesheet" href="/css/app.css">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="flex h-full min-h-screen items-center justify-center bg-gray-50 px-4 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100">

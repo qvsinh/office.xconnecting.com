@@ -97,23 +97,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="alternate icon" href="/favicon.ico">
     <style>[x-cloak] { display: none !important; }</style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#ECF3FF', 100: '#DDE9FF', 200: '#C2D6FF', 300: '#9CB9FF',
-                            400: '#7592FF', 500: '#465FFF', 600: '#3641F5', 700: '#2A31D8',
-                            800: '#252DAE', 900: '#262E89',
-                        },
-                    },
-                },
-            },
-        };
-    </script>
+    <link rel="stylesheet" href="/css/app.css">
     <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>

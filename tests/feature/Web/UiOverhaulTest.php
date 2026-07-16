@@ -107,7 +107,8 @@ final class UiOverhaulTest extends CIUnitTestCase
         $body = (string) $result->response()->getBody();
         $this->assertStringContainsString('localStorage', $body);
         $this->assertStringContainsString('documentElement.classList', $body);
-        $this->assertStringContainsString("darkMode: 'class'", $body);
+        // darkMode is compiled into /css/app.css now (no inline tailwind.config).
+        $this->assertStringContainsString('/css/app.css', $body);
         $this->assertStringContainsString('Toggle dark mode', $body);
     }
 
