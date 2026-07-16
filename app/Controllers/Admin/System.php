@@ -9,6 +9,8 @@ use App\Models\NotificationModel;
 use App\Models\UserModel;
 use CodeIgniter\CodeIgniter;
 use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\Session\Handlers\DatabaseHandler;
+use ReflectionClass;
 use Throwable;
 
 /**
@@ -46,7 +48,10 @@ class System extends BaseController
 
     public function index(): string
     {
-        return view('admin/system/info', $this->buildInfoData() + ['runtime' => $this->buildRuntimeDetails()]);
+        return view('admin/system/info', $this->buildInfoData() + [
+            'runtime' => $this->buildRuntimeDetails(),
+            'session' => $this->buildSessionSummary(),
+        ]);
     }
 
     /**
@@ -202,6 +207,71 @@ class System extends BaseController
         }
 
         return $this->jsonSuccess('OPcache reset.');
+    }
+
+    /**
+     * Session-store summary for the System info page: the active handler and,
+     * when sessions live in the database, the store table + its current row
+     * count (active sessions). File/Redis/etc. handlers report the driver only.
+     *
+     * @return array{driver: string, is_database: bool, table: ?string, rows: ?int}
+     */
+    public function buildSessionSummary(): array
+    {
+        $config = config('Session');
+        $driver = $config->driver;
+
+        $summary = [
+            'driver'      => (new ReflectionClass($driver))->getShortName(),
+            'is_database' => $driver === DatabaseHandler::class,
+            'table'       => null,
+            'rows'        => null,
+        ];
+
+        if ($summary['is_database']) {
+            $table            = ((string) $config->savePath) !== '' ? (string) $config->savePath : 'ci_sessions';
+            $db               = db_connect();
+            $summary['table'] = $table;
+            $summary['rows']  = $db->tableExists($table) ? $db->table($table)->countAllResults() : null;
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Admin-only, CSRF-guarded `POST system/sessions/reset` — clears every row
+     * from the database session store (only when the DB session handler is
+     * active). This logs EVERYONE out, including the acting admin; the UI
+     * warns accordingly. Audit-logged.
+     */
+    public function resetSessions(): ResponseInterface
+    {
+        $config = config('Session');
+
+        if ($config->driver !== DatabaseHandler::class) {
+            return $this->jsonFailed('Sessions are not stored in the database.');
+        }
+
+        $table = ((string) $config->savePath) !== '' ? (string) $config->savePath : 'ci_sessions';
+        $db    = db_connect();
+
+        if (! $db->tableExists($table)) {
+            return $this->jsonFailed('Session table not found.', 404);
+        }
+
+        try {
+            $db->table($table)->truncate();
+        } catch (Throwable $e) {
+            log_message('error', 'Session reset failed: ' . $e->getMessage());
+
+            return $this->jsonFailed('Session reset failed.', 500);
+        }
+
+        log_message('info', 'Admin #{adminId} reset all database sessions.', [
+            'adminId' => session('userAuthenticated')->id ?? null,
+        ]);
+
+        return $this->jsonSuccess('All sessions have been reset.');
     }
 
     /**

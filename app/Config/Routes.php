@@ -53,6 +53,7 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
 
     $routes->get('system', 'Admin\System::index');
     $routes->post('system/opcache/reset', 'Admin\System::resetOpcache', ['filter' => 'csrf']);
+    $routes->post('system/sessions/reset', 'Admin\System::resetSessions', ['filter' => 'csrf']);
     $routes->get('system/migrations', 'Admin\System::migrations');
     $routes->post('system/migrations/run', 'Admin\System::runMigrations', ['filter' => 'csrf']);
     $routes->post('system/migrations/rollback', 'Admin\System::rollbackMigration', ['filter' => 'csrf']);
