@@ -30,7 +30,7 @@
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Authentication required</p>
         </div>
 
-        <div class="rounded-lg border-2 border-yellow-400 bg-white p-8 shadow-sm dark:border-yellow-600/70 dark:bg-gray-800">
+        <div class="rounded-lg border-2 border-[#111111] bg-white p-8 shadow-sm dark:border-gray-100 dark:bg-gray-800">
             <div x-show="errorMessage" x-cloak x-transition
                  class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300" role="alert">
                 <div class="flex items-start justify-between gap-3">
