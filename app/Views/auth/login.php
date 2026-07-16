@@ -25,7 +25,7 @@
 <body class="flex h-full min-h-screen items-center justify-center bg-gray-50 px-4 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100">
     <div class="w-full max-w-sm" x-data="loginForm()">
         <div class="mb-8 text-center">
-            <span class="text-xl font-semibold tracking-tight">proxyv2</span>
+            <span class="text-xl font-semibold tracking-tight">Authentication</span>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Sign in to your console</p>
         </div>
 
