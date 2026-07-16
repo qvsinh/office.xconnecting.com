@@ -9,13 +9,15 @@ use App\Models\NotificationModel;
 use App\Models\UserModel;
 use CodeIgniter\CodeIgniter;
 use CodeIgniter\HTTP\ResponseInterface;
+use Throwable;
 
 /**
  * Read-only System landing: environment/info + record counts (`index()`)
  * and database migration status (`migrations()`). Gated by
- * `authFilter` + `adminFilter` (see Config/Routes.php). Neither method
- * writes anything — destructive migration run/rollback stays on the CLI
- * (kanban plan §7).
+ * `authFilter` + `adminFilter` (see Config/Routes.php). `runMigrations()` and
+ * `rollbackMigration()` are the only writers (CSRF-guarded POSTs, audit-logged);
+ * migration `down()` methods are tests-only guarded, so a live rollback never
+ * drops data (see rollbackMigration()).
  *
  * **Never render a secret.** `index()` builds an explicit whitelist of
  * display values only — never iterate `getenv()`/`$_ENV` or a config
@@ -200,6 +202,54 @@ class System extends BaseController
         }
 
         return $this->jsonSuccess('OPcache reset.');
+    }
+
+    /**
+     * Admin-only, CSRF-guarded `POST system/migrations/run` — applies all
+     * pending migrations (equivalent to `php spark migrate`). Audit-logged.
+     */
+    public function runMigrations(): ResponseInterface
+    {
+        try {
+            service('migrations')->latest();
+        } catch (Throwable $e) {
+            log_message('error', 'Admin migration run failed: ' . $e->getMessage());
+
+            return $this->jsonFailed('Migration failed: ' . $e->getMessage(), 500);
+        }
+
+        log_message('info', 'Admin #{adminId} ran database migrations.', [
+            'adminId' => session('userAuthenticated')->id ?? null,
+        ]);
+
+        return $this->jsonSuccess('Migrations are up to date.');
+    }
+
+    /**
+     * Admin-only, CSRF-guarded `POST system/migrations/rollback` — regresses
+     * the most recent migration batch (`php spark migrate:rollback`).
+     * Audit-logged.
+     *
+     * Safety: every app migration's `down()` is guarded to run only on the
+     * dedicated tests DB (see the CreateXxx migrations), so on dev/live this
+     * un-records the last batch WITHOUT dropping tables or data — re-running
+     * "Run" re-applies it idempotently. The UI warns accordingly.
+     */
+    public function rollbackMigration(): ResponseInterface
+    {
+        try {
+            service('migrations')->regress(-1);
+        } catch (Throwable $e) {
+            log_message('error', 'Admin migration rollback failed: ' . $e->getMessage());
+
+            return $this->jsonFailed('Rollback failed: ' . $e->getMessage(), 500);
+        }
+
+        log_message('info', 'Admin #{adminId} rolled back the last migration batch.', [
+            'adminId' => session('userAuthenticated')->id ?? null,
+        ]);
+
+        return $this->jsonSuccess('Rolled back the last migration batch.');
     }
 
     /**
