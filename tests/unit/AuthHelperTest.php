@@ -17,6 +17,7 @@ final class AuthHelperTest extends CIUnitTestCase
     {
         parent::tearDown();
         session()->destroy();
+        user_can_reset_cache();
     }
 
     public function testIsAuthenticatedIsFalseWithoutSession(): void
@@ -84,5 +85,31 @@ final class AuthHelperTest extends CIUnitTestCase
 
         $this->assertSame('client', current_zone());
         $this->assertFalse(is_working_admin());
+    }
+
+    public function testUserCanIsFalseWithoutASession(): void
+    {
+        $this->assertFalse(user_can('anything.at.all'));
+    }
+
+    public function testUserCanIsTrueForAnAdminZoneUserRegardlessOfPermission(): void
+    {
+        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+
+        $this->assertTrue(user_can('nothing.was.ever.granted'));
+    }
+
+    public function testUserCanIsFalseWhenTheWorkingUserHasNoRoleId(): void
+    {
+        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => null]);
+
+        $this->assertFalse(user_can('users.manage'));
+    }
+
+    public function testUserCanIsFalseWhenTheWorkingUserObjectHasNoRoleIdPropertyAtAll(): void
+    {
+        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+
+        $this->assertFalse(user_can('users.manage'));
     }
 }

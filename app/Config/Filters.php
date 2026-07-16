@@ -6,6 +6,7 @@ use App\Filters\AdminFilter;
 use App\Filters\AuthFilter;
 use App\Filters\BasicAuthFilter;
 use App\Filters\GuestFilter;
+use App\Filters\PermissionFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -42,6 +43,7 @@ class Filters extends BaseFilters
         'adminFilter'   => AdminFilter::class,
         'guestFilter'   => GuestFilter::class,
         'basicauth'     => BasicAuthFilter::class,
+        'permission'    => PermissionFilter::class,
     ];
 
     /**

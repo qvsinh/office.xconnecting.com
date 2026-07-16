@@ -43,6 +43,7 @@ class UserModel extends Model
         'company',
         'phone_number',
         'zone',
+        'role_id',
         'env',
         'status',
         'two_factor_method',
