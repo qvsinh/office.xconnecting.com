@@ -184,12 +184,18 @@ $writableLabels = [
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-6 dark:border-gray-700 dark:bg-gray-800 sm:col-span-2">
             <div class="flex items-center justify-between">
                 <h2 class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">OPcache</h2>
-                <?php if ($runtime['opcache']['available'] ?? false) : ?>
-                    <button type="button" @click="confirmResetOpcache()" :disabled="resettingOpcache"
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="confirmClearCache()" :disabled="clearingCache"
                             class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-xs font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40">
-                        Reset OPcache
+                        Clear cache
                     </button>
-                <?php endif ?>
+                    <?php if ($runtime['opcache']['available'] ?? false) : ?>
+                        <button type="button" @click="confirmResetOpcache()" :disabled="resettingOpcache"
+                                class="rounded-md border border-[#9F2F2D] px-3 py-1.5 text-xs font-medium text-[#9F2F2D] hover:bg-[#FDEBEC] disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/40">
+                            Reset OPcache
+                        </button>
+                    <?php endif ?>
+                </div>
             </div>
 
             <?php if (! ($runtime['opcache']['available'] ?? false)) : ?>
@@ -289,6 +295,7 @@ $writableLabels = [
     function systemInfo() {
         return {
             resettingOpcache: false,
+            clearingCache: false,
             extensionsOpen: false,
 
             confirmResetOpcache() {
@@ -304,6 +311,24 @@ $writableLabels = [
                 this.resettingOpcache = true;
                 const json = await postForm('/admin/system/opcache/reset', {});
                 this.resettingOpcache = false;
+                if (json) {
+                    this.$dispatch('toast', { type: json.status === 'success' ? 'success' : 'error', text: json.message || 'Unexpected response.' });
+                }
+            },
+
+            confirmClearCache() {
+                this.$dispatch('confirm', {
+                    title: 'Clear cache',
+                    body: 'Clear the application cache (php spark cache:clear)?',
+                    variant: 'danger',
+                    confirmLabel: 'Clear',
+                    onConfirm: () => this.doClearCache(),
+                });
+            },
+            async doClearCache() {
+                this.clearingCache = true;
+                const json = await postForm('/admin/system/cache/clear', {});
+                this.clearingCache = false;
                 if (json) {
                     this.$dispatch('toast', { type: json.status === 'success' ? 'success' : 'error', text: json.message || 'Unexpected response.' });
                 }
