@@ -19,6 +19,9 @@ helper('setting');
     <meta name="csrf-token" content="<?= esc(csrf_hash(), 'attr') ?>">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="alternate icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>[x-cloak] { display: none !important; }</style>
     <link rel="stylesheet" href="/css/app.css">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -41,23 +44,20 @@ helper('setting');
 
             <form @submit.prevent="submit">
                 <div class="mb-4">
-                    <label for="username" class="mb-1.5 block text-sm font-medium">Username</label>
+                    <label for="username" class="form-label">Username</label>
                     <input id="username" name="username" type="text" autocomplete="username" required
-                           x-model="username"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                           x-model="username" class="form-input">
                     <p x-show="fieldErrors.username" x-cloak class="mt-1 text-xs text-red-700 dark:text-red-400" x-text="fieldErrors.username"></p>
                 </div>
 
                 <div class="mb-6">
-                    <label for="password" class="mb-1.5 block text-sm font-medium">Password</label>
+                    <label for="password" class="form-label">Password</label>
                     <input id="password" name="password" type="password" autocomplete="current-password" required
-                           x-model="password"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                           x-model="password" class="form-input">
                     <p x-show="fieldErrors.password" x-cloak class="mt-1 text-xs text-red-700 dark:text-red-400" x-text="fieldErrors.password"></p>
                 </div>
 
-                <button type="submit" :disabled="submitting"
-                        class="flex w-full items-center justify-center rounded-md bg-[#111111] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                <button type="submit" :disabled="submitting" class="btn-primary flex w-full">
                     <span x-show="!submitting">Continue</span>
                     <span x-show="submitting" x-cloak>Verifying…</span>
                 </button>

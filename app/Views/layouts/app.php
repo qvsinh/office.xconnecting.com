@@ -87,6 +87,9 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     <meta name="csrf-header-name" content="<?= esc(csrf_header(), 'attr') ?>">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="alternate icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>[x-cloak] { display: none !important; }</style>
     <link rel="stylesheet" href="/css/app.css">
     <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
@@ -333,16 +336,22 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
          @keydown.escape.window="closeConfirm()">
         <div class="fixed inset-0 bg-black/40" x-show="confirmState.open" x-transition.opacity @click="closeConfirm()"></div>
         <div x-show="confirmState.open" x-transition
-             class="relative w-full max-w-sm rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-w-sm"
              x-trap.noscroll="confirmState.open" role="dialog" aria-modal="true">
-            <h2 class="text-base font-semibold" x-text="confirmState.title"></h2>
-            <p class="mt-2 text-sm text-[#787774] dark:text-gray-400" x-text="confirmState.body"></p>
-            <div class="mt-6 flex justify-end gap-2">
-                <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="closeConfirm()">
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="closeConfirm()" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90" x-text="confirmState.title"></h2>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" x-text="confirmState.body"></p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" class="btn-secondary" @click="closeConfirm()">
                     Cancel
                 </button>
-                <button type="button" class="rounded-md px-3 py-1.5 text-sm font-medium text-white"
-                        :class="confirmState.variant === 'danger' ? 'bg-[#9F2F2D] hover:bg-[#7f2523]' : 'bg-[#111111] hover:bg-[#333333]'"
+                <button type="button"
+                        :class="confirmState.variant === 'danger' ? 'btn-danger' : 'btn-primary'"
                         @click="confirmAccept()">
                     <span x-text="confirmState.confirmLabel || 'Confirm'"></span>
                 </button>

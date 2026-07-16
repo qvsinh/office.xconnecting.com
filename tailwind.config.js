@@ -1,3 +1,5 @@
+const defaultTheme = require('tailwindcss/defaultTheme');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ['./app/Views/**/*.php'],
@@ -17,6 +19,9 @@ module.exports = {
                     800: '#252DAE',
                     900: '#262E89',
                 },
+            },
+            fontFamily: {
+                sans: ['Outfit', ...defaultTheme.fontFamily.sans],
             },
         },
     },

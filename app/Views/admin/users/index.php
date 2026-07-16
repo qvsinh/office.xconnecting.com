@@ -50,38 +50,36 @@ $sortMark = static function (string $col) use ($sort, $order): string {
             <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Users</h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Manage every account, then act as a user to see their view.</p>
         </div>
-        <button type="button" @click="openCreate()"
-                class="rounded-md bg-[#111111] px-4 py-2 text-sm font-medium text-white hover:bg-[#333333] dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+        <button type="button" @click="openCreate()" class="btn-primary">
             + Add user
         </button>
     </div>
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[220px] flex-1">
-            <label for="keyword" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Search</label>
+            <label for="keyword" class="form-label">Search</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"
-                   placeholder="Name, email, or company"
-                   class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                   placeholder="Name, email, or company" class="form-input">
         </div>
         <div>
-            <label for="zone" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Zone</label>
-            <select id="zone" name="zone" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="zone" class="form-label">Zone</label>
+            <select id="zone" name="zone" class="form-select">
                 <option value="">Any</option>
                 <option value="global" <?= ($filters['zone'] ?? '') === 'global' ? 'selected' : '' ?>>Admin</option>
                 <option value="client" <?= ($filters['zone'] ?? '') === 'client' ? 'selected' : '' ?>>Client</option>
             </select>
         </div>
         <div>
-            <label for="status" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Status</label>
-            <select id="status" name="status" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="status" class="form-label">Status</label>
+            <select id="status" name="status" class="form-select">
                 <option value="">Any</option>
                 <option value="1" <?= ($filters['status'] ?? '') === '1' ? 'selected' : '' ?>>Active</option>
                 <option value="0" <?= ($filters['status'] ?? '') === '0' ? 'selected' : '' ?>>Inactive</option>
             </select>
         </div>
         <div>
-            <label for="limit" class="mb-1.5 block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Per page</label>
-            <select id="limit" name="limit" class="rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+            <label for="limit" class="form-label">Per page</label>
+            <select id="limit" name="limit" class="form-select">
                 <?php foreach ([25, 50, 100] as $opt) : ?>
                     <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
                 <?php endforeach ?>
@@ -89,9 +87,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
         </div>
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
-        <button type="submit" class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">Search</button>
-        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'"
-                class="rounded-md border border-[#EAEAEA] px-4 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 hover:text-[#111111] dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100">Clear</button>
+        <button type="submit" class="btn-secondary">Search</button>
+        <button type="button" @click="location.href='?limit=<?= esc((string) $limit, 'js') ?>'" class="btn-secondary">Clear</button>
     </form>
 
     <div class="mt-6 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -164,39 +161,40 @@ $sortMark = static function (string $col) use ($sort, $order): string {
          @keydown.escape.window="createOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="createOpen = false"></div>
         <div x-show="createOpen" x-transition
-             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-w-md"
              x-trap.noscroll="createOpen" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
-            <h2 id="create-user-title" class="text-base font-semibold dark:text-gray-100">Add user</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="createOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="create-user-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Add user</h2>
             <form @submit.prevent="submitCreate" class="mt-4 space-y-4">
                 <div>
-                    <label for="create_name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
-                    <input id="create_name" type="text" x-model="createForm.name" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_name" class="form-label">Name</label>
+                    <input id="create_name" type="text" x-model="createForm.name" required maxlength="255" class="form-input">
                 </div>
                 <div>
-                    <label for="create_email" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Email</label>
-                    <input id="create_email" type="email" x-model="createForm.email" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_email" class="form-label">Email</label>
+                    <input id="create_email" type="email" x-model="createForm.email" required maxlength="255" class="form-input">
                 </div>
                 <div>
-                    <label for="create_password" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Password</label>
-                    <input id="create_password" type="password" x-model="createForm.password" minlength="5" autocomplete="new-password"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="create_password" class="form-label">Password</label>
+                    <input id="create_password" type="password" x-model="createForm.password" minlength="5" autocomplete="new-password" class="form-input">
                     <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Leave blank to auto-generate a random password.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="create_zone" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Zone</label>
-                        <select id="create_zone" x-model="createForm.zone" required
-                                class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="create_zone" class="form-label">Zone</label>
+                        <select id="create_zone" x-model="createForm.zone" required class="form-select">
                             <option value="global">Admin (global)</option>
                             <option value="client">Client</option>
                         </select>
                     </div>
                     <div>
-                        <label for="create_env" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Environment</label>
-                        <select id="create_env" x-model="createForm.env" required
-                                class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="create_env" class="form-label">Environment</label>
+                        <select id="create_env" x-model="createForm.env" required class="form-select">
                             <option value="LIVE">LIVE</option>
                             <option value="TESTING">TESTING</option>
                         </select>
@@ -204,26 +202,23 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="create_language" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Language</label>
-                        <input id="create_language" type="text" x-model="createForm.language" maxlength="5" placeholder="en"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="create_language" class="form-label">Language</label>
+                        <input id="create_language" type="text" x-model="createForm.language" maxlength="5" placeholder="en" class="form-input">
                     </div>
                     <div>
-                        <label for="create_timezone" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Timezone</label>
-                        <input id="create_timezone" type="text" x-model="createForm.timezone" maxlength="30" placeholder="Asia/Tokyo"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="create_timezone" class="form-label">Timezone</label>
+                        <input id="create_timezone" type="text" x-model="createForm.timezone" maxlength="30" placeholder="Asia/Tokyo" class="form-input">
                     </div>
                 </div>
                 <label class="flex items-center gap-2 text-sm dark:text-gray-200">
                     <input type="checkbox" :checked="createForm.status === 1"
                            @change="createForm.status = $event.target.checked ? 1 : 0"
-                           class="rounded border-[#EAEAEA] text-[#111111] focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900">
+                           class="rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900">
                     Active
                 </label>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="createOpen = false">Cancel</button>
-                    <button type="submit" :disabled="creating"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="btn-secondary" @click="createOpen = false">Cancel</button>
+                    <button type="submit" :disabled="creating" class="btn-primary">
                         <span x-show="!creating">Create</span>
                         <span x-show="creating" x-cloak>Creating…</span>
                     </button>
@@ -237,40 +232,41 @@ $sortMark = static function (string $col) use ($sort, $order): string {
          @keydown.escape.window="editOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="editOpen = false"></div>
         <div x-show="editOpen" x-transition
-             class="relative w-full max-w-md rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+             class="modal-panel relative max-w-md"
              x-trap.noscroll="editOpen" role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
-            <h2 id="edit-user-title" class="text-base font-semibold dark:text-gray-100">Edit user</h2>
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="editOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="edit-user-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Edit user</h2>
             <p x-show="editLoading" x-cloak class="mt-4 text-sm text-[#787774] dark:text-gray-400">Loading…</p>
             <form x-show="!editLoading" @submit.prevent="submitEdit" class="mt-4 space-y-4">
                 <div>
-                    <label for="edit_name" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Name</label>
-                    <input id="edit_name" type="text" x-model="editForm.name" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_name" class="form-label">Name</label>
+                    <input id="edit_name" type="text" x-model="editForm.name" required maxlength="255" class="form-input">
                 </div>
                 <div>
-                    <label for="edit_email" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Email</label>
-                    <input id="edit_email" type="email" x-model="editForm.email" required maxlength="255"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_email" class="form-label">Email</label>
+                    <input id="edit_email" type="email" x-model="editForm.email" required maxlength="255" class="form-input">
                 </div>
                 <div>
-                    <label for="edit_password" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Password</label>
-                    <input id="edit_password" type="password" x-model="editForm.password" minlength="5" autocomplete="new-password"
-                           class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                    <label for="edit_password" class="form-label">Password</label>
+                    <input id="edit_password" type="password" x-model="editForm.password" minlength="5" autocomplete="new-password" class="form-input">
                     <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Leave blank to keep the current password.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="edit_zone" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Zone</label>
-                        <select id="edit_zone" x-model="editForm.zone" required
-                                class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="edit_zone" class="form-label">Zone</label>
+                        <select id="edit_zone" x-model="editForm.zone" required class="form-select">
                             <option value="global">Admin (global)</option>
                             <option value="client">Client</option>
                         </select>
                     </div>
                     <div>
-                        <label for="edit_env" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Environment</label>
-                        <select id="edit_env" x-model="editForm.env" required
-                                class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="edit_env" class="form-label">Environment</label>
+                        <select id="edit_env" x-model="editForm.env" required class="form-select">
                             <option value="LIVE">LIVE</option>
                             <option value="TESTING">TESTING</option>
                         </select>
@@ -278,26 +274,23 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="edit_language" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Language</label>
-                        <input id="edit_language" type="text" x-model="editForm.language" maxlength="5"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="edit_language" class="form-label">Language</label>
+                        <input id="edit_language" type="text" x-model="editForm.language" maxlength="5" class="form-input">
                     </div>
                     <div>
-                        <label for="edit_timezone" class="mb-1.5 block text-sm font-medium dark:text-gray-200">Timezone</label>
-                        <input id="edit_timezone" type="text" x-model="editForm.timezone" maxlength="30"
-                               class="block w-full rounded-md border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-400 dark:focus:ring-gray-400">
+                        <label for="edit_timezone" class="form-label">Timezone</label>
+                        <input id="edit_timezone" type="text" x-model="editForm.timezone" maxlength="30" class="form-input">
                     </div>
                 </div>
                 <label class="flex items-center gap-2 text-sm dark:text-gray-200">
                     <input type="checkbox" :checked="editForm.status === 1"
                            @change="editForm.status = $event.target.checked ? 1 : 0"
-                           class="rounded border-[#EAEAEA] text-[#111111] focus:ring-[#111111] dark:border-gray-700 dark:bg-gray-900">
+                           class="rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900">
                     Active
                 </label>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700" @click="editOpen = false">Cancel</button>
-                    <button type="submit" :disabled="editing"
-                            class="rounded-md bg-[#111111] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#333333] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="btn-secondary" @click="editOpen = false">Cancel</button>
+                    <button type="submit" :disabled="editing" class="btn-primary">
                         <span x-show="!editing">Save</span>
                         <span x-show="editing" x-cloak>Saving…</span>
                     </button>
