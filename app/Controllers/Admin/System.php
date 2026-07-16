@@ -210,6 +210,29 @@ class System extends BaseController
     }
 
     /**
+     * Admin-only, CSRF-guarded `POST system/cache/clear` — flushes the CI4
+     * cache store (equivalent to `php spark cache:clear`). Audit-logged.
+     */
+    public function clearCache(): ResponseInterface
+    {
+        try {
+            if (! cache()->clean()) {
+                return $this->jsonFailed('Cache clear failed.', 500);
+            }
+        } catch (Throwable $e) {
+            log_message('error', 'Admin cache clear failed: ' . $e->getMessage());
+
+            return $this->jsonFailed('Cache clear failed: ' . $e->getMessage(), 500);
+        }
+
+        log_message('info', 'Admin #{adminId} cleared the cache.', [
+            'adminId' => session('userAuthenticated')->id ?? null,
+        ]);
+
+        return $this->jsonSuccess('Cache cleared.');
+    }
+
+    /**
      * Session-store summary for the System info page: the active handler and,
      * when sessions live in the database, the store table + its current row
      * count (active sessions). File/Redis/etc. handlers report the driver only.
