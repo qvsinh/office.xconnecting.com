@@ -3,12 +3,23 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
+use Config\Database;
 
+/**
+ * Idempotent: creates the full `api_history` table on a greenfield/test DB;
+ * on a DB that already has it (imported live data) it skips the create and
+ * adds any missing columns. Indexes are only laid down on a fresh create —
+ * an imported table keeps whatever indexes it already has (adding indexes to
+ * a large existing history table is a deliberate, separate operation).
+ */
 class CreateApiHistory extends Migration
 {
-    public function up(): void
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function fields(): array
     {
-        $this->forge->addField([
+        return [
             'id' => [
                 'type'           => 'BIGINT',
                 'unsigned'       => true,
@@ -74,17 +85,46 @@ class CreateApiHistory extends Migration
                 'type' => 'DATETIME',
                 'null' => true,
             ],
-        ]);
-        $this->forge->addPrimaryKey('id');
-        // Composite covers fetchHistory's service_name+service_id scoping (leftmost-prefix rule).
-        $this->forge->addKey(['service_name', 'service_id'], false, false, 'idx_api_history_service');
-        $this->forge->addKey('command');
-        $this->forge->addKey('env');
-        $this->forge->createTable('api_history');
+        ];
+    }
+
+    public function up(): void
+    {
+        $db = Database::connect($this->DBGroup);
+        $db->resetDataCache();
+
+        if (! $db->tableExists('api_history')) {
+            $this->forge->addField($this->fields());
+            $this->forge->addPrimaryKey('id');
+            // Composite covers fetchHistory's service_name+service_id scoping (leftmost-prefix rule).
+            $this->forge->addKey(['service_name', 'service_id'], false, false, 'idx_api_history_service');
+            $this->forge->addKey('command');
+            $this->forge->addKey('env');
+            $this->forge->createTable('api_history');
+
+            return;
+        }
+
+        // Pre-existing (imported) table: add only the columns it is missing.
+        foreach ($this->fields() as $name => $definition) {
+            if ($name === 'id') {
+                continue;
+            }
+
+            if (! $db->fieldExists($name, 'api_history')) {
+                $this->forge->addColumn('api_history', [$name => $definition]);
+            }
+        }
     }
 
     public function down(): void
     {
-        $this->forge->dropTable('api_history');
+        // Safe-on-live guard: only ever drop when connected to the dedicated
+        // `tests` DB group.
+        $testsDatabase = (string) (config(Database::class)->tests['database'] ?? '');
+
+        if ($testsDatabase !== '' && $this->db->getDatabase() === $testsDatabase) {
+            $this->forge->dropTable('api_history', true);
+        }
     }
 }
