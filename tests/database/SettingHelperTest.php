@@ -49,7 +49,7 @@ final class SettingHelperTest extends CIUnitTestCase
         $model = model(SiteVariableModel::class);
 
         // Default (seeded or fallback) is the same value either way.
-        $this->assertSame('xproxy.psi.jp', site_name());
+        $this->assertSame('CI4 Starter', site_name());
 
         // Upsert (a `site_name` row may already be seeded by migration).
         $existing = $model->where('name', 'site_name')->first();
@@ -61,6 +61,6 @@ final class SettingHelperTest extends CIUnitTestCase
 
         // ...and fall back again when it's blanked.
         $model->update($id, ['value' => '']);
-        $this->assertSame('xproxy.psi.jp', site_name());
+        $this->assertSame('CI4 Starter', site_name());
     }
 }

@@ -29,8 +29,8 @@ if (! function_exists('site_name')) {
      */
     function site_name(): string
     {
-        $name = get_site_variable('site_name', 'xproxy.psi.jp');
+        $name = get_site_variable('site_name', 'CI4 Starter');
 
-        return ($name === null || $name === '') ? 'xproxy.psi.jp' : $name;
+        return ($name === null || $name === '') ? 'CI4 Starter' : $name;
     }
 }

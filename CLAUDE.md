@@ -1,40 +1,30 @@
-# Project: proxyv2.services.vn — Rebuild of proxy.services.vn (Registrar API Proxy & Developer Console)
+# Project: CI4 + TailAdmin Admin-Panel Starter
 
-**This is a greenfield rebuild** of the existing `proxy.services.vn` platform onto the
-**latest CodeIgniter 4** and a **TailAdmin (Tailwind CSS) frontend**, built end-to-end by
-AI agents. There is **no application code here yet** — it is being written from scratch.
+A reusable **CodeIgniter 4.7 + TailAdmin (Tailwind CSS + Alpine.js)** admin-panel starter,
+built end-to-end by AI agents. Use it as the base for new projects — it ships auth, users,
+roles/permissions, settings, i18n, email, scheduled tasks, and a system toolkit, so new work
+starts from a working, tested admin shell. See **`STARTER.md`** for setup + full contents.
 
-- **Legacy reference codebase:** `../proxy.services.vn` (added as a working directory). Read it to
-  understand existing behaviour, data shapes, and business rules — but **do not copy its
-  frontend** (old server-rendered theme system) or its dated patterns. Port intent, not code.
 - **Frontend template:** [TailAdmin free Tailwind dashboard](https://github.com/TailAdmin/tailadmin-free-tailwind-dashboard-template)
-  — Tailwind CSS + Alpine.js. Use it for the whole project (admin + user areas).
-- **Raw prompts** for this rebuild are logged verbatim in `changeslog/` (one file per prompt/
-  session) for later review.
-- **Working language (hard rule):** write **all saved artifacts in English** — plans, code, code
-  comments, commit messages, and changeslog notes — regardless of whether the prompt is in
-  Vietnamese or English. Chat replies may mirror the user's language; anything written to disk is
-  English.
+  — Tailwind CSS + Alpine.js, compiled via the Tailwind CLI (no CDN).
+- **Working language (hard rule):** write **all saved artifacts in English** — code, comments,
+  plans, commit messages, docs — regardless of whether the prompt is in Vietnamese or English.
+  Chat replies may mirror the user's language; anything written to disk is English.
 
-## What we're rebuilding (feature summary)
+## Feature summary
 
-A **registrar API proxy/gateway + developer console**. It sits in front of upstream registrar
-APIs and exposes them to clients through issued API keys, logging every call. Core domains:
+- **Auth & access** — email/password login, optional basic-auth site gate, TOTP 2FA, roles +
+  permissions (`user_can()` helper / opt-in `permission:` route filter) alongside a `zone`
+  (global/client) admin gate, and admin "act as" impersonation.
+- **Admin** — users management, settings (site variables), translations (i18n + JSON export),
+  email templates + a read-only sent-email log, scheduled tasks (`php spark schedule:run`), and
+  system tools (info, migrations run/rollback, logs, OPcache/cache/DB-session reset).
+- **Account** — profile, security (2FA), notifications.
+- **UI** — shared TailAdmin layout (collapsible sidebar, dark mode, Outfit font, shared toast/
+  confirm/alert Alpine components) + reusable form/button/modal classes.
 
-- **Proxy (CNR + JPRS)** — proxy upstream registrar APIs (CNR / CentralNic / RRP, and JPRS for
-  `.jp`) to clients via `/api/cnr/*` and `/api/jprs/*`, authenticated by per-client **API access
-  keys** (`apiFilter`) with per-key enable/disable and request logging.
-- **API** — API access keys, request/response **API history** & log management, and admin/client
-  **developer consoles** to compose and run CNR / JPRS calls (`ConsoleCnr` / `ConsoleJprs`).
-- **Users** — user management, sub-users (delegated access), notifications, 2FA.
-- **System** — servers, scheduled tasks, translations, email templates, settings/site variables,
-  system logs, and the upstream **PSI Billing API** console.
-
-> **Out of scope:** the legacy CMS (posts, pages, FAQ, news) is **not** being rebuilt — it still
-> exists in the legacy repo only because it hasn't been removed yet. Do not port it.
-
-> For the exact controllers, models, registrar API contracts, and proxy/keying rules, consult
-> the legacy repo at `../proxy.services.vn`.
+> Building a new feature: copy an existing module (e.g. **Settings** or **Translations**) as a
+> template — controller + model + view + guarded migration + tests — and follow the conventions below.
 
 ## Tech Stack
 
@@ -69,13 +59,14 @@ APIs and exposes them to clients through issued API keys, logging every call. Co
 - Controllers extend `App\Controllers\BaseController` (public) or an admin base for protected areas;
   data access goes through Models (`CodeIgniter\Model`), **never raw SQL**.
 - Routes are **explicit** in `app/Config/Routes.php` — auto-routing stays **off**. Group and filter
-  routes (auth / admin / super-admin / api / subuser) as the legacy app does.
+  routes by area (guest / auth / admin), reusing the existing filters (`authFilter`, `adminFilter`,
+  `guestFilter`, `basicAuthFilter`, opt-in `permission`).
 - Use **parameterized Query Builder / Model methods** — never concatenate user input into SQL.
 - Validate all HTTP input at the controller boundary with CI4 `Validation`.
-- **Never log or expose registrar credentials, API keys, or customer payment data.** Sensitive
+- **Never log or expose credentials, API keys, tokens, or personal data.** Sensitive
   values go through an encryption library and `.env`, never hardcoded.
-- External registrar/payment calls can fail or time out — handle errors explicitly and never
-  swallow them; these operations have billing / provisioning side effects.
+- External API/service calls can fail or time out — handle errors explicitly and never
+  swallow them, especially where they have side effects.
 - Format & check with `php-cs-fixer`, `phpstan`, and `phpunit`.
 
 ## Coding & review discipline — ponytail (REQUIRED)
@@ -91,7 +82,7 @@ that works.
 - **Review:** invoke `ponytail-review` after code changes (alongside the `reviewer` agent) to flag
   over-engineering, dead code, and needless complexity. Quality/simplification only — it does not
   replace security/correctness review.
-- Do **not** simplify away input validation, error handling on registrar/billing side effects,
+- Do **not** simplify away input validation, error handling on external side effects,
   auth/ownership scoping, or `esc()` output escaping — those are never "extra".
 
 Ponytail skill set available (plugin): `ponytail` (coding), `ponytail-review` (review),
@@ -127,8 +118,7 @@ vendor/bin/phpstan analyse   # static analysis
 
 Once application code exists it is indexed by **CodeGraph** (local SQLite graph at
 `.codegraph/codegraph.db`). Use the CodeGraph MCP tools to navigate and assess impact instead of
-grepping blindly. **The index is empty until code is written** — early in the rebuild, prefer the
-legacy repo (`../proxy.services.vn`, already indexed) for reference lookups.
+grepping blindly. Run `codegraph sync` after adding code so the index stays current.
 
 ## Always Do
 
@@ -206,7 +196,7 @@ Supporting: **backend-patterns**, **api-design**, **database-migrations**, **doc
 ## Docs & Codebase Knowledge
 
 - **docs**, **update-docs**, **update-codemaps** — keep docs fresh.
-- **claude-mem:learn-codebase**, **claude-mem:smart-explore** — explore the legacy repo, build memory.
+- **claude-mem:learn-codebase**, **claude-mem:smart-explore** — explore the codebase, build memory.
 - **obsidian:*** — Obsidian-style note workflows for `docs/`.
 
 > When in doubt: **superpowers:using-superpowers** → **superpowers:brainstorming** → domain skill

@@ -32,7 +32,7 @@ class SeedSiteNameVariable extends Migration
 
         $db->table('site_variable')->insert([
             'name'        => 'site_name',
-            'value'       => 'xproxy.psi.jp',
+            'value'       => 'CI4 Starter',
             'type'        => 'string',
             'description' => 'Site/brand name shown in page titles.',
             'created_at'  => date('Y-m-d H:i:s'),

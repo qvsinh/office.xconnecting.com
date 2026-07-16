@@ -16,7 +16,9 @@ use PragmaRX\Google2FA\Google2FA;
  */
 class Google2faService
 {
-    private const ISSUER = 'proxyv2.services.vn';
+    // Label shown in the authenticator app. Rename per project (or wire to a
+    // config value) — kept a constant so this crypto helper has no DB coupling.
+    private const ISSUER = 'CI4 Starter';
 
     private Google2FA $engine;
 

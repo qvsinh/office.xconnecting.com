@@ -1,6 +1,6 @@
 {
-    "name": "codeigniter4/appstarter",
-    "description": "CodeIgniter4 starter app",
+    "name": "yourorg/ci4-tailadmin-starter",
+    "description": "CodeIgniter 4 + TailAdmin admin-panel starter (auth, users, roles, settings, i18n, email, tasks, system)",
     "license": "MIT",
     "type": "project",
     "homepage": "https://codeigniter.com",

@@ -47,7 +47,8 @@ final class Google2faServiceTest extends CIUnitTestCase
         $url = $service->otpauthUrl('user@example.com', $secret);
 
         $this->assertStringStartsWith('otpauth://totp/', $url);
-        $this->assertStringContainsString('proxyv2.services.vn', $url);
+        // Issuer is URL-encoded in the otpauth URL ('CI4 Starter' -> 'CI4%20Starter').
+        $this->assertStringContainsString('CI4%20Starter', $url);
         $this->assertStringContainsString($secret, $url);
     }
 
