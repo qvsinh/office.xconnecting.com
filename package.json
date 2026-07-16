@@ -1,7 +1,7 @@
 {
-    "name": "proxyv2-assets",
+    "name": "xproxy-assets",
     "private": true,
-    "description": "Tailwind CSS asset build for proxyv2.services.vn",
+    "description": "Tailwind CSS asset build for xproxy",
     "scripts": {
         "dev": "tailwindcss -i ./resources/css/app.css -o ./public/css/app.css --watch",
         "build": "tailwindcss -i ./resources/css/app.css -o ./public/css/app.css --minify"
