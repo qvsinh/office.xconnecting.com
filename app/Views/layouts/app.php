@@ -11,7 +11,7 @@
  *   VIEW-ONLY zone helper `is_working_admin()` — an admin "acting as" a client
  *   sees the client nav; see app/Helpers/auth_helper.php).
  */
-helper(['auth', 'url']);
+helper(['auth', 'url', 'setting']);
 
 /** @var object|null $user */
 $user ??= session('userWorking');
@@ -86,7 +86,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
         if (localStorage.getItem('sidebarExpanded') === 'false') document.documentElement.classList.add('sidebar-collapsed');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= isset($pageTitle) ? esc($pageTitle) . ' — ' : '' ?>proxyv2.services.vn</title>
+    <title><?= isset($pageTitle) ? esc($pageTitle) . ' — ' : '' ?><?= esc(site_name()) ?></title>
     <meta name="csrf-token-name" content="<?= esc(csrf_token(), 'attr') ?>">
     <meta name="csrf-token" content="<?= esc(csrf_hash(), 'attr') ?>">
     <meta name="csrf-header-name" content="<?= esc(csrf_header(), 'attr') ?>">

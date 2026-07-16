@@ -6,6 +6,7 @@
  * success -> {status:'success', redirect_url, csrf_hash} ;
  * failure -> HTTP 401 {status:'failed', message, csrf_hash}.
  */
+helper('setting');
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -13,7 +14,7 @@
     <meta charset="utf-8">
     <script>if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');</script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Authentication — proxyv2.services.vn</title>
+    <title>Authentication — <?= esc(site_name()) ?></title>
     <meta name="csrf-token-name" content="<?= esc(csrf_token(), 'attr') ?>">
     <meta name="csrf-token" content="<?= esc(csrf_hash(), 'attr') ?>">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
