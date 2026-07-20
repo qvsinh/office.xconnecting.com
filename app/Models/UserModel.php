@@ -127,6 +127,21 @@ class UserModel extends Model
     }
 
     /**
+     * Active users not already a member of the given workspace, `id, name,
+     * email` only — backs the add-member picker on `Workspaces::show()`.
+     *
+     * @return list<object>
+     */
+    public function activeUsersNotInWorkspace(int $workspaceId): array
+    {
+        return $this->select('id, name, email')
+            ->where('status', 1)
+            ->whereNotIn('id', static fn (BaseBuilder $builder) => $builder->select('user_id')->from('workspace_members')->where('workspace_id', $workspaceId))
+            ->orderBy('name', 'ASC')
+            ->findAll();
+    }
+
+    /**
      * Admin list search (`Admin\Users::index()`): keyword LIKE across
      * name/email/company, optional `zone`/`status` filters. `id` is always a
      * secondary sort key in the same direction so ties (e.g. many rows

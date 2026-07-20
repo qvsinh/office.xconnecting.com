@@ -111,4 +111,15 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');
     $routes->post('notifications/mark-read', 'Notifications::markRead', ['filter' => 'csrf']);
     $routes->post('notifications/mark-all-read', 'Notifications::markAllRead', ['filter' => 'csrf']);
+
+    $routes->get('workspaces', 'Workspaces::index');
+    $routes->post('workspaces/create', 'Workspaces::create', ['filter' => 'csrf']);
+    $routes->get('workspaces/(:num)', 'Workspaces::show/$1');
+    $routes->post('workspaces/update/(:num)', 'Workspaces::update/$1', ['filter' => 'csrf']);
+    $routes->post('workspaces/delete/(:num)', 'Workspaces::delete/$1', ['filter' => 'csrf']);
+    $routes->post('workspaces/(:num)/join', 'Workspaces::join/$1', ['filter' => 'csrf']);
+    $routes->post('workspaces/(:num)/leave', 'Workspaces::leave/$1', ['filter' => 'csrf']);
+    $routes->post('workspaces/(:num)/members/add', 'Workspaces::addMember/$1', ['filter' => 'csrf']);
+    $routes->post('workspaces/(:num)/members/remove', 'Workspaces::removeMember/$1', ['filter' => 'csrf']);
+    $routes->post('workspaces/(:num)/members/add-group', 'Workspaces::addGroup/$1', ['filter' => 'csrf']);
 });

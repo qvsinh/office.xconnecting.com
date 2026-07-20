@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 
 /**
@@ -35,14 +36,26 @@ class WorkspaceModel extends Model
      * (`visibility='company'`), newest first. `GROUP BY workspaces.id` keeps
      * each workspace to one row even though the `LEFT JOIN` on
      * `workspace_members` can otherwise multiply it once per member row.
-     * `member_count` is computed via an independent subquery, so it stays
-     * accurate regardless of that join.
+     * `member_count`/`project_count` are computed via independent
+     * subqueries, so they stay accurate regardless of that join; `role` is
+     * the caller's own membership role (correlated on `$userId`, not the
+     * joined row, which can belong to any member) — null when the row is
+     * only visible via the `visibility='company'` clause and not yet
+     * joined. Backs the card grid's role badge + project count (see
+     * `kanban/processing/20260721-03-workspaces.md` §UI notes).
      *
      * @return list<object>
      */
     public function forUser(int $userId): array
     {
-        return $this->select('workspaces.*, (SELECT COUNT(*) FROM workspace_members wm WHERE wm.workspace_id = workspaces.id) AS member_count')
+        $escapedUserId = $this->db->escape($userId);
+
+        return $this->select(
+            'workspaces.*, '
+            . '(SELECT COUNT(*) FROM workspace_members wm WHERE wm.workspace_id = workspaces.id) AS member_count, '
+            . '(SELECT COUNT(*) FROM projects p WHERE p.workspace_id = workspaces.id AND p.deleted_at IS NULL) AS project_count, '
+            . '(SELECT wm2.role FROM workspace_members wm2 WHERE wm2.workspace_id = workspaces.id AND wm2.user_id = ' . $escapedUserId . ') AS role',
+        )
             ->join('workspace_members', 'workspace_members.workspace_id = workspaces.id', 'left')
             ->groupStart()
             ->where('workspace_members.user_id', $userId)
@@ -51,6 +64,25 @@ class WorkspaceModel extends Model
             ->groupEnd()
             ->groupBy('workspaces.id')
             ->orderBy('workspaces.created_at', 'DESC')
+            ->findAll();
+    }
+
+    /**
+     * `visibility='company'` workspaces the user can discover and join —
+     * excludes ones they already own or belong to. Backs the "discoverable"
+     * section of `Workspaces::index()` (`forUser()` already folds every
+     * company workspace in regardless of membership, so this is the
+     * complementary "not yet joined" slice used for the Join CTA).
+     *
+     * @return list<object>
+     */
+    public function discoverableFor(int $userId): array
+    {
+        return $this->select('workspaces.*, (SELECT COUNT(*) FROM workspace_members wm WHERE wm.workspace_id = workspaces.id) AS member_count')
+            ->where('visibility', 'company')
+            ->where('owner_id !=', $userId)
+            ->whereNotIn('id', static fn (BaseBuilder $builder) => $builder->select('workspace_id')->from('workspace_members')->where('user_id', $userId))
+            ->orderBy('created_at', 'DESC')
             ->findAll();
     }
 

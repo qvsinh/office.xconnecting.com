@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ProjectModel;
 use App\Models\UserModel;
 use App\Models\WorkspaceMemberModel;
 use App\Models\WorkspaceModel;
@@ -13,9 +14,9 @@ final class WorkspaceModelTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate   = true;
-    protected $refresh   = true;
-    protected $namespace = null;
+    protected $migrate = true;
+    protected $refresh = true;
+    protected $namespace;
 
     public function testCreateWorkspaceDerivesUniqueSlug(): void
     {
@@ -35,8 +36,8 @@ final class WorkspaceModelTest extends CIUnitTestCase
         $model       = new WorkspaceModel();
         $memberModel = new WorkspaceMemberModel();
 
-        $ownerId  = $this->createUser('owner2@example.com');
-        $memberId = $this->createUser('member@example.com');
+        $ownerId    = $this->createUser('owner2@example.com');
+        $memberId   = $this->createUser('member@example.com');
         $strangerId = $this->createUser('stranger@example.com');
 
         $ownedId   = $model->createWorkspace('Owned Workspace', $ownerId);
@@ -80,6 +81,30 @@ final class WorkspaceModelTest extends CIUnitTestCase
 
         $this->assertCount(1, $rows);
         $this->assertSame(2, (int) $rows[0]->member_count);
+        $this->assertSame('member', $rows[0]->role);
+    }
+
+    public function testForUserReturnsCallersOwnRoleAndProjectCount(): void
+    {
+        $model        = new WorkspaceModel();
+        $memberModel  = new WorkspaceMemberModel();
+        $projectModel = new ProjectModel();
+
+        $ownerId    = $this->createUser('owner5@example.com');
+        $strangerId = $this->createUser('stranger2@example.com');
+
+        $workspaceId = $model->createWorkspace('Role Aware Workspace', $ownerId);
+        $memberModel->add($workspaceId, $ownerId, 'owner');
+        $projectModel->createProject($workspaceId, 'First Project', $ownerId);
+
+        $ownerRow = $model->forUser($ownerId)[0];
+        $this->assertSame('owner', $ownerRow->role);
+        $this->assertSame(1, (int) $ownerRow->project_count);
+
+        // Visible only via `visibility='company'`, not yet joined: no role.
+        $companyId  = $model->createWorkspace('Open Workspace', $ownerId, null, 'company');
+        $companyRow = array_values(array_filter($model->forUser($strangerId), static fn ($row) => (int) $row->id === $companyId))[0];
+        $this->assertNull($companyRow->role);
     }
 
     public function testWorkspaceMemberRoleForAddAndRemove(): void
@@ -87,8 +112,8 @@ final class WorkspaceModelTest extends CIUnitTestCase
         $model       = new WorkspaceModel();
         $memberModel = new WorkspaceMemberModel();
 
-        $ownerId = $this->createUser('owner4@example.com');
-        $userId  = $this->createUser('role-user@example.com');
+        $ownerId     = $this->createUser('owner4@example.com');
+        $userId      = $this->createUser('role-user@example.com');
         $workspaceId = $model->createWorkspace('Role Workspace', $ownerId);
 
         $this->assertNull($memberModel->roleFor($workspaceId, $userId));
