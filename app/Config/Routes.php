@@ -134,4 +134,13 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('projects/(:num)/files/upload', 'ProjectFiles::upload/$1', ['filter' => 'csrf']);
     $routes->get('projects/files/download/(:num)', 'ProjectFiles::download/$1');
     $routes->post('projects/files/delete/(:num)', 'ProjectFiles::delete/$1', ['filter' => 'csrf']);
+
+    $routes->get('projects/(:num)/board-data', 'Board::data/$1');
+    $routes->post('projects/(:num)/tasks/create', 'Board::createTask/$1', ['filter' => 'csrf']);
+    $routes->post('tasks/update/(:num)', 'Board::updateTask/$1', ['filter' => 'csrf']);
+    $routes->post('tasks/move/(:num)', 'Board::moveTask/$1', ['filter' => 'csrf']);
+    $routes->post('tasks/delete/(:num)', 'Board::deleteTask/$1', ['filter' => 'csrf']);
+    $routes->post('projects/(:num)/columns/create', 'Board::createColumn/$1', ['filter' => 'csrf']);
+    $routes->post('columns/rename/(:num)', 'Board::renameColumn/$1', ['filter' => 'csrf']);
+    $routes->post('columns/delete/(:num)', 'Board::deleteColumn/$1', ['filter' => 'csrf']);
 });

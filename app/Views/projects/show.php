@@ -1,9 +1,9 @@
 <?php
 /**
  * Single project shell: header (workspace breadcrumb, status badge, color dot,
- * edit/delete), Alpine tabs — Overview (description, meta, members panel) and
- * Files (drag-or-click upload zone + file list). Tab bar is left easy to
- * extend: a "Board" tab lands in a later phase.
+ * edit/delete), Alpine tabs — Overview (description, meta, members panel),
+ * Board (kanban — `projects/board` partial, lazy-loaded on first open), and
+ * Files (drag-or-click upload zone + file list).
  *
  * @var object       $project         id/name/slug/description/status/color/workspace_id/owner_id/created_at
  * @var object       $workspace       id/name
@@ -72,12 +72,16 @@ foreach ($members as $m) {
         <?php endif ?>
     </div>
 
-    <!-- Tabs (Board tab lands in a later phase — keep this bar easy to extend) -->
+    <!-- Tabs -->
     <div class="mt-6 border-b border-[#EAEAEA] dark:border-gray-700">
         <nav class="-mb-px flex flex-wrap gap-4">
             <button type="button" @click="tab = 'overview'" class="border-b-2 px-1 py-3 text-sm font-medium"
                     :class="tab === 'overview' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100'">
                 Overview
+            </button>
+            <button type="button" @click="tab = 'board'" class="border-b-2 px-1 py-3 text-sm font-medium"
+                    :class="tab === 'board' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100'">
+                Board
             </button>
             <button type="button" @click="tab = 'files'" class="border-b-2 px-1 py-3 text-sm font-medium"
                     :class="tab === 'files' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100'">
@@ -186,6 +190,11 @@ foreach ($members as $m) {
                 </div>
             <?php endif ?>
         </div>
+    </div>
+
+    <!-- Board -->
+    <div x-show="tab === 'board'" x-cloak class="mt-6">
+        <?= $this->include('projects/board') ?>
     </div>
 
     <!-- Files -->

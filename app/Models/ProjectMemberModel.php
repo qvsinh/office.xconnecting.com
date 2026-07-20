@@ -64,4 +64,13 @@ class ProjectMemberModel extends Model
     {
         $this->where('project_id', $projectId)->where('user_id', $userId)->delete();
     }
+
+    /**
+     * Whether a user is a direct member of a project — backs `Board`'s
+     * "assignee must be a project member" guard on create/update task.
+     */
+    public function isMember(int $projectId, int $userId): bool
+    {
+        return $this->where('project_id', $projectId)->where('user_id', $userId)->first() !== null;
+    }
 }

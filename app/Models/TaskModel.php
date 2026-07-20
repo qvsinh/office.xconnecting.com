@@ -18,6 +18,12 @@ class TaskModel extends Model
      */
     private const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 
+    /**
+     * `SELECT` list shared by `forProject()`/`findWithAssignee()` so both
+     * stay in lockstep with the `assignee_name` join.
+     */
+    private const SELECT_WITH_ASSIGNEE = 'tasks.*, users.name AS assignee_name';
+
     protected $table            = 'tasks';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
@@ -42,6 +48,18 @@ class TaskModel extends Model
     }
 
     /**
+     * A single task row with the assignee's display name attached — backs
+     * `Board::createTask()`/`updateTask()`'s JSON response.
+     */
+    public function findWithAssignee(int $id): ?object
+    {
+        return $this->select(self::SELECT_WITH_ASSIGNEE)
+            ->join('users', 'users.id = tasks.assignee_id', 'left')
+            ->where('tasks.id', $id)
+            ->first();
+    }
+
+    /**
      * All tasks in a project (board + list view), with the assignee's name
      * attached, ordered by column then position for a stable board layout.
      *
@@ -49,7 +67,7 @@ class TaskModel extends Model
      */
     public function forProject(int $projectId): array
     {
-        return $this->select('tasks.*, users.name AS assignee_name')
+        return $this->select(self::SELECT_WITH_ASSIGNEE)
             ->join('users', 'users.id = tasks.assignee_id', 'left')
             ->where('tasks.project_id', $projectId)
             ->orderBy('tasks.column_id', 'ASC')

@@ -29,6 +29,16 @@ class TaskColumnModel extends Model
     protected $updatedField     = '';
 
     /**
+     * Typed wrapper over `find()` — mirrors `TaskModel::findTask()`. Not
+     * named `findColumn()`: that name collides with `BaseModel::findColumn()`
+     * (fetches a single DB column across rows).
+     */
+    public function findOne(int $id): ?object
+    {
+        return $this->find($id);
+    }
+
+    /**
      * @return list<object>
      */
     public function forProject(int $projectId): array
@@ -51,5 +61,25 @@ class TaskColumnModel extends Model
         }
 
         $this->insertBatch($rows);
+    }
+
+    /**
+     * Whether a column belongs to a project — the IDOR guard for `column_id`
+     * inputs accepted from `Board`'s create/update/move task requests, so a
+     * column from another project can never be attached to a task.
+     */
+    public function belongsToProject(int $columnId, int $projectId): bool
+    {
+        return $this->where('id', $columnId)->where('project_id', $projectId)->first() !== null;
+    }
+
+    /**
+     * The lowest-position column in a project, or null if it has none —
+     * backs `Board::createTask()`'s default column and `deleteColumn()`'s
+     * task-relocation target.
+     */
+    public function firstColumn(int $projectId): ?object
+    {
+        return $this->where('project_id', $projectId)->orderBy('position', 'ASC')->first();
     }
 }
