@@ -106,6 +106,10 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('account/2fa/verify', 'Account::verifyGoogle2fa', ['filter' => 'csrf']);
     $routes->post('account/2fa/disable', 'Account::disable2fa', ['filter' => 'csrf']);
 
+    $routes->get('account/api-keys', 'Account\ApiKeys::index');
+    $routes->post('account/api-keys/create', 'Account\ApiKeys::create', ['filter' => 'csrf']);
+    $routes->post('account/api-keys/revoke', 'Account\ApiKeys::revoke', ['filter' => 'csrf']);
+
     $routes->get('notifications', 'Notifications::index');
     $routes->get('notifications/feed', 'Notifications::feed');
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');

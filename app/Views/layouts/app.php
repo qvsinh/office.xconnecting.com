@@ -46,6 +46,7 @@ $navGroups = [
         ['label' => 'Profile', 'href' => '/account'],
         ['label' => 'Security', 'href' => '/account/security'],
         ['label' => 'Notifications', 'href' => '/notifications'],
+        ['label' => 'API Keys', 'href' => '/account/api-keys'],
     ],
 ];
 

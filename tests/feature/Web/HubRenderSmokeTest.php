@@ -77,4 +77,12 @@ final class HubRenderSmokeTest extends CIUnitTestCase
         $this->withSession()->get('/workspaces/' . $wsId)->assertStatus(200);
         $this->withSession()->get('/projects/' . $projId)->assertStatus(200);
     }
+
+    public function testAccountApiKeysPageRenders(): void
+    {
+        $user = $this->seedWebUser(['email' => 'smoke-keys@example.com', 'zone' => 'client']);
+        $this->loginAs($user);
+
+        $this->withSession()->get('/account/api-keys')->assertStatus(200);
+    }
 }
