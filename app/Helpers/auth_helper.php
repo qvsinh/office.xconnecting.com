@@ -57,6 +57,21 @@ if (! function_exists('is_working_admin')) {
     }
 }
 
+if (! function_exists('current_user_id')) {
+    /**
+     * The session identity that owns/scopes collaboration data (workspaces,
+     * projects, tasks, ...): `userWorking`, the "acting-as" identity, so
+     * ownership checks follow an admin's act-as switch the same way the
+     * account area does (see `Account::me()`). Returns `0` when there's no
+     * working user (never null — callers can compare against real ids
+     * directly without a null check).
+     */
+    function current_user_id(): int
+    {
+        return (int) (session('userWorking')->id ?? 0);
+    }
+}
+
 /*
  * PERMISSION LAYER (additive). `user_can()` is a new, opt-in authorization
  * capability layered on top of the zone gate above — it never replaces
