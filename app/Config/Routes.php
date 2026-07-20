@@ -59,6 +59,16 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('settings/update', 'Admin\Settings::update', ['filter' => 'csrf']);
     $routes->post('settings/delete', 'Admin\Settings::delete', ['filter' => 'csrf']);
 
+    $routes->get('groups', 'Admin\Groups::index');
+    $routes->post('groups/create', 'Admin\Groups::create', ['filter' => 'csrf']);
+    $routes->get('groups/edit/(:num)', 'Admin\Groups::edit/$1');
+    $routes->post('groups/update', 'Admin\Groups::update', ['filter' => 'csrf']);
+    $routes->post('groups/delete', 'Admin\Groups::delete', ['filter' => 'csrf']);
+    $routes->get('groups/members/(:num)', 'Admin\Groups::members/$1');
+    $routes->get('groups/(:num)/members-data', 'Admin\Groups::membersData/$1');
+    $routes->post('groups/(:num)/members/add', 'Admin\Groups::addMember/$1', ['filter' => 'csrf']);
+    $routes->post('groups/(:num)/members/remove', 'Admin\Groups::removeMember/$1', ['filter' => 'csrf']);
+
     $routes->get('translations', 'Admin\Translations::index');
     $routes->get('translations/export', 'Admin\Translations::export');
     $routes->post('translations/create', 'Admin\Translations::create', ['filter' => 'csrf']);

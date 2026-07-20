@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 
 /**
@@ -12,6 +13,17 @@ use CodeIgniter\Model;
  */
 class GroupModel extends Model
 {
+    /**
+     * Sortable columns for the admin groups list (`searchAdmin()`); anything
+     * else falls back to `name`.
+     */
+    public const SORT_ALLOWLIST = ['id', 'name', 'slug', 'created_at'];
+
+    /**
+     * Columns searched by a `keyword` filter term in `searchAdmin()`.
+     */
+    private const KEYWORD_FIELDS = ['name', 'slug', 'description'];
+
     protected $table            = 'user_groups';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
@@ -48,6 +60,66 @@ class GroupModel extends Model
             'slug'        => $this->uniqueSlug($name),
             'description' => $description,
         ]);
+    }
+
+    /**
+     * Admin list search (`Admin\Groups::index()`): keyword LIKE across
+     * name/slug/description, with a `member_count` subquery attached so it
+     * stays accurate regardless of joins. `id` is always a secondary sort
+     * key so ties resolve deterministically across pages — mirrors
+     * `SiteVariableModel::searchAdmin()`. Soft-deleted rows are excluded
+     * automatically by `useSoftDeletes`.
+     *
+     * @param array{keyword?: string} $filters
+     *
+     * @return list<object>
+     */
+    public function searchAdmin(array $filters, string $sort = 'name', string $order = 'asc', int $limit = 25, int $offset = 0): array
+    {
+        $this->select('user_groups.*, (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = user_groups.id) AS member_count');
+        $this->applyAdminFilters($this->builder(), $filters);
+
+        $sortColumn = in_array($sort, self::SORT_ALLOWLIST, true) ? $sort : 'name';
+        $sortOrder  = strtolower($order) === 'desc' ? 'DESC' : 'ASC';
+
+        $this->orderBy($sortColumn, $sortOrder);
+        if ($sortColumn !== 'id') {
+            $this->orderBy('id', $sortOrder);
+        }
+
+        return $this->findAll($limit, $offset);
+    }
+
+    /**
+     * @param array{keyword?: string} $filters
+     */
+    public function countAdmin(array $filters): int
+    {
+        $this->applyAdminFilters($this->builder(), $filters);
+
+        return $this->countAllResults();
+    }
+
+    /**
+     * The one place `keyword` gets translated into a WHERE clause for the
+     * admin list — shared by `searchAdmin()`/`countAdmin()` so the paginated
+     * rows and the total can't drift apart.
+     *
+     * @param array{keyword?: string} $filters
+     */
+    private function applyAdminFilters(BaseBuilder $builder, array $filters): void
+    {
+        $keyword = trim((string) ($filters['keyword'] ?? ''));
+        if ($keyword === '') {
+            return;
+        }
+
+        $builder->groupStart();
+
+        foreach (self::KEYWORD_FIELDS as $i => $field) {
+            $i === 0 ? $builder->like($field, $keyword) : $builder->orLike($field, $keyword);
+        }
+        $builder->groupEnd();
     }
 
     /**

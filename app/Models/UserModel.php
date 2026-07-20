@@ -112,6 +112,21 @@ class UserModel extends Model
     }
 
     /**
+     * Active users not already a member of the given group, `id, name,
+     * email` only — backs the add-member picker on `Admin\Groups::members()`.
+     *
+     * @return list<object>
+     */
+    public function activeUsersNotInGroup(int $groupId): array
+    {
+        return $this->select('id, name, email')
+            ->where('status', 1)
+            ->whereNotIn('id', static fn (BaseBuilder $builder) => $builder->select('user_id')->from('group_members')->where('group_id', $groupId))
+            ->orderBy('name', 'ASC')
+            ->findAll();
+    }
+
+    /**
      * Admin list search (`Admin\Users::index()`): keyword LIKE across
      * name/email/company, optional `zone`/`status` filters. `id` is always a
      * secondary sort key in the same direction so ties (e.g. many rows

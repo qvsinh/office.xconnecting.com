@@ -49,6 +49,7 @@ $navGroups = [
 if ($navZone === 'admin') {
     $navGroups['Admin'] = [
         ['label' => 'Users', 'href' => '/admin/users'],
+        ['label' => 'Groups', 'href' => '/admin/groups'],
         ['label' => 'Settings', 'href' => '/admin/settings'],
         ['label' => 'Translations', 'href' => '/admin/translations'],
         ['label' => 'Email Templates', 'href' => '/admin/email-templates'],
