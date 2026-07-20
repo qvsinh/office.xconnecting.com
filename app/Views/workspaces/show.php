@@ -94,7 +94,12 @@ foreach ($members as $m) {
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Projects</h2>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Projects</h2>
+                <?php if ($canManage) : ?>
+                    <button type="button" class="btn-secondary" @click="openCreateProject()">+ New project</button>
+                <?php endif ?>
+            </div>
             <?php if ($projects === []) : ?>
                 <div class="mt-3 rounded-lg border border-dashed border-[#EAEAEA] bg-white px-6 py-10 text-center dark:border-gray-700 dark:bg-gray-800">
                     <p class="text-sm text-[#787774] dark:text-gray-400">No projects yet.</p>
@@ -223,6 +228,46 @@ foreach ($members as $m) {
         <?php endif ?>
     </div>
 
+    <!-- New project modal -->
+    <?php if ($canManage) : ?>
+        <div x-show="createProjectOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
+             @keydown.escape.window="createProjectOpen = false">
+            <div class="fixed inset-0 bg-black/40" @click="createProjectOpen = false"></div>
+            <div x-show="createProjectOpen" x-transition
+                 class="modal-panel relative max-w-md"
+                 x-trap.noscroll="createProjectOpen" role="dialog" aria-modal="true" aria-labelledby="create-project-title">
+                <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                        @click="createProjectOpen = false" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2 id="create-project-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">New project</h2>
+                <form @submit.prevent="submitCreateProject" class="mt-4 space-y-4">
+                    <div>
+                        <label for="create_project_name" class="form-label">Name</label>
+                        <input id="create_project_name" type="text" x-model="createProjectForm.name" required maxlength="150" class="form-input">
+                    </div>
+                    <div>
+                        <label for="create_project_description" class="form-label">Description</label>
+                        <textarea id="create_project_description" x-model="createProjectForm.description" rows="3" class="form-textarea"></textarea>
+                    </div>
+                    <div>
+                        <label for="create_project_color" class="form-label">Color</label>
+                        <input id="create_project_color" type="color" x-model="createProjectForm.color" class="form-input h-10 w-16 p-1">
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" class="btn-secondary" @click="createProjectOpen = false">Cancel</button>
+                        <button type="submit" :disabled="creatingProject" class="btn-primary">
+                            <span x-show="!creatingProject">Create</span>
+                            <span x-show="creatingProject" x-cloak>Creating…</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <?php endif ?>
+
     <!-- Edit modal -->
     <?php if ($canManage) : ?>
         <div x-show="editOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
@@ -286,8 +331,30 @@ foreach ($members as $m) {
                 addingGroup: false,
                 addGroupId: '',
 
+                creatingProject: false,
+                createProjectOpen: false,
+                createProjectForm: { name: '', description: '', color: '#465fff' },
+
                 openEdit() {
                     this.editOpen = true;
+                },
+
+                openCreateProject() {
+                    this.createProjectForm = { name: '', description: '', color: '#465fff' };
+                    this.createProjectOpen = true;
+                },
+
+                async submitCreateProject() {
+                    this.creatingProject = true;
+                    const json = await postForm('/workspaces/' + this.workspaceId + '/projects/create', this.createProjectForm);
+                    this.creatingProject = false;
+                    if (!json) return;
+                    if (json.status === 'success') {
+                        this.$dispatch('toast', { type: 'success', text: json.message });
+                        window.location.href = '/projects/' + json.id;
+                    } else {
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not create the project.' });
+                    }
                 },
 
                 async submitEdit() {

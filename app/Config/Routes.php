@@ -122,4 +122,16 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('workspaces/(:num)/members/add', 'Workspaces::addMember/$1', ['filter' => 'csrf']);
     $routes->post('workspaces/(:num)/members/remove', 'Workspaces::removeMember/$1', ['filter' => 'csrf']);
     $routes->post('workspaces/(:num)/members/add-group', 'Workspaces::addGroup/$1', ['filter' => 'csrf']);
+
+    $routes->post('workspaces/(:num)/projects/create', 'Projects::create/$1', ['filter' => 'csrf']);
+    $routes->get('projects/(:num)', 'Projects::show/$1');
+    $routes->post('projects/update/(:num)', 'Projects::update/$1', ['filter' => 'csrf']);
+    $routes->post('projects/delete/(:num)', 'Projects::delete/$1', ['filter' => 'csrf']);
+    $routes->post('projects/(:num)/members/add', 'Projects::addMember/$1', ['filter' => 'csrf']);
+    $routes->post('projects/(:num)/members/remove', 'Projects::removeMember/$1', ['filter' => 'csrf']);
+
+    $routes->get('projects/(:num)/files', 'ProjectFiles::index/$1');
+    $routes->post('projects/(:num)/files/upload', 'ProjectFiles::upload/$1', ['filter' => 'csrf']);
+    $routes->get('projects/files/download/(:num)', 'ProjectFiles::download/$1');
+    $routes->post('projects/files/delete/(:num)', 'ProjectFiles::delete/$1', ['filter' => 'csrf']);
 });

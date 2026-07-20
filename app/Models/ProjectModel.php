@@ -77,7 +77,7 @@ class ProjectModel extends Model
      *
      * @return int inserted id
      */
-    public function createProject(int $workspaceId, string $name, int $ownerId, ?string $description = null): int
+    public function createProject(int $workspaceId, string $name, int $ownerId, ?string $description = null, ?string $color = null): int
     {
         return (int) $this->insert([
             'workspace_id' => $workspaceId,
@@ -85,6 +85,7 @@ class ProjectModel extends Model
             'slug'         => $this->uniqueSlug($workspaceId, $name),
             'owner_id'     => $ownerId,
             'description'  => $description,
+            'color'        => $color,
         ]);
     }
 

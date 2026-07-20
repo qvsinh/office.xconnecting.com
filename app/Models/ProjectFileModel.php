@@ -12,6 +12,12 @@ use CodeIgniter\Model;
  */
 class ProjectFileModel extends Model
 {
+    /**
+     * `SELECT` list shared by `forProject()`/`findWithUploader()` so both
+     * stay in lockstep with the `uploader_name` join.
+     */
+    private const SELECT_WITH_UPLOADER = 'project_files.*, users.name AS uploader_name';
+
     protected $table            = 'project_files';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
@@ -25,13 +31,38 @@ class ProjectFileModel extends Model
     protected $deletedField     = 'deleted_at';
 
     /**
+     * Files for a project, newest first, with the uploader's display name
+     * attached — backs `Projects::show()` and `ProjectFiles::index()`.
+     *
      * @return list<object>
      */
     public function forProject(int $projectId): array
     {
-        return $this->where('project_id', $projectId)
-            ->orderBy('created_at', 'DESC')
+        return $this->select(self::SELECT_WITH_UPLOADER)
+            ->join('users', 'users.id = project_files.uploaded_by', 'left')
+            ->where('project_files.project_id', $projectId)
+            ->orderBy('project_files.created_at', 'DESC')
             ->findAll();
+    }
+
+    /**
+     * Typed wrapper over `find()` — mirrors `UserModel::findUser()`.
+     */
+    public function findFile(int $id): ?object
+    {
+        return $this->find($id);
+    }
+
+    /**
+     * A single file row with the uploader's display name attached — backs
+     * `ProjectFiles::upload()`'s response.
+     */
+    public function findWithUploader(int $id): ?object
+    {
+        return $this->select(self::SELECT_WITH_UPLOADER)
+            ->join('users', 'users.id = project_files.uploaded_by', 'left')
+            ->where('project_files.id', $id)
+            ->first();
     }
 
     /**
