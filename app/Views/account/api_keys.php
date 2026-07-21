@@ -55,7 +55,7 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <?php foreach ($keys as $key) :
                     [$statusLabel, $statusClass] = $statusBadge($key->revoked_at ?? null, $key->expires_at ?? null);
-                ?>
+                    ?>
                     <tr>
                         <td class="px-4 py-3 font-medium dark:text-gray-100"><?= esc($key->name) ?></td>
                         <td class="px-4 py-3">

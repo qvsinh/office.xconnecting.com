@@ -3,12 +3,12 @@
  * Admin dashboard — company-wide overview: stat cards, task-priority
  * breakdown (CSS bars, no chart library), and recent/most-active lists.
  *
- * @var object       $user             session('userWorking')
+ * @var object                                                                                     $user             session('userWorking')
  * @var array{users:int, groups:int, workspaces:int, projects:int, tasks_open:int, tasks_done:int} $stats
- * @var array{low:int, normal:int, high:int, urgent:int} $tasksByPriority
- * @var list<object> $recentWorkspaces id/name/created_at, latest 5
- * @var list<object> $recentProjects   id/name/created_at, latest 5
- * @var list<object> $activeProjects   id/name/open_tasks, top 5 by open tasks
+ * @var array{low:int, normal:int, high:int, urgent:int}                                           $tasksByPriority
+ * @var list<object>                                                                               $recentWorkspaces id/name/created_at, latest 5
+ * @var list<object>                                                                               $recentProjects   id/name/created_at, latest 5
+ * @var list<object>                                                                               $activeProjects   id/name/open_tasks, top 5 by open tasks
  */
 $this->extend('layouts/app');
 
@@ -66,6 +66,7 @@ $priorityColors = [
     'urgent' => 'bg-red-500',
 ];
 $priorityCounts = [];
+
 foreach ($priorityOrder as $p) {
     $priorityCounts[$p] = (int) ($tasksByPriority[$p] ?? 0);
 }

@@ -28,6 +28,7 @@ $visBadge = ($workspace->visibility ?? 'private') === 'company'
 
 $ownerName  = '—';
 $ownerCount = 0;
+
 foreach ($members as $m) {
     if (($m->role ?? '') === 'owner') {
         $ownerCount++;

@@ -28,51 +28,51 @@ $endpoints = [
 ];
 
 $curlGet = <<<CURL
-curl -s {$baseUrl}/projects \\
-  -H "Authorization: Bearer YOUR_API_KEY"
-CURL;
+    curl -s {$baseUrl}/projects \\
+      -H "Authorization: Bearer YOUR_API_KEY"
+    CURL;
 
 $curlPost = <<<CURL
-curl -s -X POST {$baseUrl}/projects/1/tasks \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"title": "Write the launch checklist", "priority": "high"}'
-CURL;
+    curl -s -X POST {$baseUrl}/projects/1/tasks \\
+      -H "Authorization: Bearer YOUR_API_KEY" \\
+      -H "Content-Type: application/json" \\
+      -d '{"title": "Write the launch checklist", "priority": "high"}'
+    CURL;
 
 $pythonSnippet = <<<PY
-import requests
+    import requests
 
-BASE_URL = "{$baseUrl}"
-API_KEY = "YOUR_API_KEY"
-headers = {"Authorization": f"Bearer {API_KEY}"}
+    BASE_URL = "{$baseUrl}"
+    API_KEY = "YOUR_API_KEY"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
 
-# List the projects this key can access
-projects = requests.get(f"{BASE_URL}/projects", headers=headers).json()
+    # List the projects this key can access
+    projects = requests.get(f"{BASE_URL}/projects", headers=headers).json()
 
-# Create a task in project 1 (requires a write-scoped key)
-task = requests.post(
-    f"{BASE_URL}/projects/1/tasks",
-    headers=headers,
-    json={"title": "Write the launch checklist", "priority": "high"},
-).json()
-PY;
+    # Create a task in project 1 (requires a write-scoped key)
+    task = requests.post(
+        f"{BASE_URL}/projects/1/tasks",
+        headers=headers,
+        json={"title": "Write the launch checklist", "priority": "high"},
+    ).json()
+    PY;
 
 $agentPrompt = <<<PROMPT
-You have an API key and access to a project-management REST API.
+    You have an API key and access to a project-management REST API.
 
-Base URL: {$baseUrl}
-Send this header on every request: Authorization: Bearer YOUR_API_KEY
+    Base URL: {$baseUrl}
+    Send this header on every request: Authorization: Bearer YOUR_API_KEY
 
-You can:
-- GET /projects to list the projects you have access to
-- GET /projects/{id}/tasks to list the tasks in a project
-- POST /projects/{id}/tasks with JSON body {"title": "...", "priority": "low|medium|high", "assignee_id": null, "due_date": "YYYY-MM-DD"} to create a task
-- GET /tasks/{id} to read one task
-- PATCH /tasks/{id} to update a task
-- DELETE /tasks/{id} to remove a task
+    You can:
+    - GET /projects to list the projects you have access to
+    - GET /projects/{id}/tasks to list the tasks in a project
+    - POST /projects/{id}/tasks with JSON body {"title": "...", "priority": "low|medium|high", "assignee_id": null, "due_date": "YYYY-MM-DD"} to create a task
+    - GET /tasks/{id} to read one task
+    - PATCH /tasks/{id} to update a task
+    - DELETE /tasks/{id} to remove a task
 
-POST, PATCH, and DELETE only work if the key has "write" scope — a "read" key gets a 403.
-PROMPT;
+    POST, PATCH, and DELETE only work if the key has "write" scope — a "read" key gets a 403.
+    PROMPT;
 ?>
 
 <?php $this->section('content') ?>

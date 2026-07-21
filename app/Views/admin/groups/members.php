@@ -5,7 +5,7 @@
  * <select> of available (not-yet-member) active users. Mirrors the
  * TailAdmin card/table patterns from `admin/settings/index.php`.
  *
- * @var object      $group           id/name/slug/description
+ * @var object       $group           id/name/slug/description
  * @var list<object> $members        id/name/email — current group members
  * @var list<object> $availableUsers id/name/email — users not yet in the group
  */

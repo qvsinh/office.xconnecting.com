@@ -11,7 +11,7 @@ class Home extends BaseController
      * console; guests see the branded landing page. (The basic-auth site gate,
      * when enabled, runs as a global before-filter ahead of this.)
      */
-    public function index(): string|RedirectResponse
+    public function index(): RedirectResponse|string
     {
         helper('auth');
 

@@ -2,10 +2,10 @@
 /**
  * Personal dashboard — the signed-in user's own workspaces/projects/tasks.
  *
- * @var object       $user         session('userWorking')
+ * @var object                                                            $user         session('userWorking')
  * @var array{workspaces:int, projects:int, open_tasks:int, due_soon:int} $stats
- * @var list<object> $myTasks      title/project_id/project_name/priority/due_date/is_overdue
- * @var list<object> $myWorkspaces id/name/role/member_count/project_count
+ * @var list<object>                                                      $myTasks      title/project_id/project_name/priority/due_date/is_overdue
+ * @var list<object>                                                      $myWorkspaces id/name/role/member_count/project_count
  */
 $this->extend('layouts/app');
 
@@ -90,7 +90,7 @@ $statCards = [
                                 <span class="rounded-full px-2 py-0.5 text-xs font-medium capitalize <?= $priorityBadge((string) ($task->priority ?? 'normal')) ?>">
                                     <?= esc((string) ($task->priority ?? 'normal')) ?>
                                 </span>
-                                <?php if (!empty($task->due_date)) : ?>
+                                <?php if (! empty($task->due_date)) : ?>
                                     <span class="text-xs <?= $overdue ? 'font-medium text-red-600 dark:text-red-400' : 'text-[#787774] dark:text-gray-400' ?>">
                                         <?= esc((string) $task->due_date) ?>
                                     </span>

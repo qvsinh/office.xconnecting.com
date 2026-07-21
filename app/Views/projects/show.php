@@ -33,6 +33,7 @@ $colorHex = preg_match('/^#[0-9a-fA-F]{3,8}$/', $colorHex) ? $colorHex : null;
 
 $ownerName  = '—';
 $ownerCount = 0;
+
 foreach ($members as $m) {
     if (($m->role ?? '') === 'owner') {
         $ownerCount++;

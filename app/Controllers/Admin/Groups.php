@@ -136,8 +136,8 @@ class Groups extends BaseController
         }
 
         return view('admin/groups/members', [
-            'group'         => $group,
-            'members'       => model(GroupMemberModel::class)->membersOf($id),
+            'group'          => $group,
+            'members'        => model(GroupMemberModel::class)->membersOf($id),
             'availableUsers' => model(UserModel::class)->activeUsersNotInGroup($id),
         ]);
     }
