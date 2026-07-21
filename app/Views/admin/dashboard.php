@@ -78,18 +78,18 @@ $priorityMax = max(1, ...array_values($priorityCounts));
     <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Welcome back, <?= esc($user->name ?? '') ?></h1>
     <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Company-wide overview.</p>
 
-    <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="mt-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
         <?php foreach ($statCards as $card) :
             $inner = '<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">' . $card['icon'] . '</span>'
                 . '<span class="min-w-0"><span class="block text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">' . esc($card['label']) . '</span>'
                 . '<span class="mt-1 block text-2xl font-semibold text-gray-800 dark:text-white/90">' . esc((string) $card['value']) . '</span></span>';
             ?>
             <?php if ($card['href'] !== null) : ?>
-                <a href="<?= esc($card['href'], 'attr') ?>" class="flex items-center gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 transition-colors hover:border-gray-300 sm:p-5 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
+                <a href="<?= esc($card['href'], 'attr') ?>" class="flex items-center gap-3 rounded-lg border border-[#EAEAEA] bg-white p-5 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
                     <?= $inner ?>
                 </a>
             <?php else : ?>
-                <div class="flex items-center gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 sm:p-5 dark:border-gray-700 dark:bg-gray-800">
+                <div class="flex items-center gap-3 rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                     <?= $inner ?>
                 </div>
             <?php endif ?>
@@ -132,7 +132,7 @@ $priorityMax = max(1, ...array_values($priorityCounts));
     </div>
 
     <!-- Recent workspaces / recent projects -->
-    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div class="rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
             <h2 class="border-b border-[#EAEAEA] px-5 py-3 text-base font-semibold text-gray-800 dark:border-gray-700 dark:text-white/90">Recent workspaces</h2>
             <?php if ($recentWorkspaces === []) : ?>

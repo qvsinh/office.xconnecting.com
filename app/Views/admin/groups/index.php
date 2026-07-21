@@ -54,7 +54,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
         </button>
     </div>
 
-    <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+    <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
         <div class="min-w-[220px] flex-1">
             <label for="keyword" class="form-label">Search</label>
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"

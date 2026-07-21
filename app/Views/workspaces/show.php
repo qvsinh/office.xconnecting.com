@@ -40,7 +40,7 @@ foreach ($members as $m) {
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-6xl" x-data="workspaceShow(<?= (int) $workspace->id ?>)">
+<div class="mx-auto max-w-7xl" x-data="workspaceShow(<?= (int) $workspace->id ?>)">
 
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -106,9 +106,9 @@ foreach ($members as $m) {
                     <p class="text-sm text-[#787774] dark:text-gray-400">No projects yet.</p>
                 </div>
             <?php else : ?>
-                <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <?php foreach ($projects as $p) : ?>
-                        <a href="/projects/<?= (int) $p->id ?>" class="block rounded-lg border border-[#EAEAEA] bg-white p-4 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
+                        <a href="/projects/<?= (int) $p->id ?>" class="block rounded-lg border border-[#EAEAEA] bg-white p-5 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
                             <div class="flex items-start justify-between gap-2">
                                 <h3 class="font-medium text-gray-800 dark:text-white/90"><?= esc($p->name ?? '') ?></h3>
                                 <span class="shrink-0 rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-[#787774] dark:bg-gray-700 dark:text-gray-300">
@@ -173,7 +173,7 @@ foreach ($members as $m) {
 
         <?php if ($canManage) : ?>
             <div class="space-y-6">
-                <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                     <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Add member</h2>
                     <form @submit.prevent="submitAddMember" class="mt-4 space-y-4">
                         <div>
@@ -203,7 +203,7 @@ foreach ($members as $m) {
                     </form>
                 </div>
 
-                <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                     <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Add group</h2>
                     <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Adds every member of the group as a workspace member.</p>
                     <form @submit.prevent="submitAddGroup" class="mt-4 space-y-4">

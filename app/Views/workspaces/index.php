@@ -38,7 +38,7 @@ $roleBadge = static fn (string $role): string => match ($role) {
             <button type="button" @click="openCreate()" class="btn-primary mt-4">+ New workspace</button>
         </div>
     <?php else : ?>
-        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <?php foreach ($mine as $ws) :
                 $memberCount  = (int) ($ws->member_count ?? 0);
                 $projectCount = (int) ($ws->project_count ?? 0);
@@ -65,7 +65,7 @@ $roleBadge = static fn (string $role): string => match ($role) {
         <div class="mt-6">
             <h2 class="text-base font-semibold tracking-tight">Discover</h2>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Company-wide workspaces you can join.</p>
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <?php foreach ($discoverable as $ws) :
                     $memberCount = (int) ($ws->member_count ?? 0);
                     ?>

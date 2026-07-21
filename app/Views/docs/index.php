@@ -14,7 +14,7 @@ $docsNav = [
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-6xl lg:flex lg:gap-8">
+<div class="mx-auto max-w-7xl lg:flex lg:gap-8">
 
     <!-- Mobile: horizontal-scroll pill nav. Desktop: sticky left nav below. -->
     <nav class="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Docs">
@@ -48,7 +48,7 @@ $docsNav = [
             to your data through the REST API.
         </p>
 
-        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        <div class="mt-6 grid gap-5 sm:grid-cols-2">
             <a href="/docs/getting-started"
                class="rounded-lg border border-[#EAEAEA] bg-white p-6 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#111111] dark:text-gray-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

@@ -198,7 +198,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                 <!-- Acting-as banner: lives INSIDE the content column (not at the
                      body top) so the fixed sidebar can't overlap it. Plain form,
                      no Alpine, so it never touches the shared appShell() root. -->
-                <div class="flex items-center justify-between gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 lg:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/40 dark:text-yellow-300">
+                <div class="flex items-center justify-between gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 sm:px-6 lg:px-8 dark:border-yellow-900/50 dark:bg-yellow-950/40 dark:text-yellow-300">
                     <span>Acting as <strong><?= esc($actingAsUser->name) ?></strong> (<?= esc($actingAsUser->email) ?>) — you are viewing their data.</span>
                     <form method="post" action="/admin/users/stop-acting-as" class="shrink-0">
                         <input type="hidden" name="<?= esc(csrf_token(), 'attr') ?>" value="<?= esc(csrf_hash(), 'attr') ?>">
@@ -209,7 +209,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                 </div>
             <?php endif ?>
             <!-- Topbar -->
-            <header class="flex h-16 items-center justify-between border-b border-[#EAEAEA] bg-white px-4 lg:px-6 dark:border-gray-800 dark:bg-gray-900">
+            <header class="flex h-16 items-center justify-between border-b border-[#EAEAEA] bg-white px-4 sm:px-6 lg:px-8 dark:border-gray-800 dark:bg-gray-900">
                 <button type="button" class="rounded-md p-2 text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                         @click="toggleSidebar()" aria-label="Toggle sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
@@ -302,7 +302,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                 </div>
             </header>
 
-            <main class="flex-1 p-4 lg:p-6">
+            <main class="flex-1 p-4 sm:p-6 lg:p-8">
                 <?= $this->renderSection('content') ?>
             </main>
         </div>

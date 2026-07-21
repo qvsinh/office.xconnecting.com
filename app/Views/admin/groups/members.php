@@ -13,7 +13,7 @@ $this->extend('layouts/app');
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-5xl" x-data="groupMembers(<?= (int) $group->id ?>)">
+<div class="mx-auto max-w-7xl" x-data="groupMembers(<?= (int) $group->id ?>)">
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -53,7 +53,7 @@ $this->extend('layouts/app');
         </div>
 
         <!-- Add member -->
-        <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+        <div class="rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
             <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Add member</h2>
             <form @submit.prevent="submitAdd" class="mt-4 space-y-4">
                 <div>

@@ -26,7 +26,7 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-5xl" x-data="apiKeysPage()">
+<div class="mx-auto max-w-7xl" x-data="apiKeysPage()">
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>

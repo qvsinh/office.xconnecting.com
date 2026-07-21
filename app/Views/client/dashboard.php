@@ -55,9 +55,9 @@ $statCards = [
     <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Welcome back, <?= esc($user->name ?? '') ?></h1>
     <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Your workspaces, projects and tasks.</p>
 
-    <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="mt-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
         <?php foreach ($statCards as $card) : ?>
-            <div class="flex items-center gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 sm:p-5 dark:border-gray-700 dark:bg-gray-800">
+            <div class="flex items-center gap-3 rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                 <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
                     <?= $card['icon'] ?>
                 </span>
@@ -113,7 +113,7 @@ $statCards = [
     <?php else : ?>
         <div class="mt-6">
             <h2 class="text-base font-semibold tracking-tight text-gray-800 dark:text-white/90">My workspaces</h2>
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <?php foreach ($myWorkspaces as $ws) :
                     $memberCount  = (int) ($ws->member_count ?? 0);
                     $projectCount = (int) ($ws->project_count ?? 0);

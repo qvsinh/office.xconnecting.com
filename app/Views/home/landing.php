@@ -33,14 +33,14 @@ $features = [
 <body class="flex min-h-full flex-col bg-gray-50 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100">
 
     <!-- Top bar -->
-    <header class="flex items-center justify-between px-4 py-4 sm:px-8">
+    <header class="flex items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
         <span class="text-lg font-semibold tracking-tight"><?= esc(site_name()) ?></span>
         <a href="/login" class="btn-primary">Log in</a>
     </header>
 
     <!-- Hero -->
     <main class="flex-1">
-        <section class="mx-auto max-w-4xl px-4 pb-12 pt-10 text-center sm:pt-20">
+        <section class="mx-auto max-w-4xl px-4 pb-16 pt-14 text-center sm:px-6 sm:pt-24 lg:px-8">
             <h1 class="text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
                 Your company’s internal workspace
             </h1>
@@ -54,8 +54,8 @@ $features = [
         </section>
 
         <!-- Feature grid -->
-        <section class="mx-auto max-w-5xl px-4 pb-20">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section class="mx-auto max-w-5xl px-4 pb-24 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <?php foreach ($features as $feature) : ?>
                     <div class="rounded-lg border border-[#EAEAEA] bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <h2 class="text-base font-semibold"><?= esc($feature['title']) ?></h2>
@@ -67,7 +67,7 @@ $features = [
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-[#EAEAEA] px-4 py-6 text-center text-sm text-[#787774] sm:px-8 dark:border-gray-800 dark:text-gray-400">
+    <footer class="border-t border-[#EAEAEA] px-4 py-8 text-center text-sm text-[#787774] sm:px-6 lg:px-8 dark:border-gray-800 dark:text-gray-400">
         &copy; <?= esc(date('Y')) ?> <?= esc(site_name()) ?>. Internal use only.
     </footer>
 

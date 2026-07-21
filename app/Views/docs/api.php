@@ -76,7 +76,7 @@ $agentPrompt = <<<PROMPT
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-6xl lg:flex lg:gap-8">
+<div class="mx-auto max-w-7xl lg:flex lg:gap-8">
 
     <nav class="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Docs">
         <?php foreach ($docsNav as $item) : ?>

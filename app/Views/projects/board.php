@@ -20,7 +20,7 @@
     </template>
 
     <template x-if="!loading && loaded">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:overflow-x-auto sm:pb-2">
+        <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:overflow-x-auto sm:pb-2">
             <template x-for="column in columns" :key="column.id">
                 <div class="flex w-full flex-col rounded-lg border border-[#EAEAEA] bg-white sm:w-72 sm:flex-shrink-0 dark:border-gray-700 dark:bg-gray-800"
                      :class="dragOverColumnId === column.id ? 'ring-2 ring-brand-500' : ''"
@@ -28,7 +28,7 @@
                      @drop.prevent="onColumnDrop($event, column)">
 
                     <!-- Column header -->
-                    <div class="flex items-center justify-between gap-2 border-b border-[#EAEAEA] px-3 py-2.5 dark:border-gray-700">
+                    <div class="flex items-center justify-between gap-2 border-b border-[#EAEAEA] px-4 py-3 dark:border-gray-700">
                         <template x-if="renamingColumnId !== column.id">
                             <button type="button" class="min-w-0 flex-1 truncate text-left text-sm font-semibold text-gray-800 dark:text-white/90"
                                     :class="canEdit ? 'hover:underline' : 'cursor-default'"
@@ -53,7 +53,7 @@
                     </div>
 
                     <!-- Task cards -->
-                    <div class="flex min-h-16 flex-1 flex-col gap-2 p-2">
+                    <div class="flex min-h-16 flex-1 flex-col gap-3 p-3">
                         <template x-if="column.tasks.length === 0">
                             <p class="px-2 py-4 text-center text-xs text-[#787774] dark:text-gray-400">No tasks.</p>
                         </template>
@@ -99,7 +99,7 @@
 
                     <!-- Add task -->
                     <template x-if="canEdit">
-                        <div class="flex items-center gap-1 border-t border-[#EAEAEA] p-2 dark:border-gray-700">
+                        <div class="flex items-center gap-1 border-t border-[#EAEAEA] p-3 dark:border-gray-700">
                             <input type="text" x-model="newTaskTitle[column.id]" placeholder="+ Add task" class="form-input py-1.5 text-sm"
                                    @keydown.enter.prevent="addTask(column)">
                             <button type="button" class="btn-secondary shrink-0 px-2.5 py-1.5 text-sm" @click="addTask(column)" :disabled="!(newTaskTitle[column.id] || '').trim()">Add</button>
@@ -110,7 +110,7 @@
 
             <!-- Add column -->
             <template x-if="canEdit">
-                <div class="w-full rounded-lg border border-dashed border-[#EAEAEA] p-2 sm:w-56 sm:flex-shrink-0 dark:border-gray-700">
+                <div class="w-full rounded-lg border border-dashed border-[#EAEAEA] p-3 sm:w-56 sm:flex-shrink-0 dark:border-gray-700">
                     <template x-if="!addingColumnOpen">
                         <button type="button" class="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-[#787774] hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
                                 @click="addingColumnOpen = true; $nextTick(() => $refs.newColumnInput?.focus())">
