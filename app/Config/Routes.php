@@ -110,6 +110,10 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('account/api-keys/create', 'Account\ApiKeys::create', ['filter' => 'csrf']);
     $routes->post('account/api-keys/revoke', 'Account\ApiKeys::revoke', ['filter' => 'csrf']);
 
+    $routes->get('docs', 'Docs::index');
+    $routes->get('docs/getting-started', 'Docs::gettingStarted');
+    $routes->get('docs/api', 'Docs::api');
+
     $routes->get('notifications', 'Notifications::index');
     $routes->get('notifications/feed', 'Notifications::feed');
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');
