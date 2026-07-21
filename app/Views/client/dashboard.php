@@ -70,7 +70,7 @@ $statCards = [
     </div>
 
     <!-- My tasks -->
-    <div class="mt-8 rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
         <h2 class="border-b border-[#EAEAEA] px-5 py-3 text-base font-semibold text-gray-800 dark:border-gray-700 dark:text-white/90">My tasks</h2>
         <?php if ($myTasks === []) : ?>
             <p class="px-5 py-6 text-center text-sm text-[#787774] dark:text-gray-400">No tasks assigned to you.</p>
@@ -111,7 +111,7 @@ $statCards = [
             <a href="/workspaces" class="btn-primary mt-4 inline-block">Create your first workspace</a>
         </div>
     <?php else : ?>
-        <div class="mt-8">
+        <div class="mt-6">
             <h2 class="text-base font-semibold tracking-tight text-gray-800 dark:text-white/90">My workspaces</h2>
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <?php foreach ($myWorkspaces as $ws) :

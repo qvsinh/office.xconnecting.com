@@ -65,12 +65,12 @@ $steps = [
     </nav>
 
     <div class="min-w-0 max-w-3xl flex-1">
-        <h1 class="text-2xl font-semibold tracking-tight dark:text-gray-100">Getting started</h1>
-        <p class="mt-2 text-sm leading-6 text-[#787774] dark:text-gray-400">
+        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Getting started</h1>
+        <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
             The shortest path from a new account to a working board.
         </p>
 
-        <ol class="mt-8 space-y-6">
+        <ol class="mt-6 space-y-6">
             <?php foreach ($steps as $i => $step) : ?>
                 <li class="flex gap-4">
                     <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111111] text-sm font-semibold text-white dark:bg-gray-100 dark:text-gray-900">
@@ -86,7 +86,7 @@ $steps = [
             <?php endforeach ?>
         </ol>
 
-        <div class="mt-10 rounded-lg border border-[#EAEAEA] bg-[#F7F6F3] p-6 dark:border-gray-700 dark:bg-gray-800/60">
+        <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-[#F7F6F3] p-6 dark:border-gray-700 dark:bg-gray-800/60">
             <h2 class="text-base font-semibold dark:text-gray-100">Next: connect an AI agent</h2>
             <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
                 Once you have a project with tasks, you can let an AI agent read and manage them

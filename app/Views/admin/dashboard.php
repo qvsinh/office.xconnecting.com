@@ -97,7 +97,7 @@ $priorityMax = max(1, ...array_values($priorityCounts));
     </div>
 
     <!-- Tasks by priority -->
-    <div class="mt-8 rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+    <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
         <h2 class="text-base font-semibold text-gray-800 dark:text-white/90">Tasks by priority</h2>
         <?php if (array_sum($priorityCounts) === 0) : ?>
             <p class="mt-3 text-sm text-[#787774] dark:text-gray-400">No tasks yet.</p>

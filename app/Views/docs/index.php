@@ -42,13 +42,13 @@ $docsNav = [
     </nav>
 
     <div class="min-w-0 max-w-3xl flex-1">
-        <h1 class="text-2xl font-semibold tracking-tight dark:text-gray-100">Documentation</h1>
-        <p class="mt-2 text-sm leading-6 text-[#787774] dark:text-gray-400">
+        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Documentation</h1>
+        <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
             Everything you need to run projects in this hub, and to connect an AI agent or script
             to your data through the REST API.
         </p>
 
-        <div class="mt-8 grid gap-4 sm:grid-cols-2">
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
             <a href="/docs/getting-started"
                class="rounded-lg border border-[#EAEAEA] bg-white p-6 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#111111] dark:text-gray-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

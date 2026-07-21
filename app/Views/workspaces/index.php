@@ -62,7 +62,7 @@ $roleBadge = static fn (string $role): string => match ($role) {
     <?php endif ?>
 
     <?php if ($discoverable !== []) : ?>
-        <div class="mt-10">
+        <div class="mt-6">
             <h2 class="text-base font-semibold tracking-tight">Discover</h2>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Company-wide workspaces you can join.</p>
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

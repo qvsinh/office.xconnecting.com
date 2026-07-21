@@ -109,13 +109,13 @@ $agentPrompt = <<<PROMPT
                 });
             },
         }">
-        <h1 class="text-2xl font-semibold tracking-tight dark:text-gray-100">REST API</h1>
-        <p class="mt-2 text-sm leading-6 text-[#787774] dark:text-gray-400">
+        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">REST API</h1>
+        <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
             Connect an AI agent or script to your projects and tasks with a personal API key.
         </p>
 
         <!-- 1. Create a key -->
-        <section class="mt-8">
+        <section class="mt-6">
             <h2 class="text-lg font-semibold dark:text-gray-100">1. Create an API key</h2>
             <p class="mt-2 text-sm leading-6 text-[#787774] dark:text-gray-400">
                 Go to
@@ -136,7 +136,7 @@ $agentPrompt = <<<PROMPT
         </section>
 
         <!-- 2. Authenticate -->
-        <section class="mt-8">
+        <section class="mt-6">
             <h2 class="text-lg font-semibold dark:text-gray-100">2. Authenticate</h2>
             <p class="mt-2 text-sm leading-6 text-[#787774] dark:text-gray-400">
                 Base URL:
@@ -151,7 +151,7 @@ $agentPrompt = <<<PROMPT
         </section>
 
         <!-- 3. Endpoints -->
-        <section class="mt-8">
+        <section class="mt-6">
             <h2 class="text-lg font-semibold dark:text-gray-100">3. Endpoints</h2>
             <div class="mt-3 overflow-x-auto rounded-lg border border-[#EAEAEA] dark:border-gray-700">
                 <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
@@ -185,7 +185,7 @@ $agentPrompt = <<<PROMPT
         </section>
 
         <!-- 4. Examples -->
-        <section class="mt-8">
+        <section class="mt-6">
             <h2 class="text-lg font-semibold dark:text-gray-100">4. Examples</h2>
 
             <p class="mt-3 text-sm font-medium text-[#111111] dark:text-gray-100">List projects (curl)</p>
@@ -211,7 +211,7 @@ $agentPrompt = <<<PROMPT
         </section>
 
         <!-- 5. Agent prompt -->
-        <section class="mt-8">
+        <section class="mt-6">
             <h2 class="text-lg font-semibold dark:text-gray-100">5. Tell an AI agent how to use it</h2>
             <p class="mt-2 text-sm leading-6 text-[#787774] dark:text-gray-400">
                 Paste this into an agent's instructions (fill in the real key first):
