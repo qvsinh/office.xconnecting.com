@@ -101,6 +101,15 @@ class GroupModel extends Model
     }
 
     /**
+     * Total (non-soft-deleted) group count — backs the company dashboard's
+     * "groups" stat card.
+     */
+    public function countAll(): int
+    {
+        return $this->countAllResults();
+    }
+
+    /**
      * The one place `keyword` gets translated into a WHERE clause for the
      * admin list — shared by `searchAdmin()`/`countAdmin()` so the paginated
      * rows and the total can't drift apart.

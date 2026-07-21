@@ -2,6 +2,8 @@
 
 use App\Models\ProjectMemberModel;
 use App\Models\ProjectModel;
+use App\Models\TaskColumnModel;
+use App\Models\TaskModel;
 use App\Models\UserModel;
 use App\Models\WorkspaceMemberModel;
 use App\Models\WorkspaceModel;
@@ -94,6 +96,103 @@ final class ProjectModelTest extends CIUnitTestCase
         $this->assertContains('Fallback Project', $fallbackNames);
 
         $this->assertSame([], $projectModel->forUser($strangerId));
+    }
+
+    public function testCountForUserMatchesForUserCountWithoutFetchingRows(): void
+    {
+        $projectModel       = new ProjectModel();
+        $workspaceModel     = new WorkspaceModel();
+        $projectMemberModel = new ProjectMemberModel();
+
+        $ownerId = $this->createUser('owner5@example.com');
+        $memberId = $this->createUser('member5@example.com');
+
+        $workspaceId = $workspaceModel->createWorkspace('Count Workspace', $ownerId);
+        $projectId   = $projectModel->createProject($workspaceId, 'Count Project', $ownerId);
+        $projectModel->createProject($workspaceId, 'Other Project', $ownerId);
+
+        $projectMemberModel->add($projectId, $memberId, 'member');
+
+        $this->assertSame(1, $projectModel->countForUser($memberId));
+        $this->assertSame([], $projectModel->forUser($this->createUser('stranger3@example.com')));
+    }
+
+    public function testRecentOrdersByNewestFirstAndRespectsLimit(): void
+    {
+        $projectModel   = new ProjectModel();
+        $workspaceModel = new WorkspaceModel();
+
+        $ownerId     = $this->createUser('recent-owner@example.com');
+        $workspaceId = $workspaceModel->createWorkspace('Recent Workspace', $ownerId);
+
+        $projectModel->createProject($workspaceId, 'Oldest', $ownerId);
+        $projectModel->createProject($workspaceId, 'Middle', $ownerId);
+        $projectModel->createProject($workspaceId, 'Newest', $ownerId);
+
+        $names = array_column($projectModel->recent(2), 'name');
+
+        $this->assertSame(['Newest', 'Middle'], $names);
+    }
+
+    public function testCountAllCountsOnlyNonSoftDeletedProjects(): void
+    {
+        $projectModel   = new ProjectModel();
+        $workspaceModel = new WorkspaceModel();
+
+        $ownerId     = $this->createUser('count-all-owner@example.com');
+        $workspaceId = $workspaceModel->createWorkspace('Count All Workspace', $ownerId);
+
+        $projectModel->createProject($workspaceId, 'Kept', $ownerId);
+        $deletedId = $projectModel->createProject($workspaceId, 'Deleted', $ownerId);
+        $projectModel->delete($deletedId);
+
+        $this->assertSame(1, $projectModel->countAll());
+    }
+
+    public function testMostActiveOrdersByOpenTaskCountAndIncludesZeroOpenProjects(): void
+    {
+        $projectModel     = new ProjectModel();
+        $workspaceModel   = new WorkspaceModel();
+        $taskModel        = new TaskModel();
+        $taskColumnModel  = new TaskColumnModel();
+
+        $ownerId     = $this->createUser('active-owner@example.com');
+        $workspaceId = $workspaceModel->createWorkspace('Active Workspace', $ownerId);
+
+        $busyId    = $projectModel->createProject($workspaceId, 'Busy Project', $ownerId);
+        $quietId   = $projectModel->createProject($workspaceId, 'Quiet Project', $ownerId);
+        $doneOnlyId = $projectModel->createProject($workspaceId, 'All Done Project', $ownerId);
+
+        $taskColumnModel->seedDefaults($busyId);
+        $taskColumnModel->seedDefaults($quietId);
+        $taskColumnModel->seedDefaults($doneOnlyId);
+
+        $busyColumns    = $taskColumnModel->forProject($busyId);
+        $quietColumns   = $taskColumnModel->forProject($quietId);
+        $doneOnlyColumns = $taskColumnModel->forProject($doneOnlyId);
+        $doneColumn     = static fn (array $columns) => $columns[2]; // 'Done' is seeded last
+
+        // Busy: 2 open tasks.
+        $taskModel->insert(['project_id' => $busyId, 'column_id' => $busyColumns[0]->id, 'title' => 'B1', 'created_by' => $ownerId]);
+        $taskModel->insert(['project_id' => $busyId, 'column_id' => $busyColumns[1]->id, 'title' => 'B2', 'created_by' => $ownerId]);
+        $taskModel->insert(['project_id' => $busyId, 'column_id' => $doneColumn($busyColumns)->id, 'title' => 'B3 Done', 'created_by' => $ownerId]);
+
+        // Quiet: 1 open task.
+        $taskModel->insert(['project_id' => $quietId, 'column_id' => $quietColumns[0]->id, 'title' => 'Q1', 'created_by' => $ownerId]);
+
+        // All-done: only a Done task — must still appear with open_tasks = 0.
+        $taskModel->insert(['project_id' => $doneOnlyId, 'column_id' => $doneColumn($doneOnlyColumns)->id, 'title' => 'D1 Done', 'created_by' => $ownerId]);
+
+        $rows = $projectModel->mostActive(5);
+        $byName = [];
+        foreach ($rows as $row) {
+            $byName[$row->name] = (int) $row->open_tasks;
+        }
+
+        $this->assertSame(2, $byName['Busy Project']);
+        $this->assertSame(1, $byName['Quiet Project']);
+        $this->assertSame(0, $byName['All Done Project']);
+        $this->assertSame(['Busy Project', 'Quiet Project', 'All Done Project'], array_keys($byName));
     }
 
     private function createUser(string $email): int

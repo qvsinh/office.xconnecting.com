@@ -125,6 +125,52 @@ final class WorkspaceModelTest extends CIUnitTestCase
         $this->assertNull($memberModel->roleFor($workspaceId, $userId));
     }
 
+    public function testCountForUserMatchesForUserCountWithoutFetchingRows(): void
+    {
+        $model       = new WorkspaceModel();
+        $memberModel = new WorkspaceMemberModel();
+
+        $ownerId    = $this->createUser('owner6@example.com');
+        $memberId   = $this->createUser('member6@example.com');
+        $strangerId = $this->createUser('stranger6@example.com');
+
+        $joinedId = $model->createWorkspace('Counted Workspace', $ownerId);
+        $model->createWorkspace('Company Countable', $ownerId, null, 'company');
+        $model->createWorkspace('Unrelated Countable', $ownerId);
+
+        $memberModel->add($joinedId, $memberId, 'member');
+
+        $this->assertSame(2, $model->countForUser($memberId));
+        $this->assertSame(1, $model->countForUser($strangerId));
+        $this->assertSame(count($model->forUser($ownerId)), $model->countForUser($ownerId));
+    }
+
+    public function testRecentOrdersByNewestFirstAndRespectsLimit(): void
+    {
+        $model  = new WorkspaceModel();
+        $userId = $this->createUser('recent-owner@example.com');
+
+        $model->createWorkspace('Oldest', $userId);
+        $model->createWorkspace('Middle', $userId);
+        $model->createWorkspace('Newest', $userId);
+
+        $names = array_column($model->recent(2), 'name');
+
+        $this->assertSame(['Newest', 'Middle'], $names);
+    }
+
+    public function testCountAllCountsOnlyNonSoftDeletedWorkspaces(): void
+    {
+        $model  = new WorkspaceModel();
+        $userId = $this->createUser('count-all-owner@example.com');
+
+        $model->createWorkspace('Kept One', $userId);
+        $deletedId = $model->createWorkspace('Deleted One', $userId);
+        $model->delete($deletedId);
+
+        $this->assertSame(1, $model->countAll());
+    }
+
     private function createUser(string $email): int
     {
         return (int) (new UserModel())->insert([

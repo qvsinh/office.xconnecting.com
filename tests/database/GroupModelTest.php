@@ -83,6 +83,18 @@ final class GroupModelTest extends CIUnitTestCase
         $this->assertSame('Group A', $groups[0]->name);
     }
 
+    public function testCountAllCountsOnlyNonSoftDeletedGroups(): void
+    {
+        $groupModel = new GroupModel();
+
+        $groupModel->createGroup('Group X');
+        $deletedId = $groupModel->createGroup('Group Y');
+        $groupModel->createGroup('Group Z');
+        $groupModel->delete($deletedId);
+
+        $this->assertSame(2, $groupModel->countAll());
+    }
+
     private function createUser(string $email): int
     {
         return (int) (new UserModel())->insert([

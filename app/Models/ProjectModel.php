@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 
 /**
@@ -49,16 +50,88 @@ class ProjectModel extends Model
      */
     public function forUser(int $userId): array
     {
-        return $this->select('projects.*')
-            ->join('project_members', 'project_members.project_id = projects.id', 'left')
+        $this->select('projects.*');
+        $this->applyForUserFilter($this->builder(), $userId);
+
+        return $this->orderBy('projects.created_at', 'DESC')->findAll();
+    }
+
+    /**
+     * Count version of `forUser()` — backs the personal dashboard's "my
+     * projects" stat card without fetching every row.
+     */
+    public function countForUser(int $userId): int
+    {
+        // Explicit single-column select: countAllResults() wraps a grouped
+        // query as `SELECT COUNT(*) FROM (...) CI_count_all_results`, and
+        // the implicit `SELECT *` would otherwise expose both
+        // `projects.id` and `project_members.id`/`workspace_members.id`
+        // under the same alias.
+        $this->select('projects.id');
+        $this->applyForUserFilter($this->builder(), $userId);
+
+        return $this->countAllResults();
+    }
+
+    /**
+     * The most recently created projects — backs the company dashboard's
+     * "recent projects" list. `id DESC` breaks ties for rows created in the
+     * same second, so insertion order stays deterministic.
+     *
+     * @return list<object>
+     */
+    public function recent(int $limit = 5): array
+    {
+        return $this->orderBy('created_at', 'DESC')->orderBy('id', 'DESC')->findAll($limit);
+    }
+
+    /**
+     * Total (non-soft-deleted) project count — backs the company
+     * dashboard's "projects" stat card.
+     */
+    public function countAll(): int
+    {
+        return $this->countAllResults();
+    }
+
+    /**
+     * Projects ordered by their number of open (not-`Done`) tasks, most
+     * active first — backs the company dashboard's "most active projects"
+     * list. Uses a correlated subquery (not a `LEFT JOIN tasks ...
+     * GROUP BY`) so a project whose only tasks are all `Done` still gets an
+     * `open_tasks` row of `0` instead of disappearing from the result —
+     * `GROUP BY` after a `WHERE`-filtered `LEFT JOIN` would drop it.
+     *
+     * @return list<object{id: int, name: string, open_tasks: int}>
+     */
+    public function mostActive(int $limit = 5): array
+    {
+        $doneColumn = $this->db->escape('Done');
+
+        return $this->select(
+            'projects.id, projects.name, '
+            . '(SELECT COUNT(*) FROM tasks t LEFT JOIN task_columns tc ON tc.id = t.column_id '
+            . 'WHERE t.project_id = projects.id AND t.deleted_at IS NULL '
+            . 'AND (tc.name != ' . $doneColumn . ' OR tc.name IS NULL)) AS open_tasks',
+        )
+            ->orderBy('open_tasks', 'DESC')
+            ->findAll($limit);
+    }
+
+    /**
+     * The one place the "direct project member or parent-workspace member"
+     * test is defined — shared by `forUser()`/`countForUser()` so they can
+     * never drift apart.
+     */
+    private function applyForUserFilter(BaseBuilder $builder, int $userId): void
+    {
+        $builder->join('project_members', 'project_members.project_id = projects.id', 'left')
             ->join('workspace_members', 'workspace_members.workspace_id = projects.workspace_id', 'left')
             ->groupStart()
             ->where('project_members.user_id', $userId)
             ->orWhere('workspace_members.user_id', $userId)
             ->groupEnd()
-            ->groupBy('projects.id')
-            ->orderBy('projects.created_at', 'DESC')
-            ->findAll();
+            ->groupBy('projects.id');
     }
 
     /**

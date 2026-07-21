@@ -101,12 +101,90 @@ final class TaskModelTest extends CIUnitTestCase
         $this->assertSame(['low' => 0, 'normal' => 1, 'high' => 0, 'urgent' => 2], $counts);
     }
 
+    public function testCountByPriorityAllCoversEveryProject(): void
+    {
+        $taskModel  = new TaskModel();
+        $projectA   = $this->createProject();
+        $projectB   = $this->createProject();
+        $userId     = $this->createUser('priority-all@example.com');
+
+        $taskModel->insert(['project_id' => $projectA, 'title' => 'A urgent', 'priority' => 'urgent', 'created_by' => $userId]);
+        $taskModel->insert(['project_id' => $projectB, 'title' => 'B urgent', 'priority' => 'urgent', 'created_by' => $userId]);
+        $taskModel->insert(['project_id' => $projectB, 'title' => 'B low', 'priority' => 'low', 'created_by' => $userId]);
+
+        $this->assertSame(['low' => 1, 'normal' => 0, 'high' => 0, 'urgent' => 2], $taskModel->countByPriorityAll());
+    }
+
+    public function testCountOpenForProjectAndCountOpenAllExcludeDoneColumn(): void
+    {
+        $taskModel   = new TaskModel();
+        $columnModel = new TaskColumnModel();
+        $projectId   = $this->createProject();
+        $userId      = $this->createUser('open@example.com');
+
+        $columnModel->seedDefaults($projectId);
+        $columns = $columnModel->forProject($projectId);
+
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[0]->id, 'title' => 'To Do', 'created_by' => $userId]);
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => null, 'title' => 'No column yet', 'created_by' => $userId]);
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[2]->id, 'title' => 'Finished', 'created_by' => $userId]);
+
+        $this->assertSame(2, $taskModel->countOpenForProject($projectId));
+        $this->assertSame(1, $taskModel->countDoneAll());
+        $this->assertSame(2, $taskModel->countOpenAll());
+    }
+
+    public function testDueSoonForUserAndCountDueSoonForUserExcludeDoneAndOutOfRange(): void
+    {
+        $taskModel   = new TaskModel();
+        $columnModel = new TaskColumnModel();
+        $projectId   = $this->createProject();
+        $assignee    = $this->createUser('due-soon@example.com');
+
+        $columnModel->seedDefaults($projectId);
+        $columns = $columnModel->forProject($projectId);
+
+        $soon      = date('Y-m-d', strtotime('+2 days'));
+        $tooFar    = date('Y-m-d', strtotime('+30 days'));
+        $overdue   = date('Y-m-d', strtotime('-1 day'));
+
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[0]->id, 'title' => 'Due Soon', 'due_date' => $soon, 'assignee_id' => $assignee, 'created_by' => $assignee]);
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[0]->id, 'title' => 'Too Far', 'due_date' => $tooFar, 'assignee_id' => $assignee, 'created_by' => $assignee]);
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[2]->id, 'title' => 'Done But Soon', 'due_date' => $soon, 'assignee_id' => $assignee, 'created_by' => $assignee]);
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[0]->id, 'title' => 'Overdue', 'due_date' => $overdue, 'assignee_id' => $assignee, 'created_by' => $assignee]);
+
+        $titles = array_column($taskModel->dueSoonForUser($assignee, 7), 'title');
+
+        $this->assertSame(['Due Soon'], $titles);
+        $this->assertSame(1, $taskModel->countDueSoonForUser($assignee, 7));
+    }
+
+    public function testForAssigneeAttachesColumnName(): void
+    {
+        $taskModel   = new TaskModel();
+        $columnModel = new TaskColumnModel();
+        $projectId   = $this->createProject();
+        $assignee    = $this->createUser('column-name@example.com');
+
+        $columnModel->seedDefaults($projectId);
+        $columns = $columnModel->forProject($projectId);
+
+        $taskModel->insert(['project_id' => $projectId, 'column_id' => $columns[2]->id, 'title' => 'Wrapped Up', 'assignee_id' => $assignee, 'created_by' => $assignee]);
+
+        $tasks = $taskModel->forAssignee($assignee);
+
+        $this->assertSame('Done', $tasks[0]->column_name);
+    }
+
     private function createProject(): int
     {
-        $ownerId     = $this->createUser('project-owner@example.com');
-        $workspaceId = (new WorkspaceModel())->createWorkspace('Task Workspace', $ownerId);
+        static $n = 0;
+        $n++;
 
-        return (new ProjectModel())->createProject($workspaceId, 'Task Project', $ownerId);
+        $ownerId     = $this->createUser('project-owner-' . $n . '@example.com');
+        $workspaceId = (new WorkspaceModel())->createWorkspace('Task Workspace ' . $n, $ownerId);
+
+        return (new ProjectModel())->createProject($workspaceId, 'Task Project ' . $n, $ownerId);
     }
 
     private function createUser(string $email): int

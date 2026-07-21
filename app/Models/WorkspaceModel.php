@@ -50,21 +50,68 @@ class WorkspaceModel extends Model
     {
         $escapedUserId = $this->db->escape($userId);
 
-        return $this->select(
+        $this->select(
             'workspaces.*, '
             . '(SELECT COUNT(*) FROM workspace_members wm WHERE wm.workspace_id = workspaces.id) AS member_count, '
             . '(SELECT COUNT(*) FROM projects p WHERE p.workspace_id = workspaces.id AND p.deleted_at IS NULL) AS project_count, '
             . '(SELECT wm2.role FROM workspace_members wm2 WHERE wm2.workspace_id = workspaces.id AND wm2.user_id = ' . $escapedUserId . ') AS role',
-        )
-            ->join('workspace_members', 'workspace_members.workspace_id = workspaces.id', 'left')
+        );
+        $this->applyForUserFilter($this->builder(), $userId);
+
+        return $this->orderBy('workspaces.created_at', 'DESC')->findAll();
+    }
+
+    /**
+     * Count version of `forUser()` — backs the personal dashboard's "my
+     * workspaces" stat card without fetching every row.
+     */
+    public function countForUser(int $userId): int
+    {
+        // Explicit single-column select: countAllResults() wraps a grouped
+        // query as `SELECT COUNT(*) FROM (...) CI_count_all_results`, and
+        // the implicit `SELECT *` would otherwise expose both
+        // `workspaces.id` and `workspace_members.id` under the same alias.
+        $this->select('workspaces.id');
+        $this->applyForUserFilter($this->builder(), $userId);
+
+        return $this->countAllResults();
+    }
+
+    /**
+     * The most recently created workspaces — backs the company dashboard's
+     * "recent workspaces" list. `id DESC` breaks ties for rows created in
+     * the same second, so insertion order stays deterministic.
+     *
+     * @return list<object>
+     */
+    public function recent(int $limit = 5): array
+    {
+        return $this->orderBy('created_at', 'DESC')->orderBy('id', 'DESC')->findAll($limit);
+    }
+
+    /**
+     * Total (non-soft-deleted) workspace count — backs the company
+     * dashboard's "workspaces" stat card.
+     */
+    public function countAll(): int
+    {
+        return $this->countAllResults();
+    }
+
+    /**
+     * The one place the "owns, is a member of, or company-wide" membership
+     * test is defined — shared by `forUser()`/`countForUser()` so they can
+     * never drift apart.
+     */
+    private function applyForUserFilter(BaseBuilder $builder, int $userId): void
+    {
+        $builder->join('workspace_members', 'workspace_members.workspace_id = workspaces.id', 'left')
             ->groupStart()
             ->where('workspace_members.user_id', $userId)
             ->orWhere('workspaces.owner_id', $userId)
             ->orWhere('workspaces.visibility', 'company')
             ->groupEnd()
-            ->groupBy('workspaces.id')
-            ->orderBy('workspaces.created_at', 'DESC')
-            ->findAll();
+            ->groupBy('workspaces.id');
     }
 
     /**
