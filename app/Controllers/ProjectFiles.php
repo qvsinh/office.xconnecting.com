@@ -80,7 +80,7 @@ class ProjectFiles extends BaseController
             'uploaded_by'   => current_user_id(),
             'original_name' => $file->getClientName(),
             'stored_name'   => $storedName,
-            'mime'          => $file->getClientMimeType() ?: $file->getMimeType(),
+            'mime'          => $file->getMimeType() ?: $file->getClientMimeType(),
             'size'          => $file->getSize(),
         ]);
 

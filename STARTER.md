@@ -28,6 +28,28 @@ auth, users, settings, and a dashboard shell from scratch.
 - System tools: info (PHP/OPcache/extensions), DB migrations run/rollback,
   log viewer, OPcache reset, cache clear, DB-session count + reset.
 
+**Collaboration hub** (internal social/workspace layer)
+- **User groups** — admin-managed groups (teams/departments) + membership.
+- **Workspaces** — any user can create; members join (private or company-visible);
+  owner/admin manage membership and can bulk-add a whole group.
+- **Projects** — live inside a workspace; per-project members + roles; a file
+  manager (upload/download/delete, extension+mime+size allowlist, stored under
+  `writable/uploads/projects/`).
+- **Kanban board & task lists** — columns + cards per project, drag-and-drop
+  (with a touch/mobile "Move" fallback), priority/assignee/due-date, task detail.
+- **Personal API keys** — each user issues scoped tokens (read/write, optional
+  expiry); only a `sha256` hash + prefix is stored, plaintext shown once.
+- **REST API `/api/v1`** — Bearer-token API (for AI agents/scripts) exposing the
+  caller's projects and full task CRUD, membership-scoped and IDOR-guarded.
+- **Dashboards** — a company-wide overview (admin) and a personal one (everyone).
+- **In-app docs** — getting-started + a REST connection guide with copy-paste
+  curl/Python/agent-prompt examples; branded public landing page at `/`.
+
+Access model: the global RBAC above governs the **admin area**; the hub features
+use **membership + role** (owner/admin/member/viewer) via
+`app/Helpers/access_helper.php`. See `kanban/done/20260721-*` for the per-feature
+plans and `/docs/api` (in-app) for the API reference.
+
 **UI**
 - Shared TailAdmin layout: collapsible sidebar (icon rail + accordion groups),
   dark/light theme, Outfit font, shared toast/confirm/alert Alpine components,

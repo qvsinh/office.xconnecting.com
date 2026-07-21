@@ -83,12 +83,12 @@ $this->extend('layouts/app');
                 'id'    => (int) $m->id,
                 'name'  => $m->name ?? '',
                 'email' => $m->email ?? '',
-            ], $members)) ?>,
+            ], $members), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
             available: <?= json_encode(array_map(static fn ($u) => [
                 'id'    => (int) $u->id,
                 'name'  => $u->name ?? '',
                 'email' => $u->email ?? '',
-            ], $availableUsers)) ?>,
+            ], $availableUsers), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
             adding: false,
             addUserId: '',
 

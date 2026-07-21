@@ -321,9 +321,9 @@ foreach ($members as $m) {
                 editOpen: false,
                 editing: false,
                 editForm: {
-                    name: <?= json_encode($workspace->name ?? '') ?>,
-                    description: <?= json_encode($workspace->description ?? '') ?>,
-                    visibility: <?= json_encode($workspace->visibility ?? 'private') ?>,
+                    name: <?= json_encode($workspace->name ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+                    description: <?= json_encode($workspace->description ?? '', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+                    visibility: <?= json_encode($workspace->visibility ?? 'private', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
                 },
 
                 addingMember: false,

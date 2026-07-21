@@ -62,7 +62,14 @@ class ApiKeyModel extends Model
             'expires_at'   => $expiresAt,
         ]);
 
-        return ['plain' => $plain, 'row' => $this->find($id)];
+        // Never hand the sha256 hash back out — strip it from the returned row
+        // so a controller can't accidentally serialise it into a response.
+        $row = $this->find($id);
+        if (is_object($row)) {
+            unset($row->token_hash);
+        }
+
+        return ['plain' => $plain, 'row' => $row];
     }
 
     /**

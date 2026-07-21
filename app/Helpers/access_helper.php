@@ -3,6 +3,7 @@
 use App\Models\ProjectMemberModel;
 use App\Models\ProjectModel;
 use App\Models\WorkspaceMemberModel;
+use App\Models\WorkspaceModel;
 
 /**
  * Access control for collaboration features (workspaces/projects/tasks),
@@ -21,6 +22,13 @@ if (! function_exists('workspace_role')) {
     function workspace_role(int $workspaceId, ?int $userId = null): ?string
     {
         helper('auth');
+
+        // A soft-deleted (or non-existent) workspace has no roles — deny
+        // everyone, including global-zone admins, so no caller (web or API)
+        // can act on a deleted parent. `find()` excludes soft-deleted rows.
+        if (! is_object(model(WorkspaceModel::class)->find($workspaceId))) {
+            return null;
+        }
 
         if (is_admin()) {
             return 'owner';
@@ -42,6 +50,21 @@ if (! function_exists('project_role')) {
     {
         helper('auth');
 
+        // Load the project first: a soft-deleted/non-existent project has no
+        // roles (this also stops callers acting on or writing tasks into a
+        // deleted project — the API relies on this to avoid a 500). `find()`
+        // excludes soft-deleted rows.
+        $project = model(ProjectModel::class)->find($projectId);
+        if (! is_object($project)) {
+            return null;
+        }
+
+        // The parent workspace must also be alive — a project under a
+        // soft-deleted workspace is unreachable, even for a direct member.
+        if (! is_object(model(WorkspaceModel::class)->find((int) $project->workspace_id))) {
+            return null;
+        }
+
         if (is_admin()) {
             return 'owner';
         }
@@ -53,9 +76,7 @@ if (! function_exists('project_role')) {
             return $direct;
         }
 
-        $project = model(ProjectModel::class)->find($projectId);
-
-        return is_object($project) ? workspace_role((int) $project->workspace_id, $userId) : null;
+        return workspace_role((int) $project->workspace_id, $userId);
     }
 }
 

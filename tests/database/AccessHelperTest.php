@@ -88,6 +88,39 @@ final class AccessHelperTest extends CIUnitTestCase
         $this->assertSame('admin', project_role($projectId));
     }
 
+    public function testProjectRoleIsNullForASoftDeletedProjectEvenForADirectMember(): void
+    {
+        $ownerId     = $this->createUser('sd-project-owner@example.com');
+        $workspaceId = (new WorkspaceModel())->createWorkspace('SD Workspace', $ownerId);
+        $projectId   = (new ProjectModel())->createProject($workspaceId, 'SD Project', $ownerId);
+        $userId      = $this->createUser('sd-project-member@example.com');
+        (new ProjectMemberModel())->add($projectId, $userId, 'member');
+        $this->loginAsClient($userId);
+
+        // Sanity: reachable while alive.
+        $this->assertSame('member', project_role($projectId));
+
+        (new ProjectModel())->delete($projectId); // soft-delete
+
+        // Now denied — prevents the API acting on / writing tasks into it.
+        $this->assertNull(project_role($projectId));
+    }
+
+    public function testProjectRoleIsNullWhenTheParentWorkspaceIsSoftDeleted(): void
+    {
+        $ownerId     = $this->createUser('sd-ws-owner@example.com');
+        $workspaceId = (new WorkspaceModel())->createWorkspace('Doomed Workspace', $ownerId);
+        $projectId   = (new ProjectModel())->createProject($workspaceId, 'Orphan Project', $ownerId);
+        $userId      = $this->createUser('sd-ws-member@example.com');
+        (new ProjectMemberModel())->add($projectId, $userId, 'member');
+        $this->loginAsClient($userId);
+
+        (new WorkspaceModel())->delete($workspaceId); // soft-delete the parent
+
+        $this->assertNull(project_role($projectId));
+        $this->assertNull(workspace_role($workspaceId));
+    }
+
     public function testCanManageWorkspaceIsTrueOnlyForOwnerOrAdmin(): void
     {
         [$workspaceId, $memberUserId] = $this->createWorkspaceWithMember('member');
