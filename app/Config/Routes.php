@@ -148,3 +148,19 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('columns/rename/(:num)', 'Board::renameColumn/$1', ['filter' => 'csrf']);
     $routes->post('columns/delete/(:num)', 'Board::deleteColumn/$1', ['filter' => 'csrf']);
 });
+
+// REST API for AI agents (Bearer token, `api_keys` table) — stateless, so no
+// csrf/authFilter/session here; `apikey` resolves+scopes the request instead
+// (see `kanban/processing/20260721-07-rest-api.md`).
+$routes->group('api/v1', ['filter' => 'apikey'], static function (RouteCollection $routes) {
+    $routes->get('me', 'Api\V1\Me::index');
+
+    $routes->get('projects', 'Api\V1\Projects::index');
+    $routes->get('projects/(:num)', 'Api\V1\Projects::show/$1');
+    $routes->get('projects/(:num)/tasks', 'Api\V1\Projects::tasks/$1');
+    $routes->post('projects/(:num)/tasks', 'Api\V1\Projects::createTask/$1');
+
+    $routes->get('tasks/(:num)', 'Api\V1\Tasks::show/$1');
+    $routes->patch('tasks/(:num)', 'Api\V1\Tasks::update/$1');
+    $routes->delete('tasks/(:num)', 'Api\V1\Tasks::delete/$1');
+});

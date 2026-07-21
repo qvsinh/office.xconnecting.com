@@ -3,6 +3,7 @@
 namespace Config;
 
 use App\Filters\AdminFilter;
+use App\Filters\ApiKeyFilter;
 use App\Filters\AuthFilter;
 use App\Filters\BasicAuthFilter;
 use App\Filters\GuestFilter;
@@ -44,6 +45,7 @@ class Filters extends BaseFilters
         'guestFilter'   => GuestFilter::class,
         'basicauth'     => BasicAuthFilter::class,
         'permission'    => PermissionFilter::class,
+        'apikey'        => ApiKeyFilter::class,
     ];
 
     /**
@@ -85,7 +87,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
-            'basicauth' => ['except' => ['basic-auth']],
+            'basicauth' => ['except' => ['basic-auth', 'api/*']],
         ],
         'after' => [
             // 'honeypot',
