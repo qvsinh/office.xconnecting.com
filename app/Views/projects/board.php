@@ -24,7 +24,16 @@
     </template>
 
     <template x-if="!loading && loaded">
-        <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:overflow-x-auto sm:pb-2">
+        <div>
+            <!-- Board toolbar (top): add task / add column -->
+            <template x-if="canEdit">
+                <div class="mb-4 flex flex-wrap items-center gap-2">
+                    <button type="button" class="btn-primary" @click="openTaskCreate()">+ Add task</button>
+                    <button type="button" class="btn-secondary" @click="openColumnModal(null)">+ Add column</button>
+                </div>
+            </template>
+
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:overflow-x-auto sm:pb-2">
             <template x-for="column in columns" :key="column.id">
                 <div class="flex w-full flex-col rounded-lg border border-[#EAEAEA] bg-white sm:w-72 sm:flex-shrink-0 dark:border-gray-700 dark:bg-gray-800"
                      :class="dragOverColumnId === column.id ? 'ring-2 ring-brand-500' : ''"
@@ -92,28 +101,9 @@
                             </div>
                         </template>
                     </div>
-
-                    <!-- Add task (opens the create-task modal) -->
-                    <template x-if="canEdit">
-                        <div class="border-t border-[#EAEAEA] p-3 dark:border-gray-700">
-                            <button type="button" class="flex w-full items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
-                                    @click="openTaskCreate(column)">
-                                + Add task
-                            </button>
-                        </div>
-                    </template>
                 </div>
             </template>
-
-            <!-- Add column (opens the column modal) -->
-            <template x-if="canEdit">
-                <div class="w-full sm:w-56 sm:flex-shrink-0">
-                    <button type="button" class="w-full rounded-lg border border-dashed border-[#EAEAEA] px-3 py-3 text-sm font-medium text-[#787774] hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-                            @click="openColumnModal(null)">
-                        + Add column
-                    </button>
-                </div>
-            </template>
+            </div>
         </div>
     </template>
 
@@ -335,8 +325,9 @@
                 },
 
                 // --- Add task (modal) ---
-                openTaskCreate(column) {
-                    this.taskCreateForm = { title: '', column_id: column.id, priority: 'normal', assignee_id: '', due_date: '' };
+                openTaskCreate(column = null) {
+                    const columnId = column ? column.id : (this.columns[0] ? this.columns[0].id : null);
+                    this.taskCreateForm = { title: '', column_id: columnId, priority: 'normal', assignee_id: '', due_date: '' };
                     this.taskCreateOpen = true;
                     this.$nextTick(() => this.$refs.taskTitleInput?.focus());
                 },
