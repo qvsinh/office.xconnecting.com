@@ -8,6 +8,10 @@
  * opened (via a $watch on the parent `projectShow()` component's `tab`,
  * which this nested x-data can read through Alpine's scope inheritance).
  *
+ * Adding a task and adding/configuring a column are both done through
+ * modals (the "+ Add task" / "+ Add column" buttons and a column's settings
+ * button open them) rather than inline inputs.
+ *
  * @var object $project id — read for the board's projectId
  * @var bool   $canEdit read for edit/drag/delete affordances
  */
@@ -29,24 +33,16 @@
 
                     <!-- Column header -->
                     <div class="flex items-center justify-between gap-2 border-b border-[#EAEAEA] px-4 py-3 dark:border-gray-700">
-                        <template x-if="renamingColumnId !== column.id">
-                            <button type="button" class="min-w-0 flex-1 truncate text-left text-sm font-semibold text-gray-800 dark:text-white/90"
-                                    :class="canEdit ? 'hover:underline' : 'cursor-default'"
-                                    @click="canEdit && startRename(column)">
-                                <span x-text="column.name"></span>
-                                <span class="ml-1 rounded-full bg-[#F7F6F3] px-1.5 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300" x-text="column.tasks.length"></span>
-                            </button>
-                        </template>
-                        <template x-if="renamingColumnId === column.id">
-                            <input type="text" x-model="renameValue" class="form-input flex-1 py-1 text-sm"
-                                   @keydown.enter.prevent="submitRename(column)" @keydown.escape.prevent="renamingColumnId = null"
-                                   @blur="submitRename(column)" x-ref="renameInput">
-                        </template>
-                        <template x-if="canEdit && renamingColumnId !== column.id">
-                            <button type="button" class="shrink-0 rounded-md p-1 text-[#787774] hover:bg-gray-100 hover:text-[#9F2F2D] dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-red-400"
-                                    @click="confirmDeleteColumn(column)" aria-label="Delete column">
+                        <div class="flex min-w-0 items-center gap-1.5">
+                            <span class="truncate text-sm font-semibold text-gray-800 dark:text-white/90" x-text="column.name"></span>
+                            <span class="rounded-full bg-[#F7F6F3] px-1.5 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300" x-text="column.tasks.length"></span>
+                        </div>
+                        <template x-if="canEdit">
+                            <button type="button" class="shrink-0 rounded-md p-1 text-[#787774] hover:bg-gray-100 hover:text-[#111111] dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                                    @click="openColumnModal(column)" aria-label="Column settings">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0l-.867 12.142A2 2 0 0115.138 21H8.862a2 2 0 01-1.995-1.858L6 7" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </button>
                         </template>
@@ -97,37 +93,120 @@
                         </template>
                     </div>
 
-                    <!-- Add task -->
+                    <!-- Add task (opens the create-task modal) -->
                     <template x-if="canEdit">
-                        <div class="flex items-center gap-1 border-t border-[#EAEAEA] p-3 dark:border-gray-700">
-                            <input type="text" x-model="newTaskTitle[column.id]" placeholder="+ Add task" class="form-input py-1.5 text-sm"
-                                   @keydown.enter.prevent="addTask(column)">
-                            <button type="button" class="btn-secondary shrink-0 px-2.5 py-1.5 text-sm" @click="addTask(column)" :disabled="!(newTaskTitle[column.id] || '').trim()">Add</button>
+                        <div class="border-t border-[#EAEAEA] p-3 dark:border-gray-700">
+                            <button type="button" class="flex w-full items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-[#787774] hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
+                                    @click="openTaskCreate(column)">
+                                + Add task
+                            </button>
                         </div>
                     </template>
                 </div>
             </template>
 
-            <!-- Add column -->
+            <!-- Add column (opens the column modal) -->
             <template x-if="canEdit">
-                <div class="w-full rounded-lg border border-dashed border-[#EAEAEA] p-3 sm:w-56 sm:flex-shrink-0 dark:border-gray-700">
-                    <template x-if="!addingColumnOpen">
-                        <button type="button" class="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-[#787774] hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
-                                @click="addingColumnOpen = true; $nextTick(() => $refs.newColumnInput?.focus())">
-                            + Add column
-                        </button>
-                    </template>
-                    <template x-if="addingColumnOpen">
-                        <div class="flex items-center gap-1">
-                            <input type="text" x-model="newColumnName" x-ref="newColumnInput" placeholder="Column name" class="form-input py-1.5 text-sm"
-                                   @keydown.enter.prevent="addColumn()" @keydown.escape.prevent="addingColumnOpen = false; newColumnName = ''">
-                            <button type="button" class="btn-primary shrink-0 px-2.5 py-1.5 text-sm" :disabled="addingColumn || !newColumnName.trim()" @click="addColumn()">Add</button>
-                        </div>
-                    </template>
+                <div class="w-full sm:w-56 sm:flex-shrink-0">
+                    <button type="button" class="w-full rounded-lg border border-dashed border-[#EAEAEA] px-3 py-3 text-sm font-medium text-[#787774] hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                            @click="openColumnModal(null)">
+                        + Add column
+                    </button>
                 </div>
             </template>
         </div>
     </template>
+
+    <!-- Column modal: add a new column, or configure (rename / delete) an existing one -->
+    <div x-show="columnModalOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4" @keydown.escape.window="columnModalOpen = false">
+        <div class="fixed inset-0 bg-black/40" @click="columnModalOpen = false"></div>
+        <div x-show="columnModalOpen" x-transition class="modal-panel relative max-w-sm" x-trap.noscroll="columnModalOpen" role="dialog" aria-modal="true" aria-labelledby="column-modal-title">
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="columnModalOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="column-modal-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90" x-text="columnForm.id ? 'Column settings' : 'Add column'"></h2>
+            <form @submit.prevent="submitColumnModal" class="mt-4 space-y-4">
+                <div>
+                    <label for="column_name" class="form-label">Name</label>
+                    <input id="column_name" type="text" x-model="columnForm.name" x-ref="columnNameInput" required maxlength="100" class="form-input">
+                </div>
+                <div class="flex items-center justify-between gap-3 pt-2">
+                    <template x-if="columnForm.id">
+                        <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="deleteColumnFromModal()">Delete column</button>
+                    </template>
+                    <div class="flex flex-1 justify-end gap-3">
+                        <button type="button" class="btn-secondary" @click="columnModalOpen = false">Cancel</button>
+                        <button type="submit" :disabled="savingColumn" class="btn-primary">
+                            <span x-show="!savingColumn" x-text="columnForm.id ? 'Save' : 'Add'"></span>
+                            <span x-show="savingColumn" x-cloak>Saving…</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create-task modal -->
+    <div x-show="taskCreateOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4" @keydown.escape.window="taskCreateOpen = false">
+        <div class="fixed inset-0 bg-black/40" @click="taskCreateOpen = false"></div>
+        <div x-show="taskCreateOpen" x-transition class="modal-panel relative max-w-md" x-trap.noscroll="taskCreateOpen" role="dialog" aria-modal="true" aria-labelledby="task-create-title">
+            <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    @click="taskCreateOpen = false" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 id="task-create-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Add task</h2>
+            <form @submit.prevent="submitTaskCreate" class="mt-4 space-y-4">
+                <div>
+                    <label for="new_task_title" class="form-label">Title</label>
+                    <input id="new_task_title" type="text" x-model="taskCreateForm.title" x-ref="taskTitleInput" required maxlength="150" class="form-input">
+                </div>
+                <div>
+                    <label for="new_task_column" class="form-label">Column</label>
+                    <select id="new_task_column" x-model.number="taskCreateForm.column_id" class="form-select">
+                        <template x-for="c in columns" :key="c.id">
+                            <option :value="c.id" x-text="c.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label for="new_task_priority" class="form-label">Priority</label>
+                        <select id="new_task_priority" x-model="taskCreateForm.priority" class="form-select">
+                            <option value="low">Low</option>
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label for="new_task_due" class="form-label">Due date</label>
+                        <input id="new_task_due" type="date" x-model="taskCreateForm.due_date" class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <label for="new_task_assignee" class="form-label">Assignee</label>
+                    <select id="new_task_assignee" x-model="taskCreateForm.assignee_id" class="form-select">
+                        <option value="">Unassigned</option>
+                        <template x-for="member in members" :key="member.id">
+                            <option :value="member.id" x-text="member.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" class="btn-secondary" @click="taskCreateOpen = false">Cancel</button>
+                    <button type="submit" :disabled="creatingTask || !taskCreateForm.title.trim()" class="btn-primary">
+                        <span x-show="!creatingTask">Add task</span>
+                        <span x-show="creatingTask" x-cloak>Adding…</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Task detail modal -->
     <div x-show="taskModalOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4" @keydown.escape.window="taskModalOpen = false">
@@ -202,14 +281,14 @@
                 loaded: false,
                 columns: [],
                 members: [],
-                newTaskTitle: {},
 
-                addingColumnOpen: false,
-                addingColumn: false,
-                newColumnName: '',
+                columnModalOpen: false,
+                savingColumn: false,
+                columnForm: { id: null, name: '' },
 
-                renamingColumnId: null,
-                renameValue: '',
+                taskCreateOpen: false,
+                creatingTask: false,
+                taskCreateForm: { title: '', column_id: null, priority: 'normal', assignee_id: '', due_date: '' },
 
                 draggedTask: null,
                 dragOverColumnId: null,
@@ -236,7 +315,6 @@
                     }
                     this.columns = json.columns || [];
                     this.members = json.members || [];
-                    this.columns.forEach(c => { if (!(c.id in this.newTaskTitle)) this.newTaskTitle[c.id] = ''; });
                     this.loaded = true;
                 },
 
@@ -256,20 +334,37 @@
                     return !!task.due_date && task.due_date < new Date().toISOString().slice(0, 10);
                 },
 
-                async addTask(column) {
-                    const title = (this.newTaskTitle[column.id] || '').trim();
+                // --- Add task (modal) ---
+                openTaskCreate(column) {
+                    this.taskCreateForm = { title: '', column_id: column.id, priority: 'normal', assignee_id: '', due_date: '' };
+                    this.taskCreateOpen = true;
+                    this.$nextTick(() => this.$refs.taskTitleInput?.focus());
+                },
+
+                async submitTaskCreate() {
+                    const title = this.taskCreateForm.title.trim();
                     if (!title) return;
-                    const json = await postForm('/projects/' + this.projectId + '/tasks/create', { title, column_id: column.id });
+                    this.creatingTask = true;
+                    const json = await postForm('/projects/' + this.projectId + '/tasks/create', {
+                        title,
+                        column_id: this.taskCreateForm.column_id,
+                        priority: this.taskCreateForm.priority,
+                        assignee_id: this.taskCreateForm.assignee_id || '',
+                        due_date: this.taskCreateForm.due_date || '',
+                    });
+                    this.creatingTask = false;
                     if (!json) return;
                     if (json.status === 'success') {
-                        column.tasks.push(json.task);
-                        this.newTaskTitle[column.id] = '';
+                        const target = this.columns.find(c => c.id === json.task.column_id);
+                        if (target) target.tasks.push(json.task);
+                        this.taskCreateOpen = false;
                         this.$dispatch('toast', { type: 'success', text: json.message || 'Task added.' });
                     } else {
                         this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add the task.' });
                     }
                 },
 
+                // --- Task detail (modal) ---
                 openTask(task) {
                     this.selectedTask = { ...task, assignee_id: task.assignee_id ?? '', due_date: task.due_date ?? '', description: task.description ?? '' };
                     this.taskModalOpen = true;
@@ -385,27 +480,52 @@
                     if (target) target.tasks.splice(Math.max(0, Math.min(position, target.tasks.length)), 0, task);
                 },
 
-                startRename(column) {
-                    this.renamingColumnId = column.id;
-                    this.renameValue = column.name;
-                    this.$nextTick(() => this.$refs.renameInput?.focus());
+                // --- Add / configure column (modal) ---
+                openColumnModal(column) {
+                    this.columnForm = column ? { id: column.id, name: column.name } : { id: null, name: '' };
+                    this.columnModalOpen = true;
+                    this.$nextTick(() => this.$refs.columnNameInput?.focus());
                 },
 
-                async submitRename(column) {
-                    if (this.renamingColumnId !== column.id) return;
-                    const name = this.renameValue.trim();
-                    this.renamingColumnId = null;
-                    if (!name || name === column.name) return;
-                    const previous = column.name;
-                    column.name = name;
-                    const json = await postForm('/columns/rename/' + column.id, { name });
+                async submitColumnModal() {
+                    const name = this.columnForm.name.trim();
+                    if (!name) return;
+                    this.savingColumn = true;
+
+                    if (this.columnForm.id) {
+                        const column  = this.columns.find(c => c.id === this.columnForm.id);
+                        const previous = column ? column.name : '';
+                        const json = await postForm('/columns/rename/' + this.columnForm.id, { name });
+                        this.savingColumn = false;
+                        if (!json) return;
+                        if (json.status === 'success') {
+                            if (column) column.name = name;
+                            this.columnModalOpen = false;
+                            this.$dispatch('toast', { type: 'success', text: json.message || 'Column renamed.' });
+                        } else {
+                            if (column) column.name = previous;
+                            this.$dispatch('toast', { type: 'error', text: json.message || 'Could not rename the column.' });
+                        }
+                        return;
+                    }
+
+                    const json = await postForm('/projects/' + this.projectId + '/columns/create', { name });
+                    this.savingColumn = false;
                     if (!json) return;
                     if (json.status === 'success') {
-                        this.$dispatch('toast', { type: 'success', text: json.message || 'Column renamed.' });
+                        this.columnModalOpen = false;
+                        this.$dispatch('toast', { type: 'success', text: json.message || 'Column added.' });
+                        await this.load(); // create response has no column payload — refetch to get its id
                     } else {
-                        column.name = previous;
-                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not rename the column.' });
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add the column.' });
                     }
+                },
+
+                deleteColumnFromModal() {
+                    const column = this.columns.find(c => c.id === this.columnForm.id);
+                    if (!column) return;
+                    this.columnModalOpen = false;
+                    this.confirmDeleteColumn(column);
                 },
 
                 confirmDeleteColumn(column) {
@@ -425,23 +545,6 @@
                             }
                         },
                     });
-                },
-
-                async addColumn() {
-                    const name = this.newColumnName.trim();
-                    if (!name) return;
-                    this.addingColumn = true;
-                    const json = await postForm('/projects/' + this.projectId + '/columns/create', { name });
-                    this.addingColumn = false;
-                    if (!json) return;
-                    if (json.status === 'success') {
-                        this.newColumnName = '';
-                        this.addingColumnOpen = false;
-                        this.$dispatch('toast', { type: 'success', text: json.message || 'Column added.' });
-                        await this.load(); // create response has no column payload — refetch to get its id
-                    } else {
-                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add the column.' });
-                    }
                 },
             };
         }
