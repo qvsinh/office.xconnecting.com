@@ -25,8 +25,14 @@ final class ApiKeyModelTest extends CIUnitTestCase
 
         $this->assertStringStartsWith('sk_', $result['plain']);
         $this->assertSame(substr($result['plain'], 0, 12), $result['row']->token_prefix);
-        $this->assertNotSame($result['plain'], $result['row']->token_hash);
-        $this->assertSame(hash('sha256', $result['plain']), $result['row']->token_hash);
+
+        // The returned convenience row must not carry the hash back out.
+        $this->assertObjectNotHasProperty('token_hash', $result['row']);
+
+        // The DB stored the sha256 of the plaintext, never the plaintext itself.
+        $stored = $model->find((int) $result['row']->id);
+        $this->assertNotSame($result['plain'], $stored->token_hash);
+        $this->assertSame(hash('sha256', $result['plain']), $stored->token_hash);
     }
 
     public function testForUserNeverSelectsTokenHash(): void
