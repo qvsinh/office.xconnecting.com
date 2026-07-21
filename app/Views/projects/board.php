@@ -47,13 +47,27 @@
                             <span class="rounded-full bg-[#F7F6F3] px-1.5 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300" x-text="column.tasks.length"></span>
                         </div>
                         <template x-if="canEdit">
-                            <button type="button" class="shrink-0 rounded-md p-1 text-[#787774] hover:bg-gray-100 hover:text-[#111111] dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
-                                    @click="openColumnModal(column)" aria-label="Column settings">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </button>
+                            <div class="flex shrink-0 items-center gap-0.5">
+                                <button type="button" class="rounded-md p-1 text-[#787774] hover:bg-gray-100 hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-30 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                                        :disabled="columns.length < 2 || columns[0].id === column.id" @click="moveColumn(column, -1)" aria-label="Move column earlier">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6" />
+                                    </svg>
+                                </button>
+                                <button type="button" class="rounded-md p-1 text-[#787774] hover:bg-gray-100 hover:text-[#111111] disabled:cursor-not-allowed disabled:opacity-30 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                                        :disabled="columns.length < 2 || columns[columns.length - 1].id === column.id" @click="moveColumn(column, 1)" aria-label="Move column later">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6" />
+                                    </svg>
+                                </button>
+                                <button type="button" class="rounded-md p-1 text-[#787774] hover:bg-gray-100 hover:text-[#111111] dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                                        @click="openColumnModal(column)" aria-label="Column settings">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </template>
                     </div>
 
@@ -154,6 +168,10 @@
                 <div>
                     <label for="new_task_title" class="form-label">Title</label>
                     <input id="new_task_title" type="text" x-model="taskCreateForm.title" x-ref="taskTitleInput" required maxlength="150" class="form-input">
+                </div>
+                <div>
+                    <label for="new_task_description" class="form-label">Description</label>
+                    <textarea id="new_task_description" x-model="taskCreateForm.description" rows="3" class="form-textarea"></textarea>
                 </div>
                 <div>
                     <label for="new_task_column" class="form-label">Column</label>
@@ -327,7 +345,7 @@
                 // --- Add task (modal) ---
                 openTaskCreate(column = null) {
                     const columnId = column ? column.id : (this.columns[0] ? this.columns[0].id : null);
-                    this.taskCreateForm = { title: '', column_id: columnId, priority: 'normal', assignee_id: '', due_date: '' };
+                    this.taskCreateForm = { title: '', description: '', column_id: columnId, priority: 'normal', assignee_id: '', due_date: '' };
                     this.taskCreateOpen = true;
                     this.$nextTick(() => this.$refs.taskTitleInput?.focus());
                 },
@@ -338,6 +356,7 @@
                     this.creatingTask = true;
                     const json = await postForm('/projects/' + this.projectId + '/tasks/create', {
                         title,
+                        description: this.taskCreateForm.description || '',
                         column_id: this.taskCreateForm.column_id,
                         priority: this.taskCreateForm.priority,
                         assignee_id: this.taskCreateForm.assignee_id || '',
@@ -509,6 +528,26 @@
                         await this.load(); // create response has no column payload — refetch to get its id
                     } else {
                         this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add the column.' });
+                    }
+                },
+
+                // Move a column one step earlier/later (dir = -1 | +1) and
+                // persist the new left-to-right order. Optimistic; reverts on failure.
+                async moveColumn(column, dir) {
+                    const idx = this.columns.findIndex(c => c.id === column.id);
+                    const target = idx + dir;
+                    if (idx === -1 || target < 0 || target >= this.columns.length) return;
+
+                    const original = this.columns.slice();
+                    const arr = this.columns.slice();
+                    [arr[idx], arr[target]] = [arr[target], arr[idx]];
+                    this.columns = arr;
+
+                    const order = this.columns.map(c => c.id).join(',');
+                    const json = await postForm('/projects/' + this.projectId + '/columns/reorder', { order });
+                    if (!json || json.status !== 'success') {
+                        this.columns = original;
+                        this.$dispatch('toast', { type: 'error', text: (json && json.message) || 'Could not reorder columns.' });
                     }
                 },
 

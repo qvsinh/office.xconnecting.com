@@ -234,6 +234,33 @@ class Board extends BaseController
         return $this->jsonSuccess('Column created.', ['column' => $columnModel->find($id)]);
     }
 
+    /**
+     * Reorder a project's board columns. Accepts `order` as a comma-separated
+     * list of column ids in the desired left-to-right order (the board's
+     * postForm() helper can't send array fields, hence CSV). Each reposition
+     * is scoped to the project, so a foreign id can't be moved.
+     */
+    public function reorderColumns(int $projectId): ResponseInterface
+    {
+        if (! can_edit_project($projectId)) {
+            return $this->jsonFailed('You do not have permission to manage this project\'s board.', 403);
+        }
+
+        $raw = (string) $this->request->getPost('order');
+        $ids = array_values(array_filter(
+            array_map('intval', explode(',', $raw)),
+            static fn (int $id): bool => $id > 0,
+        ));
+
+        if ($ids === []) {
+            return $this->jsonFailed('No column order was provided.');
+        }
+
+        model(TaskColumnModel::class)->applyOrder($projectId, $ids);
+
+        return $this->jsonSuccess('Columns reordered.');
+    }
+
     public function renameColumn(int $columnId): ResponseInterface
     {
         $columnModel = model(TaskColumnModel::class);

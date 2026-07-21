@@ -82,4 +82,21 @@ class TaskColumnModel extends Model
     {
         return $this->where('project_id', $projectId)->orderBy('position', 'ASC')->first();
     }
+
+    /**
+     * Persist a new column order: sets `position` = array index for each id.
+     * Every update is scoped to `project_id`, so a foreign column id in the
+     * list can never be repositioned (IDOR guard) — it simply matches no row.
+     *
+     * @param list<int> $orderedIds column ids in the desired left-to-right order
+     */
+    public function applyOrder(int $projectId, array $orderedIds): void
+    {
+        foreach ($orderedIds as $position => $id) {
+            $this->builder()
+                ->where('id', (int) $id)
+                ->where('project_id', $projectId)
+                ->update(['position' => $position]);
+        }
+    }
 }

@@ -287,6 +287,32 @@ final class ProjectsTest extends CIUnitTestCase
         $this->assertSame('admin', $projectMemberModel->roleFor($projectId, (int) $newUser->id));
     }
 
+    public function testAddGroupAddsEveryGroupMemberToTheProject(): void
+    {
+        $owner       = $this->seedWebUser(['email' => 'owner-addgroup@example.com']);
+        $wsMember    = model(WorkspaceMemberModel::class);
+        $workspaceId = model(WorkspaceModel::class)->createWorkspace('Group Project Space', (int) $owner->id);
+        $wsMember->add($workspaceId, (int) $owner->id, 'owner');
+        $projectId          = model(ProjectModel::class)->createProject($workspaceId, 'Group Project', (int) $owner->id);
+        $projectMemberModel = model(ProjectMemberModel::class);
+        $projectMemberModel->add($projectId, (int) $owner->id, 'owner');
+
+        $groupId = model(\App\Models\GroupModel::class)->createGroup('Design', 'Design team');
+        $u1      = $this->seedWebUser(['email' => 'group-u1@example.com']);
+        $u2      = $this->seedWebUser(['email' => 'group-u2@example.com']);
+        model(\App\Models\GroupMemberModel::class)->add($groupId, (int) $u1->id);
+        model(\App\Models\GroupMemberModel::class)->add($groupId, (int) $u2->id);
+
+        $this->loginAs($owner);
+        $add = $this->withSession()->post('/projects/' . $projectId . '/members/add-group', $this->withCsrf([
+            'group_id' => $groupId,
+        ]));
+
+        $add->assertStatus(200);
+        $this->assertSame('member', $projectMemberModel->roleFor($projectId, (int) $u1->id));
+        $this->assertSame('member', $projectMemberModel->roleFor($projectId, (int) $u2->id));
+    }
+
     public function testRemoveMemberCannotRemoveTheOnlyOwner(): void
     {
         $owner              = $this->seedWebUser(['email' => 'owner-removemember@example.com']);

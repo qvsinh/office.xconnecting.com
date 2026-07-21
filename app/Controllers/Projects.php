@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\GroupMemberModel;
+use App\Models\GroupModel;
 use App\Models\ProjectFileModel;
 use App\Models\ProjectMemberModel;
 use App\Models\ProjectModel;
@@ -95,13 +97,14 @@ class Projects extends BaseController
         }
 
         return view('projects/show', [
-            'project'        => $project,
-            'workspace'      => $workspace,
-            'role'           => $role,
-            'canEdit'        => can_edit_project($id),
-            'members'        => model(ProjectMemberModel::class)->membersOf($id),
-            'availableUsers' => model(UserModel::class)->activeUsersNotInProject($id),
-            'files'          => model(ProjectFileModel::class)->forProject($id),
+            'project'         => $project,
+            'workspace'       => $workspace,
+            'role'            => $role,
+            'canEdit'         => can_edit_project($id),
+            'members'         => model(ProjectMemberModel::class)->membersOf($id),
+            'availableUsers'  => model(UserModel::class)->activeUsersNotInProject($id),
+            'availableGroups' => model(GroupModel::class)->findAll(),
+            'files'           => model(ProjectFileModel::class)->forProject($id),
         ]);
     }
 
@@ -221,6 +224,43 @@ class Projects extends BaseController
         $memberModel->remove($id, $userId);
 
         return $this->jsonSuccess('Member removed.');
+    }
+
+    /**
+     * Bulk-add every member of a group to the project as 'member' (skipping
+     * users who already have a role). Mirrors `Workspaces::addGroup()`.
+     */
+    public function addGroup(int $id): ResponseInterface
+    {
+        if (! model(ProjectModel::class)->findProject($id)) {
+            return $this->jsonFailed('Project not found.', 404);
+        }
+
+        if (! in_array(project_role($id), ['owner', 'admin'], true)) {
+            return $this->jsonFailed('You do not have permission to manage this project\'s members.', 403);
+        }
+
+        if (! $this->validate(['group_id' => 'required|is_natural_no_zero'])) {
+            return $this->jsonFailed($this->validator->getErrors());
+        }
+
+        $groupId = (int) $this->request->getPost('group_id');
+
+        if (! model(GroupModel::class)->findGroup($groupId)) {
+            return $this->jsonFailed('Group not found.', 404);
+        }
+
+        $memberModel = model(ProjectMemberModel::class);
+        $added       = 0;
+
+        foreach (model(GroupMemberModel::class)->membersOf($groupId) as $user) {
+            if ($memberModel->roleFor($id, (int) $user->id) === null) {
+                $memberModel->add($id, (int) $user->id, 'member');
+                $added++;
+            }
+        }
+
+        return $this->jsonSuccess('Added ' . $added . ' member(s).', ['added' => $added]);
     }
 
     /**

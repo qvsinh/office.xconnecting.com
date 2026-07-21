@@ -137,6 +137,7 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('projects/delete/(:num)', 'Projects::delete/$1', ['filter' => 'csrf']);
     $routes->post('projects/(:num)/members/add', 'Projects::addMember/$1', ['filter' => 'csrf']);
     $routes->post('projects/(:num)/members/remove', 'Projects::removeMember/$1', ['filter' => 'csrf']);
+    $routes->post('projects/(:num)/members/add-group', 'Projects::addGroup/$1', ['filter' => 'csrf']);
 
     $routes->get('projects/(:num)/files', 'ProjectFiles::index/$1');
     $routes->post('projects/(:num)/files/upload', 'ProjectFiles::upload/$1', ['filter' => 'csrf']);
@@ -149,6 +150,7 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('tasks/move/(:num)', 'Board::moveTask/$1', ['filter' => 'csrf']);
     $routes->post('tasks/delete/(:num)', 'Board::deleteTask/$1', ['filter' => 'csrf']);
     $routes->post('projects/(:num)/columns/create', 'Board::createColumn/$1', ['filter' => 'csrf']);
+    $routes->post('projects/(:num)/columns/reorder', 'Board::reorderColumns/$1', ['filter' => 'csrf']);
     $routes->post('columns/rename/(:num)', 'Board::renameColumn/$1', ['filter' => 'csrf']);
     $routes->post('columns/delete/(:num)', 'Board::deleteColumn/$1', ['filter' => 'csrf']);
 });

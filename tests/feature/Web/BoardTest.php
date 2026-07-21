@@ -283,6 +283,37 @@ final class BoardTest extends CIUnitTestCase
      *
      * @return array{0: int, 1: int, 2: WorkspaceMemberModel, 3: ProjectMemberModel, 4: list<object>}
      */
+    public function testReorderColumnsPersistsTheNewOrder(): void
+    {
+        [$projectId, $ownerId, , , $columns] = $this->makeProjectWithOwner('owner-reorder@example.com');
+        $owner                               = model(UserModel::class)->findUser($ownerId);
+        $this->loginAs($owner);
+
+        // Reverse the seeded To Do / In Progress / Done order.
+        $reversed = array_reverse(array_map(static fn ($c) => (int) $c->id, $columns));
+
+        $response = $this->withSession()->post('/projects/' . $projectId . '/columns/reorder', $this->withCsrf([
+            'order' => implode(',', $reversed),
+        ]));
+        $response->assertStatus(200);
+
+        $after = array_map(static fn ($c) => (int) $c->id, model(TaskColumnModel::class)->forProject($projectId));
+        $this->assertSame($reversed, $after);
+    }
+
+    public function testReorderColumnsIsGatedToEditors(): void
+    {
+        [$projectId, , , , $columns] = $this->makeProjectWithOwner('owner-reorder-gate@example.com');
+        $viewer                      = $this->seedWebUser(['email' => 'viewer-reorder@example.com']);
+        model(ProjectMemberModel::class)->add($projectId, (int) $viewer->id, 'viewer');
+        $this->loginAs($viewer);
+
+        $response = $this->withSession()->post('/projects/' . $projectId . '/columns/reorder', $this->withCsrf([
+            'order' => implode(',', array_reverse(array_map(static fn ($c) => (int) $c->id, $columns))),
+        ]));
+        $response->assertStatus(403);
+    }
+
     private function makeProjectWithOwner(string $email): array
     {
         $owner       = $this->seedWebUser(['email' => $email]);

@@ -84,6 +84,10 @@ foreach ($members as $m) {
                     :class="tab === 'board' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100'">
                 Board
             </button>
+            <button type="button" @click="tab = 'list'" class="border-b-2 px-1 py-3 text-sm font-medium"
+                    :class="tab === 'list' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100'">
+                List
+            </button>
             <button type="button" @click="tab = 'files'" class="border-b-2 px-1 py-3 text-sm font-medium"
                     :class="tab === 'files' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[#787774] hover:text-[#111111] dark:text-gray-400 dark:hover:text-gray-100'">
                 Files
@@ -188,6 +192,28 @@ foreach ($members as $m) {
                             <span x-show="addingMember" x-cloak>Adding…</span>
                         </button>
                     </form>
+
+                    <?php if ($availableGroups !== []) : ?>
+                        <div class="mt-6 border-t border-[#EAEAEA] pt-5 dark:border-gray-700">
+                            <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">Add a group</h2>
+                            <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Adds every member of the group to this project.</p>
+                            <form @submit.prevent="submitAddGroup" class="mt-4 space-y-4">
+                                <div>
+                                    <label for="add_group_id" class="form-label">Group</label>
+                                    <select id="add_group_id" x-model="addGroupId" required class="form-select">
+                                        <option value="">Select a group…</option>
+                                        <?php foreach ($availableGroups as $g) : ?>
+                                            <option value="<?= (int) $g->id ?>"><?= esc($g->name ?? '') ?></option>
+                                        <?php endforeach ?>
+                                    </select>
+                                </div>
+                                <button type="submit" :disabled="addingGroup || !addGroupId" class="btn-secondary w-full">
+                                    <span x-show="!addingGroup">Add group members</span>
+                                    <span x-show="addingGroup" x-cloak>Adding…</span>
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif ?>
                 </div>
             <?php endif ?>
         </div>
@@ -196,6 +222,11 @@ foreach ($members as $m) {
     <!-- Board -->
     <div x-show="tab === 'board'" x-cloak class="mt-6">
         <?= $this->include('projects/board') ?>
+    </div>
+
+    <!-- List -->
+    <div x-show="tab === 'list'" x-cloak class="mt-6">
+        <?= $this->include('projects/tasks_list') ?>
     </div>
 
     <!-- Files -->
@@ -301,7 +332,17 @@ foreach ($members as $m) {
             return {
                 projectId: projectId,
                 workspaceId: workspaceId,
-                tab: 'overview',
+                // Restore the last-viewed tab (per project) so a reload doesn't
+                // snap back to Overview; validated against the known tabs.
+                tab: (function () {
+                    const t = localStorage.getItem('project_tab_' + projectId);
+                    return ['overview', 'board', 'list', 'files'].includes(t) ? t : 'overview';
+                })(),
+
+                // Alpine calls init() automatically on component start.
+                init() {
+                    this.$watch('tab', (v) => localStorage.setItem('project_tab_' + this.projectId, v));
+                },
 
                 files: <?= json_encode($files, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
                 uploading: false,
@@ -318,6 +359,9 @@ foreach ($members as $m) {
                 addingMember: false,
                 addUserId: '',
                 addRole: 'member',
+
+                addingGroup: false,
+                addGroupId: '',
 
                 openEdit() {
                     this.editOpen = true;
@@ -366,6 +410,20 @@ foreach ($members as $m) {
                         window.location.reload();
                     } else {
                         this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add member.' });
+                    }
+                },
+
+                async submitAddGroup() {
+                    if (!this.addGroupId) return;
+                    this.addingGroup = true;
+                    const json = await postForm('/projects/' + this.projectId + '/members/add-group', { group_id: this.addGroupId });
+                    this.addingGroup = false;
+                    if (!json) return;
+                    if (json.status === 'success') {
+                        this.$dispatch('toast', { type: 'success', text: json.message });
+                        window.location.reload();
+                    } else {
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add the group.' });
                     }
                 },
 
