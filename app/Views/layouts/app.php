@@ -34,14 +34,11 @@ if (is_authenticated()) {
 // Sidebar nav, grouped TailAdmin-style. Same group shape for both zones so
 // admin-as-client and real-client render identical Account links; the Admin
 // group only exists when $navZone === 'admin'.
-// Dashboard is a top-level link (not wrapped in a group); the rest are
-// collapsible accordion groups.
+// Dashboard, Workspaces and Docs are top-level links (not wrapped in a
+// group); the rest (Account, Admin) are collapsible accordion groups.
 $dashboardHref = $navZone === 'admin' ? '/admin/dashboard' : '/dashboard';
 
 $navGroups = [
-    'Workspace' => [
-        ['label' => 'Workspaces', 'href' => '/workspaces'],
-    ],
     'Account' => [
         ['label' => 'Profile', 'href' => '/account'],
         ['label' => 'Security', 'href' => '/account/security'],
@@ -139,6 +136,14 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                         : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
                     <?= $navIcons['Dashboard'] ?? $navIconDefault ?>
                     <span class="whitespace-nowrap" x-show="navLabelsVisible()">Dashboard</span>
+                </a>
+                <?php $workspacesActive = url_is('workspaces') || url_is('workspaces/*') || url_is('projects/*'); ?>
+                <a href="/workspaces" @click="sidebarMobileOpen = false"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium <?= $workspacesActive
+                        ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
+                        : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
+                    <?= $navIcons['Workspace'] ?? $navIconDefault ?>
+                    <span class="whitespace-nowrap" x-show="navLabelsVisible()">Workspaces</span>
                 </a>
                 <?php $docsActive = url_is('docs*'); ?>
                 <a href="/docs" @click="sidebarMobileOpen = false"
