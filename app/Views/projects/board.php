@@ -35,7 +35,7 @@
 
             <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:overflow-x-auto sm:pb-2">
             <template x-for="column in columns" :key="column.id">
-                <div class="flex w-full flex-col rounded-lg border border-[#EAEAEA] bg-white sm:w-72 sm:flex-shrink-0 dark:border-gray-700 dark:bg-gray-800"
+                <div class="flex min-h-[500px] w-full flex-col rounded-lg border border-[#EAEAEA] bg-white sm:w-72 sm:flex-shrink-0 dark:border-gray-700 dark:bg-gray-800"
                      :class="dragOverColumnId === column.id ? 'ring-2 ring-brand-500' : ''"
                      @dragover.prevent="dragOverColumnId = column.id" @dragleave="dragOverColumnId = null"
                      @drop.prevent="onColumnDrop($event, column)">
