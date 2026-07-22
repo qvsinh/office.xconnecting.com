@@ -33,7 +33,9 @@
                 <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                     <template x-for="task in sortedTasks" :key="task.id">
                         <tr>
-                            <td class="px-4 py-3 font-medium text-gray-800 dark:text-white/90" x-text="task.title"></td>
+                            <td class="px-4 py-3 font-medium">
+                                <a :href="'/tasks/' + task.id" class="text-gray-800 hover:text-brand-600 hover:underline dark:text-white/90 dark:hover:text-brand-400" x-text="task.title"></a>
+                            </td>
                             <td class="px-4 py-3">
                                 <span class="rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300" x-text="task.column_name"></span>
                             </td>

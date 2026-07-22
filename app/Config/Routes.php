@@ -146,6 +146,9 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
 
     $routes->get('projects/(:num)/board-data', 'Board::data/$1');
     $routes->post('projects/(:num)/tasks/create', 'Board::createTask/$1', ['filter' => 'csrf']);
+    $routes->get('tasks/(:num)', 'Tasks::show/$1');
+    $routes->post('tasks/(:num)/comments', 'Tasks::addComment/$1', ['filter' => 'csrf']);
+    $routes->post('comments/delete/(:num)', 'Tasks::deleteComment/$1', ['filter' => 'csrf']);
     $routes->post('tasks/update/(:num)', 'Board::updateTask/$1', ['filter' => 'csrf']);
     $routes->post('tasks/move/(:num)', 'Board::moveTask/$1', ['filter' => 'csrf']);
     $routes->post('tasks/delete/(:num)', 'Board::deleteTask/$1', ['filter' => 'csrf']);

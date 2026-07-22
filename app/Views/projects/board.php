@@ -58,7 +58,7 @@
                                  class="group relative cursor-pointer rounded-lg border border-[#EAEAEA] bg-white p-3 shadow-sm hover:border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600"
                                  @dragstart="dragStart($event, task)" @dragend="draggedTask = null"
                                  @dragover.prevent.stop="dragOverColumnId = column.id" @drop.prevent.stop="onCardDrop($event, column, idx)"
-                                 @click="openTask(task)">
+                                 @click="window.location.href = '/tasks/' + task.id">
                                 <p class="pr-5 text-sm font-medium text-gray-800 dark:text-white/90" x-text="task.title"></p>
                                 <div class="mt-2 flex flex-wrap items-center gap-2">
                                     <span class="rounded-full px-2 py-0.5 text-xs font-medium capitalize" :class="priorityClasses(task.priority)" x-text="task.priority"></span>
@@ -212,69 +212,6 @@
         </div>
     </div>
 
-    <!-- Task detail modal -->
-    <div x-show="taskModalOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4" @keydown.escape.window="taskModalOpen = false">
-        <div class="fixed inset-0 bg-black/40" @click="taskModalOpen = false"></div>
-        <template x-if="selectedTask">
-            <div x-show="taskModalOpen" x-transition class="modal-panel relative max-w-md" x-trap.noscroll="taskModalOpen" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
-                <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                        @click="taskModalOpen = false" aria-label="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-                <h2 id="task-modal-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Task details</h2>
-                <form @submit.prevent="saveTask" class="mt-4 space-y-4">
-                    <div>
-                        <label for="task_title" class="form-label">Title</label>
-                        <input id="task_title" type="text" x-model="selectedTask.title" required maxlength="150" :disabled="!canEdit" class="form-input">
-                    </div>
-                    <div>
-                        <label for="task_description" class="form-label">Description</label>
-                        <textarea id="task_description" x-model="selectedTask.description" rows="3" :disabled="!canEdit" class="form-textarea"></textarea>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex-1">
-                            <label for="task_priority" class="form-label">Priority</label>
-                            <select id="task_priority" x-model="selectedTask.priority" :disabled="!canEdit" class="form-select">
-                                <option value="low">Low</option>
-                                <option value="normal">Normal</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
-                        </div>
-                        <div class="flex-1">
-                            <label for="task_due_date" class="form-label">Due date</label>
-                            <input id="task_due_date" type="date" x-model="selectedTask.due_date" :disabled="!canEdit" class="form-input">
-                        </div>
-                    </div>
-                    <div>
-                        <label for="task_assignee" class="form-label">Assignee</label>
-                        <select id="task_assignee" x-model="selectedTask.assignee_id" :disabled="!canEdit" class="form-select">
-                            <option value="">Unassigned</option>
-                            <template x-for="member in members" :key="member.id">
-                                <option :value="member.id" x-text="member.name"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <div class="flex items-center justify-between gap-3 pt-2">
-                        <template x-if="canEdit">
-                            <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400" @click="confirmDeleteTask">Delete</button>
-                        </template>
-                        <div class="flex flex-1 justify-end gap-3">
-                            <button type="button" class="btn-secondary" @click="taskModalOpen = false">Close</button>
-                            <template x-if="canEdit">
-                                <button type="submit" :disabled="savingTask" class="btn-primary">
-                                    <span x-show="!savingTask">Save</span>
-                                    <span x-show="savingTask" x-cloak>Saving…</span>
-                                </button>
-                            </template>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </template>
-    </div>
 
     <script>
         function projectBoard(projectId, canEdit) {
@@ -296,10 +233,6 @@
 
                 draggedTask: null,
                 dragOverColumnId: null,
-
-                selectedTask: null,
-                taskModalOpen: false,
-                savingTask: false,
 
                 async load() {
                     this.loading = true;
@@ -370,68 +303,6 @@
                     } else {
                         this.$dispatch('toast', { type: 'error', text: json.message || 'Could not add the task.' });
                     }
-                },
-
-                // --- Task detail (modal) ---
-                openTask(task) {
-                    this.selectedTask = { ...task, assignee_id: task.assignee_id ?? '', due_date: task.due_date ?? '', description: task.description ?? '' };
-                    this.taskModalOpen = true;
-                },
-
-                async saveTask() {
-                    if (!this.canEdit || !this.selectedTask) return;
-                    this.savingTask = true;
-                    const json = await postForm('/tasks/update/' + this.selectedTask.id, {
-                        title: this.selectedTask.title,
-                        description: this.selectedTask.description || '',
-                        priority: this.selectedTask.priority,
-                        assignee_id: this.selectedTask.assignee_id || '',
-                        due_date: this.selectedTask.due_date || '',
-                    });
-                    this.savingTask = false;
-                    if (!json) return;
-                    if (json.status === 'success') {
-                        this.replaceTaskLocal(json.task);
-                        this.taskModalOpen = false;
-                        this.$dispatch('toast', { type: 'success', text: json.message || 'Task updated.' });
-                    } else {
-                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not update the task.' });
-                    }
-                },
-
-                confirmDeleteTask() {
-                    if (!this.selectedTask) return;
-                    const task = this.selectedTask;
-                    this.$dispatch('confirm', {
-                        title: 'Delete task',
-                        body: 'Delete "' + task.title + '"? This cannot be undone.',
-                        variant: 'danger',
-                        confirmLabel: 'Delete',
-                        onConfirm: async () => {
-                            const json = await postForm('/tasks/delete/' + task.id, {});
-                            if (!json) return;
-                            if (json.status === 'success') {
-                                this.removeTaskLocal(task.id);
-                                this.taskModalOpen = false;
-                                this.$dispatch('toast', { type: 'success', text: json.message || 'Task deleted.' });
-                            } else {
-                                this.$dispatch('toast', { type: 'error', text: json.message || 'Could not delete the task.' });
-                            }
-                        },
-                    });
-                },
-
-                // Replaces a task in-place using a server-returned task object
-                // (create/update responses include one); removes it from any
-                // other column first in case its column_id changed.
-                replaceTaskLocal(task) {
-                    this.columns.forEach(col => { col.tasks = col.tasks.filter(t => t.id !== task.id); });
-                    const target = this.columns.find(c => c.id === task.column_id);
-                    if (target) target.tasks.push(task);
-                },
-
-                removeTaskLocal(taskId) {
-                    this.columns.forEach(col => { col.tasks = col.tasks.filter(t => t.id !== taskId); });
                 },
 
                 dragStart(event, task) {
