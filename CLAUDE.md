@@ -112,6 +112,26 @@ vendor/bin/php-cs-fixer fix  # format code
 vendor/bin/phpstan analyse   # static analysis
 ```
 
+## Gotchas & workflow notes (this project)
+
+- **Tests share one MySQL DB (`db_proxy_test`).** Never run two `phpunit` processes at once —
+  concurrent `$refresh` regress/migrate corrupts it (errors like `Table 'db_proxy_test.users' doesn't exist`).
+  Recover with `mysql ... -e "DROP DATABASE db_proxy_test; CREATE DATABASE db_proxy_test ..."` then re-run.
+- **Full suite runs >120s** (gets backgrounded). Run in chunks: `vendor/bin/phpunit tests/feature`, then
+  `vendor/bin/phpunit tests/database tests/unit tests/session`.
+- **After editing `app/Views/**` classes, run `npm run build`.** Tailwind JIT only emits classes/arbitrary
+  values (e.g. `min-h-[500px]`) present at build time (content glob = `./app/Views/**/*.php`); the browser
+  caches `/css/app.css`, so hard-refresh to see changes.
+- **Gating tests redirect before the view renders**, so they miss view-variable mismatches (500s). Keep a
+  render smoke test (`tests/feature/Web/HubRenderSmokeTest.php`) that logs in and asserts authed pages return 200.
+- **`postForm()` (layout AJAX helper) can't send array fields** — send a CSV string and `explode()` server-side
+  (see `Board::reorderColumns`).
+- **`BasicAuthGateTest` has 4 pre-existing failures** (empty `app.basic.auth.*` in `.env`) — unrelated to feature work; don't chase them.
+- Persist client-side UI state (active tab, etc.) in `localStorage` keyed per record; Alpine auto-calls a
+  component's `init()` — use it to `$watch` and persist (see `projectShow`/`workspaceShow`).
+- Sidebar nav (`app/Views/layouts/app.php`): top-level links use `url_is('x') || url_is('x/*')` for active
+  state so detail pages stay highlighted; `$navGroups` are accordion sections.
+
 ---
 
 # CodeGraph — Code Intelligence
