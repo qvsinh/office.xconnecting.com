@@ -316,7 +316,17 @@ foreach ($members as $m) {
         function workspaceShow(workspaceId) {
             return {
                 workspaceId: workspaceId,
-                tab: 'overview',
+                // Restore the last-viewed tab (per workspace) so a reload keeps
+                // Overview/Members instead of snapping back to Overview.
+                tab: (function () {
+                    const t = localStorage.getItem('workspace_tab_' + workspaceId);
+                    return ['overview', 'members'].includes(t) ? t : 'overview';
+                })(),
+
+                // Alpine calls init() automatically on component start.
+                init() {
+                    this.$watch('tab', (v) => localStorage.setItem('workspace_tab_' + this.workspaceId, v));
+                },
 
                 editOpen: false,
                 editing: false,
