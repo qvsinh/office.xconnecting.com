@@ -120,6 +120,42 @@ final class ApiTest extends CIUnitTestCase
         $this->assertNull(model(TaskModel::class)->findTask($taskId));
     }
 
+    public function testListAndAddTaskComments(): void
+    {
+        [$projectId, $ownerId, , , $columns] = $this->makeProjectWithOwner('comment-owner@example.com');
+        $taskId                              = model(TaskModel::class)->insert([
+            'project_id' => $projectId,
+            'column_id'  => $columns[0]->id,
+            'title'      => 'Discuss',
+            'position'   => 0,
+            'created_by' => $ownerId,
+        ]);
+
+        // A read-scope key cannot POST a comment (write scope required).
+        $readToken = $this->mintToken($ownerId, 'read');
+        $this->withHeaders(['Authorization' => 'Bearer ' . $readToken])
+            ->post('/api/v1/tasks/' . $taskId . '/comments', ['body' => 'nope'])
+            ->assertStatus(403);
+
+        $token = $this->mintToken($ownerId, 'read,write');
+
+        $add = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->post('/api/v1/tasks/' . $taskId . '/comments', ['body' => 'Looks good to me']);
+        $add->assertStatus(200);
+        $this->assertSame('Looks good to me', json_decode($add->getJSON(), true)['data']['body']);
+
+        $list = $this->withHeaders(['Authorization' => 'Bearer ' . $token])->get('/api/v1/tasks/' . $taskId . '/comments');
+        $list->assertStatus(200);
+        $comments = json_decode($list->getJSON(), true)['data'];
+        $this->assertCount(1, $comments);
+        $this->assertSame('Looks good to me', $comments[0]['body']);
+
+        // Empty body is rejected (422).
+        $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->post('/api/v1/tasks/' . $taskId . '/comments', ['body' => ''])
+            ->assertStatus(422);
+    }
+
     public function testCreateTaskFailsValidationWithoutATitle(): void
     {
         [$projectId, $ownerId] = $this->makeProjectWithOwner('validation-owner@example.com');

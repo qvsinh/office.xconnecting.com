@@ -172,4 +172,7 @@ $routes->group('api/v1', ['filter' => 'apikey'], static function (RouteCollectio
     $routes->get('tasks/(:num)', 'Api\V1\Tasks::show/$1');
     $routes->patch('tasks/(:num)', 'Api\V1\Tasks::update/$1');
     $routes->delete('tasks/(:num)', 'Api\V1\Tasks::delete/$1');
+
+    $routes->get('tasks/(:num)/comments', 'Api\V1\Tasks::comments/$1');
+    $routes->post('tasks/(:num)/comments', 'Api\V1\Tasks::addComment/$1');
 });

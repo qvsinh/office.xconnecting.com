@@ -25,6 +25,8 @@ $endpoints = [
     ['GET', '/tasks/{id}', 'One task.'],
     ['PATCH', '/tasks/{id}', 'Update fields on a task.'],
     ['DELETE', '/tasks/{id}', 'Soft-delete a task.'],
+    ['GET', '/tasks/{id}/comments', "A task's comment thread (oldest first)."],
+    ['POST', '/tasks/{id}/comments', 'Add a comment to a task (body: {"body": "..."}).'],
 ];
 
 $curlGet = <<<CURL
@@ -55,6 +57,14 @@ $pythonSnippet = <<<PY
         headers=headers,
         json={"title": "Write the launch checklist", "priority": "high"},
     ).json()
+
+    # Comment on the task you just created
+    task_id = task["data"]["id"]
+    requests.post(
+        f"{BASE_URL}/tasks/{task_id}/comments",
+        headers=headers,
+        json={"body": "Draft is ready for review."},
+    )
     PY;
 
 $agentPrompt = <<<PROMPT
@@ -66,10 +76,12 @@ $agentPrompt = <<<PROMPT
     You can:
     - GET /projects to list the projects you have access to
     - GET /projects/{id}/tasks to list the tasks in a project
-    - POST /projects/{id}/tasks with JSON body {"title": "...", "priority": "low|medium|high", "assignee_id": null, "due_date": "YYYY-MM-DD"} to create a task
+    - POST /projects/{id}/tasks with JSON body {"title": "...", "priority": "low|normal|high|urgent", "assignee_id": null, "due_date": "YYYY-MM-DD", "column_id": null} to create a task
     - GET /tasks/{id} to read one task
-    - PATCH /tasks/{id} to update a task
+    - PATCH /tasks/{id} to update a task (same fields as create)
     - DELETE /tasks/{id} to remove a task
+    - GET /tasks/{id}/comments to read a task's comments
+    - POST /tasks/{id}/comments with JSON body {"body": "..."} to add a comment
 
     POST, PATCH, and DELETE only work if the key has "write" scope — a "read" key gets a 403.
     PROMPT;

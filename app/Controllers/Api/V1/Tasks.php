@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Api\V1;
 
+use App\Models\TaskCommentModel;
 use App\Models\TaskModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -97,6 +98,68 @@ class Tasks extends BaseApiController
         $taskModel->delete($id);
 
         return $this->ok(['deleted' => true]);
+    }
+
+    /**
+     * `GET /api/v1/tasks/{id}/comments` — the task's comment thread (oldest
+     * first). Read access = project membership.
+     */
+    public function comments(int $id): ResponseInterface
+    {
+        $task = model(TaskModel::class)->findTask($id);
+
+        if ($task === null || project_role((int) $task->project_id, $this->userId()) === null) {
+            return $this->fail('not_found', 'Task not found.', 404);
+        }
+
+        $comments = array_map(
+            fn (object $c): array => $this->commentPayload($c),
+            model(TaskCommentModel::class)->forTask($id),
+        );
+
+        return $this->ok($comments);
+    }
+
+    /**
+     * `POST /api/v1/tasks/{id}/comments` — `{body}`. Any project member may
+     * comment (the `apikey` filter already requires the `write` scope for POST).
+     */
+    public function addComment(int $id): ResponseInterface
+    {
+        $task = model(TaskModel::class)->findTask($id);
+
+        if ($task === null || project_role((int) $task->project_id, $this->userId()) === null) {
+            return $this->fail('not_found', 'Task not found.', 404);
+        }
+
+        if (! $this->validate(['body' => 'required|max_length[5000]'])) {
+            return $this->failValidation($this->validator->getErrors());
+        }
+
+        $fields       = $this->validator->getValidated();
+        $commentModel = model(TaskCommentModel::class);
+        $commentId    = $commentModel->insert([
+            'task_id' => $id,
+            'user_id' => $this->userId(),
+            'body'    => trim((string) $fields['body']),
+        ]);
+
+        return $this->ok($this->commentPayload($commentModel->findWithAuthor((int) $commentId)));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function commentPayload(object $comment): array
+    {
+        return [
+            'id'          => (int) $comment->id,
+            'task_id'     => (int) $comment->task_id,
+            'user_id'     => (int) $comment->user_id,
+            'author_name' => $comment->author_name ?? null,
+            'body'        => $comment->body,
+            'created_at'  => $comment->created_at,
+        ];
     }
 
     /**
