@@ -1,5 +1,0 @@
------BEGIN CERTIFICATE-----
-TEST FIXTURE ONLY - not a real certificate. Used by JprsApi feature
-tests so buildCombinedPem() can read a file that exists; FakeCurlRequest
-never inspects the actual cert bytes.
------END CERTIFICATE-----
