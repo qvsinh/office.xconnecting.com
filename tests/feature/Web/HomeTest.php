@@ -37,7 +37,7 @@ final class HomeTest extends CIUnitTestCase
 
     public function testClientIsRedirectedToClientDashboard(): void
     {
-        $client = $this->seedWebUser(['email' => 'home-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'home-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->get('/')->assertRedirectTo('/dashboard');
@@ -45,7 +45,7 @@ final class HomeTest extends CIUnitTestCase
 
     public function testAdminIsRedirectedToAdminDashboard(): void
     {
-        $admin = $this->seedWebUser(['email' => 'home-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'home-admin@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $this->withSession()->get('/')->assertRedirectTo('/admin/dashboard');

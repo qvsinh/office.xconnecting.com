@@ -3,11 +3,10 @@
 namespace App\Controllers;
 
 /**
- * In-app documentation: hub usage guide + REST API connection guide for
- * wiring an AI agent to a project via an API key (see
- * `kanban/processing/20260721-09-docs.md`). Static content, no models — the
- * only dynamic value passed to a view is the API base URL, kept in sync
- * with the real `api/v1` route group so copy-paste examples stay accurate.
+ * In-app documentation: how attendance works, for employees and managers.
+ *
+ * The REST API page went with the projects/tasks module — the API is down to
+ * `GET /api/v1/me`, which needs no page of its own. Static content, no models.
  */
 class Docs extends BaseController
 {
@@ -19,12 +18,5 @@ class Docs extends BaseController
     public function gettingStarted(): string
     {
         return view('docs/getting_started');
-    }
-
-    public function api(): string
-    {
-        return view('docs/api', [
-            'apiBaseUrl' => rtrim(base_url('api/v1'), '/'),
-        ]);
     }
 }

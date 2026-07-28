@@ -31,7 +31,7 @@ final class AdminUserSeederTest extends CIUnitTestCase
         $adminRole = (new RoleModel())->findByName('admin');
 
         $this->assertNotNull($admin);
-        $this->assertSame('global', $admin->zone);
+        $this->assertSame('admin', $admin->zone);
         $this->assertSame(1, (int) $admin->status);
         $this->assertSame((int) $adminRole->id, (int) $admin->role_id);
 

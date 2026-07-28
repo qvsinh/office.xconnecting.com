@@ -36,7 +36,7 @@ final class UserCanHelperTest extends CIUnitTestCase
     public function testUserCanIsTrueWhenTheWorkingUsersRoleGrantsThePermission(): void
     {
         $roleId       = $this->createRole('editor', ['content.manage']);
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $roleId]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $roleId]);
 
         $this->assertTrue(user_can('content.manage'));
         $this->assertFalse(user_can('system.manage')); // granted a different permission only
@@ -45,7 +45,7 @@ final class UserCanHelperTest extends CIUnitTestCase
     public function testUserCanIsFalseWhenTheRoleGrantsNothing(): void
     {
         $roleId = $this->createRole('bystander', []);
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $roleId]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $roleId]);
 
         $this->assertFalse(user_can('content.manage'));
     }
@@ -55,17 +55,17 @@ final class UserCanHelperTest extends CIUnitTestCase
         $grantedRoleId = $this->createRole('granted-role', ['content.manage']);
         $bareRoleId    = $this->createRole('bare-role', []);
 
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $grantedRoleId]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $grantedRoleId]);
         $this->assertTrue(user_can('content.manage'));
 
         // Switch identity mid "request" (e.g. an act-as-style flow) — the
         // cache is keyed by role_id, so the second role must not inherit the
         // first role's cached grant.
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $bareRoleId]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $bareRoleId]);
         $this->assertFalse(user_can('content.manage'));
 
         // Switching back still reflects the first role correctly too.
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $grantedRoleId]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $grantedRoleId]);
         $this->assertTrue(user_can('content.manage'));
     }
 

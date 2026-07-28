@@ -8,6 +8,8 @@
  *
  * @var array{id:int,name:string,email:string,company:?string,phone_number:?string,language:string,timezone:string,two_factor_method:string} $user
  */
+use App\Validation\PasswordRules;
+
 $this->extend('layouts/app');
 ?>
 
@@ -78,12 +80,18 @@ $this->extend('layouts/app');
             </div>
             <div>
                 <label for="password" class="form-label">New password</label>
-                <input id="password" name="password" type="password" required minlength="5" autocomplete="new-password"
+                <input id="password" name="password" type="password" required
+                       minlength="<?= esc((string) PasswordRules::MIN_LENGTH, 'attr') ?>"
+                       maxlength="<?= esc((string) PasswordRules::MAX_LENGTH, 'attr') ?>"
+                       autocomplete="new-password" aria-describedby="password-requirements"
                        x-model="passwordForm.password" class="form-input">
+                <?= view('account/_password_note', ['id' => 'password-requirements']) ?>
             </div>
             <div>
                 <label for="password_confirm" class="form-label">Confirm new password</label>
-                <input id="password_confirm" name="password_confirm" type="password" required minlength="5" autocomplete="new-password"
+                <input id="password_confirm" name="password_confirm" type="password" required
+                       minlength="<?= esc((string) PasswordRules::MIN_LENGTH, 'attr') ?>"
+                       autocomplete="new-password"
                        x-model="passwordForm.password_confirm" class="form-input">
                 <p x-show="passwordMismatch" x-cloak class="mt-1 text-xs text-red-700 dark:text-red-400">Passwords do not match.</p>
             </div>

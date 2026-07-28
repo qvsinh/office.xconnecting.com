@@ -44,6 +44,7 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('system/logs/delete-all', 'Admin\SystemLogs::deleteAll', ['filter' => 'csrf']);
 
     $routes->get('users', 'Admin\Users::index');
+    $routes->get('users/generate-password', 'Admin\Users::generatePassword');
     $routes->post('users/create', 'Admin\Users::create', ['filter' => 'csrf']);
     $routes->get('users/edit/(:num)', 'Admin\Users::edit/$1');
     $routes->post('users/update', 'Admin\Users::update', ['filter' => 'csrf']);
@@ -86,6 +87,12 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->get('emails', 'Admin\Emails::index');
     $routes->get('emails/show/(:segment)', 'Admin\Emails::show/$1');
 
+    // Access log: personal data, so admin-zone only — not the attendance
+    // permission a department head may hold.
+    $routes->get('access-logs', 'Admin\AccessLogs::index');
+    $routes->get('access-logs/user/(:num)', 'Admin\AccessLogs::user/$1');
+    $routes->get('access-logs/show/(:num)', 'Admin\AccessLogs::show/$1');
+
     $routes->get('scheduled-tasks', 'Admin\ScheduledTasks::index');
     $routes->post('scheduled-tasks/create', 'Admin\ScheduledTasks::create', ['filter' => 'csrf']);
     $routes->get('scheduled-tasks/edit/(:num)', 'Admin\ScheduledTasks::edit/$1');
@@ -93,6 +100,51 @@ $routes->group('admin', ['filter' => ['authFilter', 'adminFilter']], static func
     $routes->post('scheduled-tasks/delete', 'Admin\ScheduledTasks::delete', ['filter' => 'csrf']);
     $routes->post('scheduled-tasks/toggle', 'Admin\ScheduledTasks::toggle', ['filter' => 'csrf']);
     $routes->post('scheduled-tasks/run', 'Admin\ScheduledTasks::runNow', ['filter' => 'csrf']);
+});
+
+/*
+ * Leave approval: a separate permission from attendance management, so a manager
+ * can be given one without the other.
+ */
+$routes->group('admin', ['filter' => ['authFilter', 'permission:requests.approve']], static function (RouteCollection $routes) {
+    $routes->get('requests', 'Admin\Requests::index');
+    $routes->post('requests/approve/(:num)', 'Admin\Requests::approve/$1', ['filter' => 'csrf']);
+    $routes->post('requests/reject/(:num)', 'Admin\Requests::reject/$1', ['filter' => 'csrf']);
+});
+
+/*
+ * Attendance management shares the `/admin` prefix but NOT `adminFilter`: it is
+ * permission-gated so a department head can review and correct their team's
+ * attendance without holding global admin rights. `PermissionFilter` still lets
+ * admin-zone users through. A second group with the same prefix is legal in CI4
+ * — verify with `php spark routes` after editing.
+ */
+$routes->group('admin', ['filter' => ['authFilter', 'permission:attendance.manage']], static function (RouteCollection $routes) {
+    // Today board first — it is the screen a manager opens daily.
+    $routes->get('attendance/today', 'Admin\Attendance::today');
+
+    $routes->get('attendance/report', 'Admin\AttendanceReport::index');
+    $routes->get('attendance/report/user/(:num)', 'Admin\AttendanceReport::user/$1');
+    $routes->get('attendance/report/export', 'Admin\AttendanceReport::export');
+    $routes->post('attendance/report/lock', 'Admin\AttendanceReport::lock', ['filter' => 'csrf']);
+    $routes->post('attendance/report/unlock', 'Admin\AttendanceReport::unlock', ['filter' => 'csrf']);
+
+    $routes->get('attendance', 'Admin\Attendance::index');
+    $routes->get('attendance/edit/(:num)', 'Admin\Attendance::edit/$1');
+    $routes->post('attendance/update', 'Admin\Attendance::update', ['filter' => 'csrf']);
+    $routes->post('attendance/create', 'Admin\Attendance::create', ['filter' => 'csrf']);
+
+    // Work schedules + holidays: the baseline the attendance figures are
+    // measured against (card 01b).
+    $routes->get('attendance/schedules', 'Admin\WorkSchedules::index');
+    $routes->post('attendance/schedules/create', 'Admin\WorkSchedules::create', ['filter' => 'csrf']);
+    $routes->get('attendance/schedules/edit/(:num)', 'Admin\WorkSchedules::edit/$1');
+    $routes->post('attendance/schedules/update', 'Admin\WorkSchedules::update', ['filter' => 'csrf']);
+    $routes->post('attendance/schedules/delete', 'Admin\WorkSchedules::delete', ['filter' => 'csrf']);
+
+    $routes->get('attendance/holidays', 'Admin\Holidays::index');
+    $routes->post('attendance/holidays/create', 'Admin\Holidays::create', ['filter' => 'csrf']);
+    $routes->post('attendance/holidays/delete', 'Admin\Holidays::delete', ['filter' => 'csrf']);
 });
 
 $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection $routes) {
@@ -112,7 +164,19 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
 
     $routes->get('docs', 'Docs::index');
     $routes->get('docs/getting-started', 'Docs::gettingStarted');
-    $routes->get('docs/api', 'Docs::api');
+
+    // Employee self-service attendance — always scoped to the session user,
+    // never takes a user id.
+    $routes->get('attendance', 'Attendance::index');
+    $routes->get('attendance/report', 'Attendance::report');
+
+    // Leave / late-arrival requests (card 02) — always the session user's own.
+    $routes->get('requests', 'Requests::index');
+    $routes->get('requests/preview', 'Requests::preview');
+    $routes->post('requests/create', 'Requests::create', ['filter' => 'csrf']);
+    $routes->post('requests/cancel/(:num)', 'Requests::cancel/$1', ['filter' => 'csrf']);
+    $routes->post('attendance/checkin', 'Attendance::checkin', ['filter' => 'csrf']);
+    $routes->post('attendance/checkout', 'Attendance::checkout', ['filter' => 'csrf']);
 
     $routes->get('notifications', 'Notifications::index');
     $routes->get('notifications/feed', 'Notifications::feed');
@@ -120,42 +184,6 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->post('notifications/mark-read', 'Notifications::markRead', ['filter' => 'csrf']);
     $routes->post('notifications/mark-all-read', 'Notifications::markAllRead', ['filter' => 'csrf']);
 
-    $routes->get('workspaces', 'Workspaces::index');
-    $routes->post('workspaces/create', 'Workspaces::create', ['filter' => 'csrf']);
-    $routes->get('workspaces/(:num)', 'Workspaces::show/$1');
-    $routes->post('workspaces/update/(:num)', 'Workspaces::update/$1', ['filter' => 'csrf']);
-    $routes->post('workspaces/delete/(:num)', 'Workspaces::delete/$1', ['filter' => 'csrf']);
-    $routes->post('workspaces/(:num)/join', 'Workspaces::join/$1', ['filter' => 'csrf']);
-    $routes->post('workspaces/(:num)/leave', 'Workspaces::leave/$1', ['filter' => 'csrf']);
-    $routes->post('workspaces/(:num)/members/add', 'Workspaces::addMember/$1', ['filter' => 'csrf']);
-    $routes->post('workspaces/(:num)/members/remove', 'Workspaces::removeMember/$1', ['filter' => 'csrf']);
-    $routes->post('workspaces/(:num)/members/add-group', 'Workspaces::addGroup/$1', ['filter' => 'csrf']);
-
-    $routes->post('workspaces/(:num)/projects/create', 'Projects::create/$1', ['filter' => 'csrf']);
-    $routes->get('projects/(:num)', 'Projects::show/$1');
-    $routes->post('projects/update/(:num)', 'Projects::update/$1', ['filter' => 'csrf']);
-    $routes->post('projects/delete/(:num)', 'Projects::delete/$1', ['filter' => 'csrf']);
-    $routes->post('projects/(:num)/members/add', 'Projects::addMember/$1', ['filter' => 'csrf']);
-    $routes->post('projects/(:num)/members/remove', 'Projects::removeMember/$1', ['filter' => 'csrf']);
-    $routes->post('projects/(:num)/members/add-group', 'Projects::addGroup/$1', ['filter' => 'csrf']);
-
-    $routes->get('projects/(:num)/files', 'ProjectFiles::index/$1');
-    $routes->post('projects/(:num)/files/upload', 'ProjectFiles::upload/$1', ['filter' => 'csrf']);
-    $routes->get('projects/files/download/(:num)', 'ProjectFiles::download/$1');
-    $routes->post('projects/files/delete/(:num)', 'ProjectFiles::delete/$1', ['filter' => 'csrf']);
-
-    $routes->get('projects/(:num)/board-data', 'Board::data/$1');
-    $routes->post('projects/(:num)/tasks/create', 'Board::createTask/$1', ['filter' => 'csrf']);
-    $routes->get('tasks/(:num)', 'Tasks::show/$1');
-    $routes->post('tasks/(:num)/comments', 'Tasks::addComment/$1', ['filter' => 'csrf']);
-    $routes->post('comments/delete/(:num)', 'Tasks::deleteComment/$1', ['filter' => 'csrf']);
-    $routes->post('tasks/update/(:num)', 'Board::updateTask/$1', ['filter' => 'csrf']);
-    $routes->post('tasks/move/(:num)', 'Board::moveTask/$1', ['filter' => 'csrf']);
-    $routes->post('tasks/delete/(:num)', 'Board::deleteTask/$1', ['filter' => 'csrf']);
-    $routes->post('projects/(:num)/columns/create', 'Board::createColumn/$1', ['filter' => 'csrf']);
-    $routes->post('projects/(:num)/columns/reorder', 'Board::reorderColumns/$1', ['filter' => 'csrf']);
-    $routes->post('columns/rename/(:num)', 'Board::renameColumn/$1', ['filter' => 'csrf']);
-    $routes->post('columns/delete/(:num)', 'Board::deleteColumn/$1', ['filter' => 'csrf']);
 });
 
 // REST API for AI agents (Bearer token, `api_keys` table) — stateless, so no
@@ -164,15 +192,4 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
 $routes->group('api/v1', ['filter' => 'apikey'], static function (RouteCollection $routes) {
     $routes->get('me', 'Api\V1\Me::index');
 
-    $routes->get('projects', 'Api\V1\Projects::index');
-    $routes->get('projects/(:num)', 'Api\V1\Projects::show/$1');
-    $routes->get('projects/(:num)/tasks', 'Api\V1\Projects::tasks/$1');
-    $routes->post('projects/(:num)/tasks', 'Api\V1\Projects::createTask/$1');
-
-    $routes->get('tasks/(:num)', 'Api\V1\Tasks::show/$1');
-    $routes->patch('tasks/(:num)', 'Api\V1\Tasks::update/$1');
-    $routes->delete('tasks/(:num)', 'Api\V1\Tasks::delete/$1');
-
-    $routes->get('tasks/(:num)/comments', 'Api\V1\Tasks::comments/$1');
-    $routes->post('tasks/(:num)/comments', 'Api\V1\Tasks::addComment/$1');
 });

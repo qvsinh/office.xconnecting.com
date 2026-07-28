@@ -180,6 +180,17 @@ class App extends BaseConfig
      *
      * @var array<string, string>
      */
+    // Deliberately empty: nginx on this EC2 host talks to php-fpm over FastCGI,
+    // so REMOTE_ADDR is already the visitor's real address and no forwarded
+    // header should be trusted. Attendance's office-IP allowlist depends on
+    // this being right (see kanban .../20260722-01-attendance-checkin-checkout.md §0).
+    //
+    // Add entries ONLY if a proxy is put in front (nginx `proxy_pass` over HTTP,
+    // an ALB, or a CDN), and only as a map of trusted-proxy => header:
+    //     ['127.0.0.1' => 'X-Forwarded-For']         // nginx proxy_pass, same host
+    //     ['10.0.0.0/16' => 'X-Forwarded-For']       // AWS ALB in the VPC
+    // A plain list (['127.0.0.1']) throws ConfigException in CI4 4.7.
+    // Verify after any change: /admin/attendance prints the address the app sees.
     public array $proxyIPs = [];
 
     /**

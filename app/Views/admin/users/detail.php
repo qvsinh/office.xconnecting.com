@@ -3,7 +3,7 @@
  * Admin user detail: read-only profile + a link to the admin note editor +
  * act-as.
  *
- * @var object $user full users row (id/name/email/company/zone/env/status/
+ * @var object $user full users row (id/name/email/company/zone/status/
  *             language/timezone/login_at/note/...) — only the fields
  *             named below are ever rendered; never dump the object
  *             (it also carries password/google2fa_secret).
@@ -30,16 +30,8 @@ $this->extend('layouts/app');
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Zone</dt>
             <dd class="mt-1">
-                <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= $user->zone === 'global' ? 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' ?>">
-                    <?= $user->zone === 'global' ? 'Admin' : 'Client' ?>
-                </span>
-            </dd>
-        </div>
-        <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Environment</dt>
-            <dd class="mt-1">
-                <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= $user->env === 'LIVE' ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FBF3DB] text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300' ?>">
-                    <?= esc($user->env) ?>
+                <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= zone_is_admin($user->zone) ? 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' ?>">
+                    <?= zone_is_admin($user->zone) ? 'Admin' : 'User' ?>
                 </span>
             </dd>
         </div>

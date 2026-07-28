@@ -15,17 +15,40 @@ if (! function_exists('is_authenticated')) {
     }
 }
 
+if (! function_exists('zone_is_admin')) {
+    /**
+     * Whether a `users.zone` value denotes an administrator.
+     *
+     * `zone` was renamed `global` -> `admin` / `client` -> `user` (migration
+     * 2026-07-27-010000). Sessions cache the user row, so anyone signed in when
+     * that migration ran still carries the legacy value until their next login —
+     * this accepts both so nobody loses admin access mid-session.
+     *
+     * ponytail: the ONLY place the legacy value is tolerated. Once every session
+     * has rolled over, drop the `=== 'global'` arm and this stays a one-liner.
+     */
+    function zone_is_admin(?string $zone): bool
+    {
+        return $zone === 'admin' || $zone === 'global';
+    }
+}
+
 if (! function_exists('is_admin')) {
     function is_admin(): bool
     {
-        return is_authenticated() && session('userAuthenticated')->zone === 'global';
+        return is_authenticated() && zone_is_admin(session('userAuthenticated')->zone ?? null);
     }
 }
 
 if (! function_exists('is_client')) {
+    /**
+     * A non-administrator (an ordinary employee). Defined as "not an admin"
+     * rather than by matching a value, so the legacy `client` and the current
+     * `user` both resolve correctly without a second legacy list.
+     */
     function is_client(): bool
     {
-        return is_authenticated() && session('userAuthenticated')->zone === 'client';
+        return is_authenticated() && ! zone_is_admin(session('userAuthenticated')->zone ?? null);
     }
 }
 
@@ -38,22 +61,48 @@ if (! function_exists('is_client')) {
  */
 
 if (! function_exists('current_zone')) {
+    /**
+     * The acted-as identity's zone, normalised to the current vocabulary
+     * (`admin` / `user`) so callers never have to know about the legacy values.
+     */
     function current_zone(): string
     {
         $working = session('userWorking') ?? session('userAuthenticated');
 
         if ($working === null) {
-            return 'client';
+            return 'user';
         }
 
-        return $working->zone ?? 'client';
+        return zone_is_admin($working->zone ?? null) ? 'admin' : 'user';
     }
 }
 
 if (! function_exists('is_working_admin')) {
     function is_working_admin(): bool
     {
-        return current_zone() === 'global';
+        return current_zone() === 'admin';
+    }
+}
+
+if (! function_exists('is_impersonating')) {
+    /**
+     * Whether an admin is currently "acting as" somebody else (`userWorking`
+     * differs from `userAuthenticated`).
+     *
+     * Read/ownership scoping deliberately follows `userWorking` — but actions
+     * that *attest to a person's own conduct* must not. Recording a check-in
+     * while impersonating would file an arrival under the employee's name that
+     * the employee never made, i.e. falsified payroll input, so `Attendance`
+     * refuses it (viewing stays allowed).
+     */
+    function is_impersonating(): bool
+    {
+        $authenticated = session('userAuthenticated');
+        $working       = session('userWorking');
+
+        return $authenticated !== null
+            && $working !== null
+            && (int) ($authenticated->id ?? 0) !== (int) ($working->id ?? 0);
     }
 }
 

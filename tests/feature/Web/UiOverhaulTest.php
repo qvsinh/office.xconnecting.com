@@ -33,7 +33,7 @@ final class UiOverhaulTest extends CIUnitTestCase
 
     public function testAdminSessionOnDashboardSeesAdminNavGroup(): void
     {
-        $admin = $this->seedWebUser(['email' => 'ui-admin-nav@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'ui-admin-nav@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/dashboard');
@@ -45,8 +45,8 @@ final class UiOverhaulTest extends CIUnitTestCase
 
     public function testActingAsClientHidesAdminNavAndShowsBanner(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'ui-actas-admin@example.com', 'zone' => 'global']);
-        $client = $this->seedWebUser(['email' => 'ui-actas-client@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'ui-actas-admin@example.com', 'zone' => 'admin']);
+        $client = $this->seedWebUser(['email' => 'ui-actas-client@example.com', 'zone' => 'user']);
 
         $result = $this->withSession([
             'basicAuthAuthenticated' => 1,
@@ -68,7 +68,7 @@ final class UiOverhaulTest extends CIUnitTestCase
 
     public function testPlainClientSessionSeesClientNavWithoutAdminGroup(): void
     {
-        $client = $this->seedWebUser(['email' => 'ui-client-nav@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'ui-client-nav@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $result = $this->withSession()->get('/dashboard');
@@ -114,7 +114,7 @@ final class UiOverhaulTest extends CIUnitTestCase
 
     public function testDashboardRendersGroupedSidebarSectionHeaders(): void
     {
-        $admin = $this->seedWebUser(['email' => 'ui-groups-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'ui-groups-admin@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/dashboard');
@@ -127,7 +127,7 @@ final class UiOverhaulTest extends CIUnitTestCase
 
     public function testClientDashboardRendersGroupsWithoutAdminHeader(): void
     {
-        $client = $this->seedWebUser(['email' => 'ui-groups-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'ui-groups-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $result = $this->withSession()->get('/dashboard');
@@ -171,7 +171,7 @@ final class UiOverhaulTest extends CIUnitTestCase
 
     public function testAdminUsersFilterClearIsARealButtonNotALink(): void
     {
-        $admin = $this->seedWebUser(['email' => 'ui-clear-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'ui-clear-admin@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/users');

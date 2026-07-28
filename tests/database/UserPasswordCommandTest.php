@@ -26,21 +26,21 @@ final class UserPasswordCommandTest extends CIUnitTestCase
             'name'   => 'CLI User',
             'email'  => 'cli@example.com',
             'password' => 'old-hash',
-            'zone'   => 'client',
+            'zone'   => 'user',
             'status' => 1,
         ]);
 
-        command('user:password cli@example.com "NewFixtureValue1"');
+        command('user:password cli@example.com "NewFixtureValue1!"');
 
         $authConfig = config('Auth');
-        $expected   = hash($authConfig->password_algorithm, 'NewFixtureValue1' . $authConfig->password_salt);
+        $expected   = hash($authConfig->password_algorithm, 'NewFixtureValue1!' . $authConfig->password_salt);
 
         $this->assertSame($expected, $userModel->find($id)->password);
     }
 
     public function testCommandFailsLoudlyForUnknownEmail(): void
     {
-        command('user:password nobody@example.com "WhateverValue1"');
+        command('user:password nobody@example.com "WhateverValue1!"');
 
         $this->assertStringContainsString('No active user found', $this->getStreamFilterBuffer());
     }

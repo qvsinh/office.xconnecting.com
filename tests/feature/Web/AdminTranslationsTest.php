@@ -35,7 +35,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testCreateStoresTranslationAndReturnsSuccessEnvelope(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $create = $this->withSession()->post('/admin/translations/create', $this->withCsrf([
@@ -58,7 +58,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testCreateRejectsMissingRequiredFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $missing = $this->withSession()->post('/admin/translations/create', $this->withCsrf([
@@ -73,7 +73,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testCreateRejectsDuplicateLangCodeAndSlug(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'admin']);
         model(TranslationModel::class)->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'v1']);
         $this->loginAs($admin);
 
@@ -92,7 +92,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testCreateAllowsSameSlugOnAnotherLanguage(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'admin']);
         model(TranslationModel::class)->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
         $this->loginAs($admin);
 
@@ -108,7 +108,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testEditReturnsTranslationFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'admin']);
         $model = model(TranslationModel::class);
         $id    = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'location' => 'home', 'content' => 'Welcome']);
         $this->loginAs($admin);
@@ -126,7 +126,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testEditRejectsUnknownTranslationId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $edit = $this->withSession()->get('/admin/translations/edit/999999');
@@ -136,7 +136,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testUpdatePersistsEdits(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'admin']);
         $model = model(TranslationModel::class);
         $id    = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
         $this->loginAs($admin);
@@ -159,7 +159,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testUpdateAllowsKeepingOwnLangSlugButRejectsAnotherRowsCombo(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'admin']);
         $model = model(TranslationModel::class);
         $idA   = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => '1']);
         $idB   = $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => '2']);
@@ -186,7 +186,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testUpdateRejectsUnknownTranslationId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $update = $this->withSession()->post('/admin/translations/update', $this->withCsrf([
@@ -201,7 +201,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testDeleteHardRemovesTranslation(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'admin']);
         $model = model(TranslationModel::class);
         $id    = $model->insert(['lang_code' => 'en', 'slug' => 'delete_me', 'content' => '1']);
         $this->loginAs($admin);
@@ -215,7 +215,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testDeleteRejectsUnknownTranslationId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $delete = $this->withSession()->post('/admin/translations/delete', $this->withCsrf(['id' => 999999]));
@@ -225,7 +225,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testExportReturnsJsonMapForChosenLanguage(): void
     {
-        $admin = $this->seedWebUser(['email' => 'exporter@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'exporter@example.com', 'zone' => 'admin']);
         model(TranslationModel::class)->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
         model(TranslationModel::class)->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
         $this->loginAs($admin);
@@ -242,7 +242,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testExportWithoutLangCodeReturnsBadRequest(): void
     {
-        $admin = $this->seedWebUser(['email' => 'exporter2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'exporter2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $export = $this->withSession()->get('/admin/translations/export');
@@ -252,7 +252,7 @@ final class AdminTranslationsTest extends CIUnitTestCase
 
     public function testNonAdminClientSessionIsRejectedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $index = $this->withSession()->get('/admin/translations');

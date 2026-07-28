@@ -33,7 +33,7 @@ final class AdminSystemMigrationsActionTest extends CIUnitTestCase
 
     public function testAdminCanRunMigrations(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-mig-run@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-mig-run@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/system/migrations/run', $this->withCsrf([]));
@@ -51,7 +51,7 @@ final class AdminSystemMigrationsActionTest extends CIUnitTestCase
 
     public function testRunNonAdminClientIsRejected(): void
     {
-        $client = $this->seedWebUser(['email' => 'mig-run-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'mig-run-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->post('/admin/system/migrations/run', $this->withCsrf([]))->assertRedirectTo('/dashboard');
@@ -66,7 +66,7 @@ final class AdminSystemMigrationsActionTest extends CIUnitTestCase
 
     public function testRollbackNonAdminClientIsRejected(): void
     {
-        $client = $this->seedWebUser(['email' => 'mig-rb-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'mig-rb-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->post('/admin/system/migrations/rollback', $this->withCsrf([]))->assertRedirectTo('/dashboard');

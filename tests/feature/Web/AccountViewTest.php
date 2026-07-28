@@ -39,7 +39,7 @@ final class AccountViewTest extends CIUnitTestCase
 
     public function testProfilePageRendersFormsForLoggedInUser(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-account-profile@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-account-profile@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/account');
@@ -52,9 +52,43 @@ final class AccountViewTest extends CIUnitTestCase
         $this->assertStringContainsString(esc($user->email, 'attr'), $body);
     }
 
+    /**
+     * The topbar identity must survive pages that pass their own `$user`.
+     *
+     * `/account` and `/account/security` pass `$user` as an **array**
+     * (profileData()), and the layout used to fall back with
+     * `$user ??= session('userWorking')` — so the array won and the avatar
+     * initial plus the name/email in the header rendered empty. The layout now
+     * reads `$navUser` straight from the session; this pins that down.
+     *
+     * @dataProvider accountPageProvider
+     */
+    public function testHeaderShowsTheSignedInIdentityOnPagesThatPassTheirOwnUserVariable(string $page): void
+    {
+        $user = $this->seedWebUser([
+            'email' => 'headercheck@example.com',
+            'name'  => 'Header Check Person',
+        ]);
+        $this->loginAs($user);
+
+        $result = $this->withSession()->get($page);
+
+        $result->assertStatus(200);
+        $result->assertSee('Header Check Person');
+        $result->assertSee('headercheck@example.com');
+    }
+
+    /**
+     * @return list<array{0: string}>
+     */
+    public static function accountPageProvider(): array
+    {
+        return [['/account'], ['/account/security']];
+    }
+
     public function testSecurityPageRendersStatusWithoutSecret(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-account-security@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-account-security@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/account/security');
@@ -69,7 +103,7 @@ final class AccountViewTest extends CIUnitTestCase
 
     public function testVerify2faPageRendersCodeFormWhenPending(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-verify2fa-pending@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-verify2fa-pending@example.com', 'zone' => 'user']);
         $this->withSession(['basicAuthAuthenticated' => 1, 'pending2faUserId' => $user->id]);
 
         $result = $this->get('/verify-2fa');
@@ -91,7 +125,7 @@ final class AccountViewTest extends CIUnitTestCase
 
     public function testVerify2faPageRedirectsToDashboardWhenAlreadyAuthenticated(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-verify2fa-authed@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-verify2fa-authed@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/verify-2fa');
@@ -107,7 +141,7 @@ final class AccountViewTest extends CIUnitTestCase
         // test is about page rendering once authenticated, not the login flow.
         $user = $this->seedWebUser([
             'email'             => 'view-account-secret@example.com',
-            'zone'              => 'client',
+            'zone'              => 'user',
             'two_factor_method' => 'google2fa',
             'google2fa_secret'  => self::A_SECRET,
         ]);
@@ -135,7 +169,7 @@ final class AccountViewTest extends CIUnitTestCase
     {
         $user = $this->seedWebUser([
             'email'   => 'view-account-xss@example.com',
-            'zone'    => 'client',
+            'zone'    => 'user',
             'name'    => self::XSS_SCRIPT,
             'company' => self::XSS_SCRIPT,
         ]);
@@ -151,7 +185,7 @@ final class AccountViewTest extends CIUnitTestCase
 
     public function testDashboardIncludesAccountLink(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-account-nav@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-account-nav@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/dashboard');

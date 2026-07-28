@@ -35,8 +35,7 @@ final class ResetUserPasswordCommandTest extends CIUnitTestCase
             'name'     => 'Reset Target',
             'email'    => $email,
             'password' => 'old-hash',
-            'zone'     => 'client',
-            'env'      => 'TESTING',
+            'zone'     => 'user',
             'status'   => 1,
         ], true);
     }
@@ -45,38 +44,39 @@ final class ResetUserPasswordCommandTest extends CIUnitTestCase
     {
         $id = $this->seedUser('by-id@example.com');
 
-        command('user:reset-password ' . $id . ' newpass123');
+        command('user:reset-password ' . $id . ' NewPass123!');
 
         $user = (new UserModel())->find($id);
-        $this->assertSame($this->expectedHash('newpass123'), $user->password);
+        $this->assertSame($this->expectedHash('NewPass123!'), $user->password);
     }
 
     public function testResetsByEmail(): void
     {
         $id = $this->seedUser('by-email@example.com');
 
-        command('user:reset-password by-email@example.com anotherpass');
+        command('user:reset-password by-email@example.com AnotherPass1!');
 
         $user = (new UserModel())->find($id);
-        $this->assertSame($this->expectedHash('anotherpass'), $user->password);
+        $this->assertSame($this->expectedHash('AnotherPass1!'), $user->password);
     }
 
     public function testUnknownIdentifierLeavesNoChangeAndReports(): void
     {
-        command('user:reset-password nobody@example.com whatever');
+        command('user:reset-password nobody@example.com Whatever1!');
 
         $this->assertStringContainsString('No user found', $this->getStreamFilterBuffer());
     }
 
-    public function testRejectsTooShortPassword(): void
+    public function testRejectsAPasswordThatFailsTheSharedPolicy(): void
     {
         $id = $this->seedUser('short@example.com');
 
-        command('user:reset-password ' . $id . ' 1234');
+        // Long enough was never the only rule — this one has no special char.
+        command('user:reset-password ' . $id . ' NoSpecial123');
 
         // Password unchanged (rejected before the update).
         $user = (new UserModel())->find($id);
         $this->assertSame('old-hash', $user->password);
-        $this->assertStringContainsString('at least 5 characters', $this->getStreamFilterBuffer());
+        $this->assertStringContainsString('special character', $this->getStreamFilterBuffer());
     }
 }

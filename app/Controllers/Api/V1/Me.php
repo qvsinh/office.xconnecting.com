@@ -2,13 +2,14 @@
 
 namespace App\Controllers\Api\V1;
 
-use App\Models\ProjectModel;
-use App\Models\TaskModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * `GET /api/v1/me` — the API key owner's profile + a couple of quick counts.
+ * `GET /api/v1/me` — the API key owner's profile.
+ *
+ * The project/task counters were dropped with that module; the endpoint stays as
+ * the "does my key work and who am I" probe, which is what clients use it for.
  */
 class Me extends BaseApiController
 {
@@ -21,13 +22,9 @@ class Me extends BaseApiController
         }
 
         return $this->ok([
-            'id'     => (int) $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'counts' => [
-                'projects' => count(model(ProjectModel::class)->forUser($this->userId())),
-                'tasks'    => count(model(TaskModel::class)->forAssignee($this->userId())),
-            ],
+            'id'    => (int) $user->id,
+            'name'  => $user->name,
+            'email' => $user->email,
         ]);
     }
 }

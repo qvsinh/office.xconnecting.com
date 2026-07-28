@@ -34,7 +34,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testCreateStoresSettingAndReturnsSuccessEnvelope(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $create = $this->withSession()->post('/admin/settings/create', $this->withCsrf([
@@ -56,7 +56,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testCreateRejectsMissingName(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $missingName = $this->withSession()->post('/admin/settings/create', $this->withCsrf([
@@ -70,7 +70,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testCreateRejectsDuplicateName(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'admin']);
         model(SiteVariableModel::class)->insert(['name' => 'app_name', 'value' => 'v1']);
         $this->loginAs($admin);
 
@@ -85,7 +85,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testEditReturnsSettingFields(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'global']);
+        $admin  = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'admin']);
         $model  = model(SiteVariableModel::class);
         $id     = $model->insert(['name' => 'edit_target', 'value' => 'original', 'description' => 'desc']);
         $this->loginAs($admin);
@@ -102,7 +102,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testEditRejectsUnknownSettingId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $edit = $this->withSession()->get('/admin/settings/edit/999999');
@@ -112,7 +112,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testUpdatePersistsEdits(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'admin']);
         $model = model(SiteVariableModel::class);
         $id    = $model->insert(['name' => 'original_name', 'value' => 'v1']);
         $this->loginAs($admin);
@@ -134,7 +134,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testUpdateAllowsKeepingOwnNameButRejectsAnotherRowsName(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'admin']);
         $model = model(SiteVariableModel::class);
         $idA   = $model->insert(['name' => 'setting_a', 'value' => '1']);
         $idB   = $model->insert(['name' => 'setting_b', 'value' => '2']);
@@ -159,7 +159,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testUpdateRejectsUnknownSettingId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $update = $this->withSession()->post('/admin/settings/update', $this->withCsrf([
@@ -173,7 +173,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testDeleteSoftDeletesSetting(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'admin']);
         $model = model(SiteVariableModel::class);
         $id    = $model->insert(['name' => 'delete_me', 'value' => '1']);
         $this->loginAs($admin);
@@ -190,7 +190,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testDeleteRejectsUnknownSettingId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $delete = $this->withSession()->post('/admin/settings/delete', $this->withCsrf(['id' => 999999]));
@@ -200,7 +200,7 @@ final class AdminSettingsTest extends CIUnitTestCase
 
     public function testNonAdminClientSessionIsRejectedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $index = $this->withSession()->get('/admin/settings');

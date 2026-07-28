@@ -46,10 +46,12 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
   once in the layout, reuse everywhere) — never the browser's native `alert()` / `confirm()`. Load a
   UI/UX skill when first building them.
 - **UI/UX skills (installed project-locally via `npx skills add Leonxlnx/taste-skill`):**
-  `stitch-design-taste` (default taste pass), `design-taste-frontend`, `minimalist-ui` (fits
-  TailAdmin), `high-end-visual-design`, `gpt-taste`, `industrial-brutalist-ui`, `image-to-code`,
-  `imagegen-frontend-web`/`-mobile`, `brandkit`, plus `frontend-patterns`. The `frontend-coder`
-  agent must load the most specific one before non-trivial visual work (see its skill table).
+  `hallmark` (default taste pass), `better-interface` (review pass — wraps `better-accessibility` /
+  `-layout` / `-writing` / `-typography` / `-colors` / `-ui`), `design-taste-frontend`,
+  `minimalist-ui` (fits TailAdmin), `high-end-visual-design`, `stitch-design-taste`, `gpt-taste`,
+  `industrial-brutalist-ui`, `image-to-code`, `imagegen-frontend-web`/`-mobile`, `brandkit`, plus
+  `frontend-patterns`. The `frontend-coder` agent must load the most specific one before non-trivial
+  visual work (see its skill table).
 - **Escape all dynamic output** with `esc()` (laminas-escaper) to prevent XSS — Tailwind styling
   does not exempt output from escaping.
 - Extend a shared layout via `$this->extend()` / `$this->section()`; do not duplicate chrome.
@@ -114,21 +116,34 @@ vendor/bin/phpstan analyse   # static analysis
 
 ## Gotchas & workflow notes (this project)
 
-- **Tests share one MySQL DB (`db_proxy_test`).** Never run two `phpunit` processes at once —
-  concurrent `$refresh` regress/migrate corrupts it (errors like `Table 'db_proxy_test.users' doesn't exist`).
-  Recover with `mysql ... -e "DROP DATABASE db_proxy_test; CREATE DATABASE db_proxy_test ..."` then re-run.
+- **Tests share one MySQL DB (`database.tests.database` in `.env` — currently `db_office_xcn_vn_test`).**
+  Never run two `phpunit` processes at once — concurrent `$refresh` regress/migrate corrupts it
+  (errors like `Table '….users' doesn't exist`). Recover with
+  `mysql ... -e "DROP DATABASE <name>; CREATE DATABASE <name> CHARACTER SET utf8mb4 ..."` then re-run.
+  Two other symptoms with the same fix: `Unknown database '…'` after the DB is renamed in `.env`
+  (just CREATE it — migrations rebuild the schema), and
+  `There is a gap in the migration sequence near version …` when the DB still holds migration
+  history from another branch.
 - **Full suite runs >120s** (gets backgrounded). Run in chunks: `vendor/bin/phpunit tests/feature`, then
   `vendor/bin/phpunit tests/database tests/unit tests/session`.
 - **After editing `app/Views/**` classes, run `npm run build`.** Tailwind JIT only emits classes/arbitrary
   values (e.g. `min-h-[500px]`) present at build time (content glob = `./app/Views/**/*.php`); the browser
   caches `/css/app.css`, so hard-refresh to see changes.
-- **Gating tests redirect before the view renders**, so they miss view-variable mismatches (500s). Keep a
-  render smoke test (`tests/feature/Web/HubRenderSmokeTest.php`) that logs in and asserts authed pages return 200.
+- **Gating tests redirect before the view renders**, so they miss view-variable mismatches (500s).
+  `tests/feature/Web/AuthedPagesRenderTest.php` logs in and asserts every authed page returns 200 —
+  add new pages to its provider.
+- **Data going into a `<script>` body must use
+  `json_encode($v, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)`** (see `requests/index.php`).
+  `esc($v, 'js')` is only correct *inside* a quoted JS string — used bare it emits `\x22…\x22`, which is a
+  **syntax error**, and a `<script>` that fails to parse silently kills every Alpine handler on that
+  component (the `/requests` modal could not be closed). A 200 response proves nothing here;
+  `tests/feature/Web/AuthedPagesRenderTest.php` asserts every authed page returns 200 **and** parses
+  its inline scripts with `node --check`.
 - **`postForm()` (layout AJAX helper) can't send array fields** — send a CSV string and `explode()` server-side
-  (see `Board::reorderColumns`).
+  (see `Admin\WorkSchedules::resolveWorkdays`).
 - **`BasicAuthGateTest` has 4 pre-existing failures** (empty `app.basic.auth.*` in `.env`) — unrelated to feature work; don't chase them.
 - Persist client-side UI state (active tab, etc.) in `localStorage` keyed per record; Alpine auto-calls a
-  component's `init()` — use it to `$watch` and persist (see `projectShow`/`workspaceShow`).
+  component's `init()` — use it to `$watch` and persist (see `myRequests` in `requests/index.php`).
 - Sidebar nav (`app/Views/layouts/app.php`): top-level links use `url_is('x') || url_is('x/*')` for active
   state so detail pages stay highlighted; `$navGroups` are accordion sections.
 
@@ -198,8 +213,11 @@ Supporting: **backend-patterns**, **api-design**, **database-migrations**, **doc
 ## Frontend / UI (TailAdmin · Tailwind · Alpine)
 
 - **frontend-patterns** — view-layer patterns (apply through Tailwind utilities, not Bootstrap).
-- **minimalist-ui**, **design-taste-frontend**, **stitch-design-taste** — design-taste guidance;
-  translate their advice into **TailAdmin/Tailwind** components, keeping `esc()` on all output.
+- **hallmark** (default), **minimalist-ui**, **design-taste-frontend**, **stitch-design-taste** —
+  design-taste guidance; translate their advice into **TailAdmin/Tailwind** components, keeping
+  `esc()` on all output.
+- **better-interface** — cross-discipline review pass over a finished screen/flow; load a single
+  **better-accessibility / -layout / -writing / -typography / -colors / -ui** for narrow fixes.
 - **image-to-code** — convert a mockup/screenshot to Tailwind markup.
 - **brandkit** — brand tokens; map to the Tailwind theme config.
 

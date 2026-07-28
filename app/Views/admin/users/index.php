@@ -3,7 +3,7 @@
  * Admin user management: search + paginate every account, create/edit via a
  * shared Alpine modal, and act-as impersonation.
  *
- * @var list<object>                                      $items   searchAdmin() rows (id/name/email/company/zone/env/status/login_at/created_at — no password)
+ * @var list<object>                                      $items   searchAdmin() rows (id/name/email/company/zone/status/login_at/created_at — no password)
  * @var int                                               $total
  * @var int                                               $page
  * @var int                                               $limit
@@ -65,8 +65,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
             <label for="zone" class="form-label">Zone</label>
             <select id="zone" name="zone" class="form-select">
                 <option value="">Any</option>
-                <option value="global" <?= ($filters['zone'] ?? '') === 'global' ? 'selected' : '' ?>>Admin</option>
-                <option value="client" <?= ($filters['zone'] ?? '') === 'client' ? 'selected' : '' ?>>Client</option>
+                <option value="admin" <?= ($filters['zone'] ?? '') === 'admin' ? 'selected' : '' ?>>Admin</option>
+                <option value="user" <?= ($filters['zone'] ?? '') === 'user' ? 'selected' : '' ?>>User</option>
             </select>
         </div>
         <div>
@@ -97,7 +97,6 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
                     <th class="px-4 py-3"><a href="<?= esc($sortUrl('name'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">User<?= esc($sortMark('name')) ?></a></th>
                     <th class="px-4 py-3"><a href="<?= esc($sortUrl('zone'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Zone<?= esc($sortMark('zone')) ?></a></th>
-                    <th class="px-4 py-3">Env</th>
                     <th class="px-4 py-3"><a href="<?= esc($sortUrl('status'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Status<?= esc($sortMark('status')) ?></a></th>
                     <th class="px-4 py-3"><a href="<?= esc($sortUrl('login_at'), 'attr') ?>" class="hover:text-[#111111] dark:hover:text-gray-100">Last login<?= esc($sortMark('login_at')) ?></a></th>
                     <th class="px-4 py-3 text-right">Actions</th>
@@ -111,13 +110,8 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                             <p class="text-xs text-[#787774] dark:text-gray-400"><?= esc($item->email) ?></p>
                         </td>
                         <td class="px-4 py-3">
-                            <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= $item->zone === 'global' ? 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' ?>">
-                                <?= $item->zone === 'global' ? 'Admin' : 'Client' ?>
-                            </span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= $item->env === 'LIVE' ? 'bg-[#EDF3EC] text-[#346538] dark:bg-green-900/40 dark:text-green-300' : 'bg-[#FBF3DB] text-[#956400] dark:bg-yellow-900/40 dark:text-yellow-300' ?>">
-                                <?= esc($item->env) ?>
+                            <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= zone_is_admin($item->zone) ? 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' ?>">
+                                <?= zone_is_admin($item->zone) ? 'Admin' : 'User' ?>
                             </span>
                         </td>
                         <td class="px-4 py-3">
@@ -179,26 +173,17 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                     <label for="create_email" class="form-label">Email</label>
                     <input id="create_email" type="email" x-model="createForm.email" required maxlength="255" class="form-input">
                 </div>
+                <?= view('admin/users/_password_field', [
+                    'prefix' => 'create',
+                    'hint'   => 'Press Generate, or leave blank — a blank field is auto-generated but never shown, so the user would need a reset to sign in.',
+                ]) ?>
                 <div>
-                    <label for="create_password" class="form-label">Password</label>
-                    <input id="create_password" type="password" x-model="createForm.password" minlength="5" autocomplete="new-password" class="form-input">
-                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Leave blank to auto-generate a random password.</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="create_zone" class="form-label">Zone</label>
-                        <select id="create_zone" x-model="createForm.zone" required class="form-select">
-                            <option value="global">Admin (global)</option>
-                            <option value="client">Client</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="create_env" class="form-label">Environment</label>
-                        <select id="create_env" x-model="createForm.env" required class="form-select">
-                            <option value="LIVE">LIVE</option>
-                            <option value="TESTING">TESTING</option>
-                        </select>
-                    </div>
+                    <label for="create_zone" class="form-label">Zone</label>
+                    <select id="create_zone" x-model="createForm.zone" required class="form-select">
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Admins manage everyone's attendance and settings. Users see only their own.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -251,26 +236,16 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                     <label for="edit_email" class="form-label">Email</label>
                     <input id="edit_email" type="email" x-model="editForm.email" required maxlength="255" class="form-input">
                 </div>
+                <?= view('admin/users/_password_field', [
+                    'prefix' => 'edit',
+                    'hint'   => 'Leave blank to keep the current password.',
+                ]) ?>
                 <div>
-                    <label for="edit_password" class="form-label">Password</label>
-                    <input id="edit_password" type="password" x-model="editForm.password" minlength="5" autocomplete="new-password" class="form-input">
-                    <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">Leave blank to keep the current password.</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="edit_zone" class="form-label">Zone</label>
-                        <select id="edit_zone" x-model="editForm.zone" required class="form-select">
-                            <option value="global">Admin (global)</option>
-                            <option value="client">Client</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="edit_env" class="form-label">Environment</label>
-                        <select id="edit_env" x-model="editForm.env" required class="form-select">
-                            <option value="LIVE">LIVE</option>
-                            <option value="TESTING">TESTING</option>
-                        </select>
-                    </div>
+                    <label for="edit_zone" class="form-label">Zone</label>
+                    <select id="edit_zone" x-model="editForm.zone" required class="form-select">
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -312,14 +287,50 @@ $sortMark = static function (string $col) use ($sort, $order): string {
             return {
                 creating: false,
                 createOpen: false,
-                createForm: { name: '', email: '', password: '', zone: 'client', env: 'LIVE', status: 1, language: 'en', timezone: 'Asia/Tokyo' },
+                generatingPassword: false,
+                createPasswordShown: false,
+                editPasswordShown: false,
+                createForm: { name: '', email: '', password: '', zone: 'user', status: 1, language: 'en', timezone: 'Asia/Tokyo' },
                 editing: false,
                 editOpen: false,
                 editLoading: false,
-                editForm: { id: null, name: '', email: '', password: '', zone: 'client', env: 'LIVE', status: 1, language: '', timezone: '' },
+                editForm: { id: null, name: '', email: '', password: '', zone: 'user', status: 1, language: '', timezone: '' },
+
+                /**
+                 * Fill a form's password with a server-generated one and reveal
+                 * it — the admin has to be able to read it to hand it over.
+                 * Generated server-side so the policy has exactly one home.
+                 */
+                async fillGeneratedPassword(prefix) {
+                    this.generatingPassword = true;
+                    let json;
+                    try {
+                        const res = await fetch('/admin/users/generate-password', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        json = await res.json();
+                    } catch (e) {
+                        this.$dispatch('toast', { type: 'error', text: 'Network error. Please try again.' });
+                        return;
+                    } finally {
+                        this.generatingPassword = false;
+                    }
+                    if (json.status !== 'success' || !json.password) {
+                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not generate a password.' });
+                        return;
+                    }
+                    this[prefix + 'Form'].password = json.password;
+                    this[prefix + 'PasswordShown'] = true;
+                },
+
+                async copyPassword(password) {
+                    const ok = await copyText(password);
+                    this.$dispatch('toast', ok
+                        ? { type: 'success', text: 'Password copied. Hand it over now — it is not stored anywhere you can read it back.' }
+                        : { type: 'error', text: 'Could not copy. Select the password and copy it manually.' });
+                },
 
                 openCreate() {
-                    this.createForm = { name: '', email: '', password: '', zone: 'client', env: 'LIVE', status: 1, language: 'en', timezone: 'Asia/Tokyo' };
+                    this.createForm = { name: '', email: '', password: '', zone: 'user', status: 1, language: 'en', timezone: 'Asia/Tokyo' };
+                    this.createPasswordShown = false;
                     this.createOpen = true;
                 },
 
@@ -338,6 +349,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 },
 
                 async openEdit(id) {
+                    this.editPasswordShown = false;
                     this.editOpen = true;
                     this.editLoading = true;
                     let json;
@@ -361,7 +373,6 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                         email: json.user.email,
                         password: '',
                         zone: json.user.zone,
-                        env: json.user.env,
                         status: json.user.status,
                         language: json.user.language || '',
                         timezone: json.user.timezone || '',

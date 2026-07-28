@@ -36,7 +36,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testCreateStoresGroupWithDerivedSlug(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $create = $this->withSession()->post('/admin/groups/create', $this->withCsrf([
@@ -57,7 +57,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testCreateRejectsMissingName(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/groups/create', $this->withCsrf(['name' => '']));
@@ -68,7 +68,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testCreateDeduplicatesSlugForSameName(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $this->withSession()->post('/admin/groups/create', $this->withCsrf(['name' => 'Ops']));
@@ -82,7 +82,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testEditReturnsGroupFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'admin']);
         $id    = model(GroupModel::class)->createGroup('Marketing', 'Growth team');
         $this->loginAs($admin);
 
@@ -98,7 +98,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testEditRejectsUnknownGroupId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $edit = $this->withSession()->get('/admin/groups/edit/999999');
@@ -108,7 +108,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testUpdatePersistsEditsWithoutChangingSlug(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'admin']);
         $model = model(GroupModel::class);
         $id    = $model->createGroup('Original Name');
         $this->loginAs($admin);
@@ -129,7 +129,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testUpdateRejectsUnknownGroupId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $update = $this->withSession()->post('/admin/groups/update', $this->withCsrf([
@@ -142,7 +142,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testDeleteSoftDeletesGroupAndRemovesItsMembers(): void
     {
-        $admin       = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'global']);
+        $admin       = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'admin']);
         $groupModel  = model(GroupModel::class);
         $memberModel = model(GroupMemberModel::class);
         $groupId     = $groupModel->createGroup('Delete Me');
@@ -160,7 +160,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testDeleteRejectsUnknownGroupId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $delete = $this->withSession()->post('/admin/groups/delete', $this->withCsrf(['id' => 999999]));
@@ -170,7 +170,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testMembersDataListsCurrentMembers(): void
     {
-        $admin   = $this->seedWebUser(['email' => 'members-data-admin@example.com', 'zone' => 'global']);
+        $admin   = $this->seedWebUser(['email' => 'members-data-admin@example.com', 'zone' => 'admin']);
         $groupId = model(GroupModel::class)->createGroup('Data Team');
         $member  = $this->seedWebUser(['email' => 'listed-member@example.com', 'name' => 'Listed Member']);
         model(GroupMemberModel::class)->add($groupId, (int) $member->id);
@@ -187,7 +187,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testMembersDataRejectsUnknownGroupId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'members-data-admin2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'members-data-admin2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/groups/999999/members-data');
@@ -197,7 +197,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testAddMemberAddsUserAndReflectsInCount(): void
     {
-        $admin      = $this->seedWebUser(['email' => 'add-admin@example.com', 'zone' => 'global']);
+        $admin      = $this->seedWebUser(['email' => 'add-admin@example.com', 'zone' => 'admin']);
         $groupModel = model(GroupModel::class);
         $groupId    = $groupModel->createGroup('Add Target');
         $user       = $this->seedWebUser(['email' => 'to-be-added@example.com']);
@@ -216,7 +216,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testAddMemberRejectsUnknownUserId(): void
     {
-        $admin   = $this->seedWebUser(['email' => 'add-admin2@example.com', 'zone' => 'global']);
+        $admin   = $this->seedWebUser(['email' => 'add-admin2@example.com', 'zone' => 'admin']);
         $groupId = model(GroupModel::class)->createGroup('Add Target 2');
         $this->loginAs($admin);
 
@@ -229,7 +229,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testAddMemberRejectsUnknownGroupId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'add-admin3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'add-admin3@example.com', 'zone' => 'admin']);
         $user  = $this->seedWebUser(['email' => 'irrelevant-user@example.com']);
         $this->loginAs($admin);
 
@@ -242,7 +242,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testRemoveMemberRemovesUserAndReflectsInCount(): void
     {
-        $admin       = $this->seedWebUser(['email' => 'remove-admin@example.com', 'zone' => 'global']);
+        $admin       = $this->seedWebUser(['email' => 'remove-admin@example.com', 'zone' => 'admin']);
         $groupModel  = model(GroupModel::class);
         $memberModel = model(GroupMemberModel::class);
         $groupId     = $groupModel->createGroup('Remove Target');
@@ -263,7 +263,7 @@ final class AdminGroupsTest extends CIUnitTestCase
 
     public function testNonAdminClientSessionIsRejectedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $index = $this->withSession()->get('/admin/groups');

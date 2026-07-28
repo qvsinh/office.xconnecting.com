@@ -34,8 +34,8 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testActAsSetsUserWorkingButKeepsUserAuthenticatedAsTheAdmin(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'admin-actas@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'target-actas@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'admin-actas@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'target-actas@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/users/act-as/' . $target->id, $this->withCsrf([]));
@@ -47,8 +47,8 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testIsAdminStaysTrueAndClientScopedReadReflectsTheTargetAfterActAs(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'admin-scope@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['name' => 'Target Person', 'email' => 'target-scope@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'admin-scope@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['name' => 'Target Person', 'email' => 'target-scope@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
         $this->withSession()->post('/admin/users/act-as/' . $target->id, $this->withCsrf([]));
 
@@ -66,8 +66,8 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testStopActingRestoresUserWorkingToTheAdmin(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'admin-stop@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'target-stop@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'admin-stop@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'target-stop@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
         $this->withSession()->post('/admin/users/act-as/' . $target->id, $this->withCsrf([]));
         $this->assertSame((int) $target->id, (int) session('userWorking')->id);
@@ -81,7 +81,7 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testStopActingIsSafeToCallWhenNotImpersonating(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-idempotent@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-idempotent@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/users/stop-acting-as', $this->withCsrf([]));
@@ -92,8 +92,8 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testNonAdminClientSessionCannotImpersonate(): void
     {
-        $client = $this->seedWebUser(['email' => 'client-actas@example.com', 'zone' => 'client']);
-        $target = $this->seedWebUser(['email' => 'target-blocked@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'client-actas@example.com', 'zone' => 'user']);
+        $target = $this->seedWebUser(['email' => 'target-blocked@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $result = $this->withSession()->post('/admin/users/act-as/' . $target->id, $this->withCsrf([]));
@@ -105,7 +105,7 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testActAsRejectsUnknownUserId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-unknown@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-unknown@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/users/act-as/999999', $this->withCsrf([]));
@@ -116,8 +116,8 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testActAsIsNotRoutedForGet(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'admin-getcheck@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'target-getcheck@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'admin-getcheck@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'target-getcheck@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
 
         $this->expectException(PageNotFoundException::class);
@@ -126,8 +126,8 @@ final class AdminActAsTest extends CIUnitTestCase
 
     public function testActAsWithoutCsrfTokenIsRejected(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'admin-nocsrf@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'target-nocsrf@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'admin-nocsrf@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'target-nocsrf@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/users/act-as/' . $target->id, []);

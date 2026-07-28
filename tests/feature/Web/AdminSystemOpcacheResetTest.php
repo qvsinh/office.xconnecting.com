@@ -40,7 +40,7 @@ final class AdminSystemOpcacheResetTest extends CIUnitTestCase
 
     public function testNonAdminClientIsRejectedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'gate-opcache-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'gate-opcache-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->post('/admin/system/opcache/reset', $this->withCsrf([]))->assertRedirectTo('/dashboard');
@@ -48,7 +48,7 @@ final class AdminSystemOpcacheResetTest extends CIUnitTestCase
 
     public function testMissingCsrfTokenIsRejected(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-opcache-nocsrf@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-opcache-nocsrf@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/system/opcache/reset', []);
@@ -65,7 +65,7 @@ final class AdminSystemOpcacheResetTest extends CIUnitTestCase
      */
     public function testAdminResetHandlesEveryOpcacheAvailabilityBranchGracefully(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-opcache-reset@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-opcache-reset@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/system/opcache/reset', $this->withCsrf([]));

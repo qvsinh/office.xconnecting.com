@@ -26,7 +26,7 @@ final class AdminSystemInfoTest extends CIUnitTestCase
     public function testCountsMatchRealTableCounts(): void
     {
         model(UserModel::class)->insert([
-            'name' => 'Count User', 'email' => 'count@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1,
+            'name' => 'Count User', 'email' => 'count@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1,
         ]);
         model(NotificationModel::class)->insert(['user_id' => 1, 'message' => 'hi', 'is_read' => 0]);
 

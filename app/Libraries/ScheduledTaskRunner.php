@@ -2,7 +2,9 @@
 
 namespace App\Libraries;
 
+use App\Models\AttendanceDayModel;
 use App\Models\ScheduledTaskModel;
+use CodeIgniter\I18n\Time;
 use Throwable;
 
 /**
@@ -40,7 +42,66 @@ class ScheduledTaskRunner
                 'label' => 'Purge old notifications',
                 'run'   => fn (array $params): string => $this->purgeTable('notifications', 'created_at', $this->days($params, 30)),
             ],
+            'access_logs.purge' => [
+                'label' => 'Purge old access logs',
+                // Personal data (addresses, devices) — 90 days is long enough to
+                // investigate a dispute and short enough not to keep a permanent
+                // movement record of every employee.
+                'run' => fn (array $params): string => $this->purgeTable('access_logs', 'created_at', $this->days($params, 90)),
+            ],
+            'attendance.flag_missing_checkout' => [
+                'label' => 'Flag attendance days with no check-out',
+                'run'   => fn (array $params): string => $this->flagMissingCheckouts($params),
+            ],
+            'attendance.remind_checkout' => [
+                'label' => 'Remind employees who have not checked out',
+                'run'   => static fn (array $params): string => (new AttendanceReminders())->remindCheckout($params),
+            ],
+            'attendance.absence_digest' => [
+                'label' => 'Daily absence digest for managers',
+                'run'   => static fn (array $params): string => (new AttendanceReminders())->absenceDigest($params),
+            ],
+            'attendance.missing_checkout_digest' => [
+                'label' => 'Weekly uncorrected missing check-outs',
+                'run'   => static fn (array $params): string => (new AttendanceReminders())->missingCheckoutDigest($params),
+            ],
+            'requests.pending_digest' => [
+                'label' => 'Pending leave requests digest',
+                'run'   => static fn (array $params): string => (new AttendanceReminders())->pendingRequestsDigest($params),
+            ],
         ];
+    }
+
+    /**
+     * Marks yesterday's (Vietnam calendar) attendance rows that have an arrival
+     * but no departure, so the management list can surface them for correction.
+     *
+     * Deliberately does NOT invent a check-out time: auto-filling the schedule's
+     * end time would fabricate payroll data. Flagging puts a human in the loop
+     * through the audited correction path instead.
+     *
+     * `params.days_ago` (default 1) lets an admin re-scan an older day from the
+     * scheduled-tasks screen without a code change.
+     *
+     * @param array<string, mixed> $params
+     */
+    private function flagMissingCheckouts(array $params): string
+    {
+        helper('attendance');
+
+        $daysAgo  = max(0, (int) ($params['days_ago'] ?? 1));
+        $workDate = Time::now(attendance_tz())->subDays($daysAgo)->toDateString();
+
+        $model = model(AttendanceDayModel::class);
+        $rows  = $model->openRowsOn($workDate);
+
+        if ($rows === []) {
+            return "No open attendance rows on {$workDate}.";
+        }
+
+        $flagged = $model->flagMissingCheckout(array_map(static fn (object $row): int => (int) $row->id, $rows));
+
+        return "Flagged {$flagged} day(s) without check-out on {$workDate}.";
     }
 
     /**

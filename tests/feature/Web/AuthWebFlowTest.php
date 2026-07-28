@@ -66,7 +66,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
 
     public function testAdminCanLoginThroughRoutingAndReachAdminDashboard(): void
     {
-        $user = $this->seedUser(['name' => 'Ada Admin', 'email' => 'admin@example.com', 'zone' => 'global']);
+        $user = $this->seedUser(['name' => 'Ada Admin', 'email' => 'admin@example.com', 'zone' => 'admin']);
 
         $login = $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::TEST_PASSWORD]));
 
@@ -81,7 +81,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
 
     public function testClientCanLoginThroughRoutingAndReachClientDashboard(): void
     {
-        $user = $this->seedUser(['name' => 'Cara Client', 'email' => 'client@example.com', 'zone' => 'client']);
+        $user = $this->seedUser(['name' => 'Cara Client', 'email' => 'client@example.com', 'zone' => 'user']);
 
         $login = $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::TEST_PASSWORD]));
 
@@ -127,7 +127,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
 
     public function testClientUserIsBlockedFromAdminDashboard(): void
     {
-        $user = $this->seedUser(['email' => 'client2@example.com', 'zone' => 'client']);
+        $user = $this->seedUser(['email' => 'client2@example.com', 'zone' => 'user']);
         $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::TEST_PASSWORD]));
 
         $result = $this->withSession()->get('/admin/dashboard');
@@ -137,7 +137,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
 
     public function testAuthenticatedUserIsRedirectedAwayFromLogin(): void
     {
-        $user = $this->seedUser(['email' => 'already@example.com', 'zone' => 'global']);
+        $user = $this->seedUser(['email' => 'already@example.com', 'zone' => 'admin']);
         $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::TEST_PASSWORD]));
 
         $result = $this->withSession()->get('/login');
@@ -147,7 +147,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
 
     public function testLogoutDestroysSessionAndSubsequentRequestRedirectsToLogin(): void
     {
-        $user = $this->seedUser(['email' => 'logout@example.com', 'zone' => 'client']);
+        $user = $this->seedUser(['email' => 'logout@example.com', 'zone' => 'user']);
         $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::TEST_PASSWORD]));
 
         $logout = $this->withSession()->get('/logout');
@@ -171,7 +171,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
         $user = $this->seedUser([
             'name'  => '<script>alert(1)</script>',
             'email' => 'xss@example.com',
-            'zone'  => 'client',
+            'zone'  => 'user',
         ]);
         $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::TEST_PASSWORD]));
 
@@ -224,7 +224,7 @@ final class AuthWebFlowTest extends CIUnitTestCase
             'name'              => 'Test User',
             'email'             => 'user@example.com',
             'password'          => hash($authConfig->password_algorithm, self::TEST_PASSWORD . $authConfig->password_salt),
-            'zone'              => 'client',
+            'zone'              => 'user',
             'status'            => 1,
             'two_factor_method' => 'none',
             'language'          => 'en',

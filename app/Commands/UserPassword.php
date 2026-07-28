@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Models\UserModel;
+use App\Validation\PasswordRules;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -37,6 +38,16 @@ class UserPassword extends BaseCommand
 
         if (! $user) {
             CLI::error("No active user found with email: {$email}");
+
+            return;
+        }
+
+        // Same policy as the web forms — see App\Validation\PasswordRules.
+        $error = null;
+
+        if (! (new PasswordRules())->strong_password((string) $password, $error)) {
+            CLI::error($error ?? 'Password does not meet the policy.');
+            CLI::write('Required: ' . implode('; ', PasswordRules::describe()) . '.', 'yellow');
 
             return;
         }

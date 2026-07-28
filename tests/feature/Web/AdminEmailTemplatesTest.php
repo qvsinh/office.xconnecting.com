@@ -35,7 +35,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testCreateStoresTemplateAndReturnsSuccessEnvelope(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $create = $this->withSession()->post('/admin/email-templates/create', $this->withCsrf([
@@ -60,7 +60,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testCreateRejectsMissingRequiredFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $missing = $this->withSession()->post('/admin/email-templates/create', $this->withCsrf([
@@ -75,7 +75,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testCreateRejectsDuplicateNameAndLangCode(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'admin']);
         model(EmailTemplateModel::class)->insert(['name' => 'signup_verify_email', 'lang_code' => 'en', 'subject' => 'v1', 'content' => '1']);
         $this->loginAs($admin);
 
@@ -95,7 +95,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testCreateAllowsSameNameOnAnotherLanguage(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'admin']);
         model(EmailTemplateModel::class)->insert(['name' => 'signup_verify_email', 'lang_code' => 'en', 'subject' => 'Verify', 'content' => '1']);
         $this->loginAs($admin);
 
@@ -112,7 +112,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testEditReturnsTemplateFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'admin']);
         $model = model(EmailTemplateModel::class);
         $id    = $model->insert(['name' => 'signup_verify_email', 'lang_code' => 'en', 'subject' => 'Verify', 'content' => 'Hi', 'active' => 1]);
         $this->loginAs($admin);
@@ -131,7 +131,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testEditRejectsUnknownTemplateId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $edit = $this->withSession()->get('/admin/email-templates/edit/999999');
@@ -141,7 +141,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testUpdatePersistsEdits(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'admin']);
         $model = model(EmailTemplateModel::class);
         $id    = $model->insert(['name' => 'signup_verify_email', 'lang_code' => 'en', 'subject' => 'Verify', 'content' => 'Hi', 'active' => 1]);
         $this->loginAs($admin);
@@ -165,7 +165,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testUpdateAllowsKeepingOwnNameLangButRejectsAnotherRowsCombo(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'admin']);
         $model = model(EmailTemplateModel::class);
         $idA   = $model->insert(['name' => 'signup_verify_email', 'lang_code' => 'en', 'subject' => '1', 'content' => '1']);
         $idB   = $model->insert(['name' => 'change_email', 'lang_code' => 'en', 'subject' => '2', 'content' => '2']);
@@ -194,7 +194,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testUpdateRejectsUnknownTemplateId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $update = $this->withSession()->post('/admin/email-templates/update', $this->withCsrf([
@@ -210,7 +210,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testDeleteSoftDeletesTemplate(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'admin']);
         $model = model(EmailTemplateModel::class);
         $id    = $model->insert(['name' => 'delete_me', 'lang_code' => 'en', 'subject' => '1', 'content' => '1']);
         $this->loginAs($admin);
@@ -227,7 +227,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testDeleteRejectsUnknownTemplateId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $delete = $this->withSession()->post('/admin/email-templates/delete', $this->withCsrf(['id' => 999999]));
@@ -237,7 +237,7 @@ final class AdminEmailTemplatesTest extends CIUnitTestCase
 
     public function testNonAdminClientSessionIsRejectedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $index = $this->withSession()->get('/admin/email-templates');

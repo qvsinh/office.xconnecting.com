@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Libraries\AccessLogger;
+use App\Models\AccessLogModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -66,6 +68,9 @@ class Auth extends BaseController
         }
 
         $userModel->stampLogin((int) $user->id);
+        // Logged before the session rotates, so the row belongs to the login
+        // event itself rather than to whatever the new session does next.
+        (new AccessLogger())->record(AccessLogModel::EVENT_LOGIN, (int) $user->id, $this->request);
 
         // Rotate the session ID on privilege change to prevent session fixation.
         session()->regenerate(true);
@@ -161,6 +166,9 @@ class Auth extends BaseController
         }
 
         $userModel->stampLogin($pendingId);
+        // Only a *completed* second factor counts as a login — a correct
+        // password that never passes 2FA is not one.
+        (new AccessLogger())->record(AccessLogModel::EVENT_LOGIN, $pendingId, $this->request);
 
         // Rotate the session ID on privilege change to prevent session fixation.
         session()->regenerate(true);

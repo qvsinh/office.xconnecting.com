@@ -11,7 +11,7 @@ use Config\Database;
  * permission set, and grants every permission to `admin` (0 to `user`).
  * That part is a strict once-only guard (skipped entirely once the `admin`
  * role row exists). Separately, backfills any `users` row still missing a
- * `role_id` from its `zone` (global -> admin, else -> user) — guarded by
+ * `role_id` from its `zone` (admin/global -> admin role, else -> user role) — guarded by
  * `role_id IS NULL` instead, so it's safe to invoke again (e.g. a manual
  * data-fix after importing rows) without re-granting or duplicating roles.
  */
@@ -80,8 +80,16 @@ class SeedRolesAndPermissions extends Migration
             return;
         }
 
-        $db->table('users')->where('zone', 'global')->where('role_id', null)->update(['role_id' => (int) $adminRole->id]);
-        $db->table('users')->where('zone !=', 'global')->where('role_id', null)->update(['role_id' => (int) $userRole->id]);
+        // Accepts both zone vocabularies: `admin` (current) and `global` (before
+        // migration 2026-07-27-010000 renamed the values). This backfill is
+        // guarded by `role_id IS NULL` and documented as safe to re-run for a
+        // manual data-fix, so it has to stay correct for whichever value the rows
+        // actually hold — matching only the legacy name would silently give every
+        // administrator the `user` role.
+        $adminZones = ['admin', 'global'];
+
+        $db->table('users')->whereIn('zone', $adminZones)->where('role_id', null)->update(['role_id' => (int) $adminRole->id]);
+        $db->table('users')->whereNotIn('zone', $adminZones)->where('role_id', null)->update(['role_id' => (int) $userRole->id]);
     }
 
     public function down(): void

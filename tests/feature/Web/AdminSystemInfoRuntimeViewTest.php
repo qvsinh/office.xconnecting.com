@@ -36,7 +36,7 @@ final class AdminSystemInfoRuntimeViewTest extends CIUnitTestCase
 
     public function testAdminSeesAllFourRuntimePanels(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-runtime-panels@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-runtime-panels@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system');
@@ -60,7 +60,7 @@ final class AdminSystemInfoRuntimeViewTest extends CIUnitTestCase
 
     public function testRuntimePanelsRenderedHtmlContainsNoKnownSecretOrAbsolutePath(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-runtime-nosecret@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-runtime-nosecret@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system');
@@ -90,7 +90,7 @@ final class AdminSystemInfoRuntimeViewTest extends CIUnitTestCase
 
     public function testExtensionsListIsCollapsedByDefaultViaAlpineCloak(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-runtime-extensions@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-runtime-extensions@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system');
@@ -111,7 +111,7 @@ final class AdminSystemInfoRuntimeViewTest extends CIUnitTestCase
      */
     public function testResetOpcacheControlOnlyRendersWhenOpcacheIsAvailable(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-runtime-opcache-btn@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-runtime-opcache-btn@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system');
@@ -145,7 +145,7 @@ final class AdminSystemInfoRuntimeViewTest extends CIUnitTestCase
 
     public function testNonAdminClientIsBlockedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'view-runtime-gate-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'view-runtime-gate-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->get('/admin/system')->assertRedirectTo('/dashboard');

@@ -35,7 +35,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testCreateStoresTaskAndReturnsSuccessEnvelope(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $create = $this->withSession()->post('/admin/scheduled-tasks/create', $this->withCsrf([
@@ -62,7 +62,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testCreateRejectsMissingRequiredFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $missing = $this->withSession()->post('/admin/scheduled-tasks/create', $this->withCsrf([
@@ -82,7 +82,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
      */
     public function testCreateRejectsHandlerNotInAllowlist(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/scheduled-tasks/create', $this->withCsrf([
@@ -97,7 +97,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testCreateRejectsInvalidJsonParams(): void
     {
-        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/scheduled-tasks/create', $this->withCsrf([
@@ -113,7 +113,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testEditReturnsTaskFields(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin@example.com', 'zone' => 'admin']);
         $model = model(ScheduledTaskModel::class);
         $id    = $model->insert(['name' => 'Purge notifications', 'handler' => 'notifications.purge', 'interval_minutes' => 30, 'enabled' => 1]);
         $this->loginAs($admin);
@@ -130,7 +130,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testEditRejectsUnknownTaskId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'edit-admin2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $edit = $this->withSession()->get('/admin/scheduled-tasks/edit/999999');
@@ -140,7 +140,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testUpdatePersistsEditsAndRecomputesNextRunAtOnlyWhenIntervalChanges(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater@example.com', 'zone' => 'admin']);
         $model = model(ScheduledTaskModel::class);
         $id    = $model->insert(['name' => 'Old name', 'handler' => 'emails.purge', 'interval_minutes' => 60, 'enabled' => 1, 'next_run_at' => '2020-01-01 00:00:00']);
         $this->loginAs($admin);
@@ -168,7 +168,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testUpdateRejectsHandlerNotInAllowlist(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater2@example.com', 'zone' => 'admin']);
         $model = model(ScheduledTaskModel::class);
         $id    = $model->insert(['name' => 'Task', 'handler' => 'emails.purge', 'interval_minutes' => 60, 'enabled' => 1]);
         $this->loginAs($admin);
@@ -183,7 +183,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testUpdateRejectsUnknownTaskId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'updater3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $update = $this->withSession()->post('/admin/scheduled-tasks/update', $this->withCsrf([
@@ -195,7 +195,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testDeleteHardRemovesTask(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter@example.com', 'zone' => 'admin']);
         $model = model(ScheduledTaskModel::class);
         $id    = $model->insert(['name' => 'Delete me', 'handler' => 'emails.purge', 'interval_minutes' => 60]);
         $this->loginAs($admin);
@@ -208,7 +208,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testDeleteRejectsUnknownTaskId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'deleter2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $delete = $this->withSession()->post('/admin/scheduled-tasks/delete', $this->withCsrf(['id' => 999999]));
@@ -218,7 +218,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testToggleFlipsEnabled(): void
     {
-        $admin = $this->seedWebUser(['email' => 'toggler@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'toggler@example.com', 'zone' => 'admin']);
         $model = model(ScheduledTaskModel::class);
         $id    = $model->insert(['name' => 'Task', 'handler' => 'emails.purge', 'interval_minutes' => 60, 'enabled' => 1]);
         $this->loginAs($admin);
@@ -234,7 +234,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testToggleRejectsUnknownTaskId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'toggler2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'toggler2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/scheduled-tasks/toggle', $this->withCsrf(['id' => 999999, 'enabled' => 1]));
@@ -244,7 +244,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testRunNowExecutesAndReturnsResult(): void
     {
-        $admin = $this->seedWebUser(['email' => 'runner@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'runner@example.com', 'zone' => 'admin']);
         $model = model(ScheduledTaskModel::class);
         $id    = $model->insert(['name' => 'Purge notifications', 'handler' => 'notifications.purge', 'interval_minutes' => 60, 'enabled' => 1]);
         $this->loginAs($admin);
@@ -263,7 +263,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testRunNowRejectsUnknownTaskId(): void
     {
-        $admin = $this->seedWebUser(['email' => 'runner2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'runner2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $run = $this->withSession()->post('/admin/scheduled-tasks/run', $this->withCsrf(['id' => 999999]));
@@ -273,7 +273,7 @@ final class AdminScheduledTasksTest extends CIUnitTestCase
 
     public function testNonAdminClientSessionIsRejectedByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'client-gate@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $index = $this->withSession()->get('/admin/scheduled-tasks');

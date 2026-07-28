@@ -162,7 +162,8 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
                 <button type="button" class="btn-secondary shrink-0" @click="copyToken()">Copy</button>
             </div>
             <p class="mt-4 text-sm text-[#787774] dark:text-gray-400">
-                <a href="/docs/api" class="font-medium text-[#111111] hover:underline dark:text-gray-100">Connect an agent →</a>
+                Use it as <code>Authorization: Bearer &lt;token&gt;</code> against
+                <code>GET /api/v1/me</code> to verify it works.
             </p>
             <div class="flex justify-end pt-4">
                 <button type="button" class="btn-primary" @click="doneReveal()">Done</button>

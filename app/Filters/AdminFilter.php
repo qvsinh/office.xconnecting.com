@@ -7,7 +7,7 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Requires an authenticated user with `zone === 'global'`. Stacked after
+ * Requires an authenticated user with `zone === 'admin'`. Stacked after
  * `authFilter` on the `admin` route group, but self-contained (redirects to
  * `/login` if not authenticated at all) in case it's ever used standalone.
  */

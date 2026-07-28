@@ -22,7 +22,7 @@ final class UserModelTest extends CIUnitTestCase
             'name'   => 'Active User',
             'email'  => 'active@example.com',
             'password' => 'irrelevant-hash',
-            'zone'   => 'client',
+            'zone'   => 'user',
             'status' => 1,
         ]);
 
@@ -39,7 +39,7 @@ final class UserModelTest extends CIUnitTestCase
             'name'   => 'Deleted User',
             'email'  => 'deleted@example.com',
             'password' => 'irrelevant-hash',
-            'zone'   => 'client',
+            'zone'   => 'user',
             'status' => 1,
         ]);
         $model->delete($id);
@@ -61,7 +61,7 @@ final class UserModelTest extends CIUnitTestCase
             'name'   => 'Login User',
             'email'  => 'login@example.com',
             'password' => 'irrelevant-hash',
-            'zone'   => 'client',
+            'zone'   => 'user',
             'status' => 1,
         ]);
 
@@ -78,9 +78,9 @@ final class UserModelTest extends CIUnitTestCase
         // `company` isn't in `$allowedFields` (mass-assignment isn't needed for
         // it yet — only `searchAdmin()` reads it) -> bypass field protection
         // for this test's setup rows only.
-        $model->protect(false)->insert(['name' => 'Alice Admin', 'email' => 'alice@example.com', 'password' => 'x', 'zone' => 'global', 'status' => 1, 'company' => 'Acme']);
-        $model->protect(false)->insert(['name' => 'Bob Client', 'email' => 'bob@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1, 'company' => 'Other Co']);
-        $model->protect(false)->insert(['name' => 'Carol Client', 'email' => 'carol@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 0, 'company' => 'Acme Subsidiary']);
+        $model->protect(false)->insert(['name' => 'Alice Admin', 'email' => 'alice@example.com', 'password' => 'x', 'zone' => 'admin', 'status' => 1, 'company' => 'Acme']);
+        $model->protect(false)->insert(['name' => 'Bob Client', 'email' => 'bob@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1, 'company' => 'Other Co']);
+        $model->protect(false)->insert(['name' => 'Carol Client', 'email' => 'carol@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 0, 'company' => 'Acme Subsidiary']);
 
         $byName = $model->searchAdmin(['keyword' => 'Alice']);
         $this->assertCount(1, $byName);
@@ -97,15 +97,15 @@ final class UserModelTest extends CIUnitTestCase
     public function testSearchAdminFiltersByZoneAndStatus(): void
     {
         $model = new UserModel();
-        $model->insert(['name' => 'Zone Admin', 'email' => 'zone-admin@example.com', 'password' => 'x', 'zone' => 'global', 'status' => 1]);
-        $model->insert(['name' => 'Zone Client Active', 'email' => 'zone-client-active@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
-        $model->insert(['name' => 'Zone Client Inactive', 'email' => 'zone-client-inactive@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 0]);
+        $model->insert(['name' => 'Zone Admin', 'email' => 'zone-admin@example.com', 'password' => 'x', 'zone' => 'admin', 'status' => 1]);
+        $model->insert(['name' => 'Zone Client Active', 'email' => 'zone-client-active@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1]);
+        $model->insert(['name' => 'Zone Client Inactive', 'email' => 'zone-client-inactive@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 0]);
 
-        $globals = $model->searchAdmin(['zone' => 'global']);
+        $globals = $model->searchAdmin(['zone' => 'admin']);
         $this->assertCount(1, $globals);
-        $this->assertSame('global', $globals[0]->zone);
+        $this->assertSame('admin', $globals[0]->zone);
 
-        $inactiveClients = $model->searchAdmin(['zone' => 'client', 'status' => 0]);
+        $inactiveClients = $model->searchAdmin(['zone' => 'user', 'status' => 0]);
         $this->assertCount(1, $inactiveClients);
         $this->assertSame('Zone Client Inactive', $inactiveClients[0]->name);
     }
@@ -114,10 +114,10 @@ final class UserModelTest extends CIUnitTestCase
     {
         $model = new UserModel();
         for ($i = 0; $i < 5; $i++) {
-            $model->insert(['name' => "Paged User {$i}", 'email' => "paged{$i}@example.com", 'password' => 'x', 'zone' => 'client', 'status' => 1]);
+            $model->insert(['name' => "Paged User {$i}", 'email' => "paged{$i}@example.com", 'password' => 'x', 'zone' => 'user', 'status' => 1]);
         }
 
-        $filters = ['zone' => 'client'];
+        $filters = ['zone' => 'user'];
         $page    = $model->searchAdmin($filters, 'login_at', 'desc', 2, 0);
 
         $this->assertCount(2, $page);
@@ -127,7 +127,7 @@ final class UserModelTest extends CIUnitTestCase
     public function testSearchAdminExcludesSoftDeletedRows(): void
     {
         $model = new UserModel();
-        $id    = $model->insert(['name' => 'Deleted Search User', 'email' => 'deleted-search@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
+        $id    = $model->insert(['name' => 'Deleted Search User', 'email' => 'deleted-search@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1]);
         $model->delete($id);
 
         $this->assertSame([], $model->searchAdmin(['keyword' => 'Deleted Search User']));
@@ -137,10 +137,10 @@ final class UserModelTest extends CIUnitTestCase
     public function testCountActiveAdminsCountsOnlyActiveGlobalUsers(): void
     {
         $model = new UserModel();
-        $model->insert(['name' => 'Active Admin', 'email' => 'active-admin@example.com', 'password' => 'x', 'zone' => 'global', 'status' => 1]);
-        $model->insert(['name' => 'Inactive Admin', 'email' => 'inactive-admin@example.com', 'password' => 'x', 'zone' => 'global', 'status' => 0]);
-        $model->insert(['name' => 'Active Client', 'email' => 'active-client@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
-        $deletedAdminId = $model->insert(['name' => 'Deleted Admin', 'email' => 'deleted-admin@example.com', 'password' => 'x', 'zone' => 'global', 'status' => 1]);
+        $model->insert(['name' => 'Active Admin', 'email' => 'active-admin@example.com', 'password' => 'x', 'zone' => 'admin', 'status' => 1]);
+        $model->insert(['name' => 'Inactive Admin', 'email' => 'inactive-admin@example.com', 'password' => 'x', 'zone' => 'admin', 'status' => 0]);
+        $model->insert(['name' => 'Active Client', 'email' => 'active-client@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1]);
+        $deletedAdminId = $model->insert(['name' => 'Deleted Admin', 'email' => 'deleted-admin@example.com', 'password' => 'x', 'zone' => 'admin', 'status' => 1]);
         $model->delete($deletedAdminId);
 
         $this->assertSame(1, $model->countActiveAdmins());
@@ -149,7 +149,7 @@ final class UserModelTest extends CIUnitTestCase
     public function testEnableGoogle2faSetsSecretAndMethod(): void
     {
         $model = new UserModel();
-        $id    = $model->insert(['name' => '2fa User', 'email' => '2fa-enable@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
+        $id    = $model->insert(['name' => '2fa User', 'email' => '2fa-enable@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1]);
 
         $model->enableGoogle2fa($id, 'JBSWY3DPEHPK3PXP');
 
@@ -161,7 +161,7 @@ final class UserModelTest extends CIUnitTestCase
     public function testDisableTwoFactorClearsSecretAndMethod(): void
     {
         $model = new UserModel();
-        $id    = $model->insert(['name' => '2fa User', 'email' => '2fa-disable@example.com', 'password' => 'x', 'zone' => 'client', 'status' => 1]);
+        $id    = $model->insert(['name' => '2fa User', 'email' => '2fa-disable@example.com', 'password' => 'x', 'zone' => 'user', 'status' => 1]);
         $model->enableGoogle2fa($id, 'JBSWY3DPEHPK3PXP');
 
         $model->disableTwoFactor($id);
@@ -169,16 +169,5 @@ final class UserModelTest extends CIUnitTestCase
         $user = $model->find($id);
         $this->assertSame('none', $user->two_factor_method);
         $this->assertNull($user->google2fa_secret);
-    }
-
-    public function testCountByEnv(): void
-    {
-        $model = new UserModel();
-        $model->insert(['name' => 'L1', 'email' => 'l1@example.com', 'password' => 'x', 'zone' => 'client', 'env' => 'LIVE', 'status' => 1]);
-        $model->insert(['name' => 'L2', 'email' => 'l2@example.com', 'password' => 'x', 'zone' => 'client', 'env' => 'LIVE', 'status' => 1]);
-        $model->insert(['name' => 'T1', 'email' => 't1@example.com', 'password' => 'x', 'zone' => 'client', 'env' => 'TESTING', 'status' => 1]);
-
-        $this->assertSame(2, $model->countByEnv('LIVE'));
-        $this->assertSame(1, $model->countByEnv('TESTING'));
     }
 }

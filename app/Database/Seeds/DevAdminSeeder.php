@@ -29,7 +29,7 @@ class DevAdminSeeder extends Seeder
             'name'              => 'Dev Admin',
             'email'             => self::EMAIL,
             'password'          => hash($authConfig->password_algorithm, 'Proxy@2026!' . $authConfig->password_salt),
-            'zone'              => 'global',
+            'zone'              => 'admin',
             'status'            => 1,
             'two_factor_method' => 'none',
             'language'          => 'en',

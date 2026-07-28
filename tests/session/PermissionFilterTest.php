@@ -42,7 +42,7 @@ final class PermissionFilterTest extends CIUnitTestCase
 
     public function testAdminBypassesThePermissionCheck(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
 
         $result = ($this->getFilterCaller(new PermissionFilter(), 'before'))(['anything.not.granted']);
 
@@ -52,7 +52,7 @@ final class PermissionFilterTest extends CIUnitTestCase
     public function testRedirectsToDashboardWhenTheRoleLacksThePermission(): void
     {
         $userRole = model(RoleModel::class)->findByName('user'); // seeded, 0 permissions
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $userRole->id]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $userRole->id]);
 
         $result = ($this->getFilterCaller(new PermissionFilter(), 'before'))(['users.manage']);
 
@@ -67,7 +67,7 @@ final class PermissionFilterTest extends CIUnitTestCase
         $permissionId = model(PermissionModel::class)->findByName('users.manage')->id;
         $roleModel->syncPermissions((int) $userRole->id, [(int) $permissionId]);
 
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $userRole->id]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $userRole->id]);
 
         $result = ($this->getFilterCaller(new PermissionFilter(), 'before'))(['users.manage']);
 
@@ -77,7 +77,7 @@ final class PermissionFilterTest extends CIUnitTestCase
     public function testReturnsJsonForbiddenForAjaxRequests(): void
     {
         $userRole = model(RoleModel::class)->findByName('user'); // 0 permissions
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => $userRole->id]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => $userRole->id]);
         $this->request->setHeader('X-Requested-With', 'XMLHttpRequest');
 
         $result = ($this->getFilterCaller(new PermissionFilter(), 'before'))(['users.manage']);

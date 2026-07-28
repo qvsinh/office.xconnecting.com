@@ -118,7 +118,7 @@ final class ApiKeyModelTest extends CIUnitTestCase
             'name'     => $email,
             'email'    => $email,
             'password' => 'irrelevant-hash',
-            'zone'     => 'client',
+            'zone'     => 'user',
             'status'   => 1,
         ]);
     }

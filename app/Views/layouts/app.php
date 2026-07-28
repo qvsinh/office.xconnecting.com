@@ -5,17 +5,23 @@
  * reused by every future feature page). Child views extend this via
  * $this->extend('layouts/app') and fill the 'content' section.
  *
+ * The topbar identity is read straight from the session as `$navUser` and is
+ * deliberately NOT a view variable: pages legitimately pass their own `$user`
+ * (an array on /account, a *different* user on /admin/users/view), and a
+ * `$user ??= session(...)` fallback let those shadow the chrome — the avatar and
+ * name went blank on the account pages and showed the wrong person on the admin
+ * user pages.
+ *
  * Expects (optional, falls back safely if absent):
- * - $user   : object|null  session('userWorking') — name/email/zone.
- * - $navZone: 'admin'|'client' — which sidebar nav to render (defaults by the
+ * - $navZone: 'admin'|'user' — which sidebar nav to render (defaults by the
  *   VIEW-ONLY zone helper `is_working_admin()` — an admin "acting as" a client
  *   sees the client nav; see app/Helpers/auth_helper.php).
  */
 helper(['auth', 'url', 'setting']);
 
-/** @var object|null $user */
-$user ??= session('userWorking');
-$navZone ??= is_working_admin() ? 'admin' : 'client';
+/** The signed-in (or acted-as) identity the topbar renders. Never a view variable. */
+$navUser = session('userWorking');
+$navZone ??= is_working_admin() ? 'admin' : 'user';
 
 // Admin-editable brand name (site_name setting; falls back in site_name()).
 $siteName = site_name();
@@ -34,11 +40,19 @@ if (is_authenticated()) {
 // Sidebar nav, grouped TailAdmin-style. Same group shape for both zones so
 // admin-as-client and real-client render identical Account links; the Admin
 // group only exists when $navZone === 'admin'.
-// Dashboard, Workspaces and Docs are top-level links (not wrapped in a
+// Dashboard and Docs are top-level links (not wrapped in a
 // group); the rest (Account, Admin) are collapsible accordion groups.
 $dashboardHref = $navZone === 'admin' ? '/admin/dashboard' : '/dashboard';
 
+// The employee's own attendance — everyone gets these, they are self-service.
+// The management screens live in the Admin group below, so a user never sees
+// company-wide links mixed in with their own.
 $navGroups = [
+    'Attendance' => [
+        ['label' => 'My Attendance', 'href' => '/attendance'],
+        ['label' => 'My Month', 'href' => '/attendance/report'],
+        ['label' => 'My Requests', 'href' => '/requests'],
+    ],
     'Account' => [
         ['label' => 'Profile', 'href' => '/account'],
         ['label' => 'Security', 'href' => '/account/security'],
@@ -47,6 +61,19 @@ $navGroups = [
     ],
 ];
 
+// Attendance management, keyed by the permission that actually gates the route.
+// Kept separate from the zone check below because these are permission-gated,
+// not admin-zone-gated: a department head holding `attendance.manage` must get
+// them without being made a global admin.
+$attendanceAdminItems = array_values(array_filter([
+    user_can('attendance.manage') ? ['label' => 'Attendance · Today', 'href' => '/admin/attendance/today'] : null,
+    user_can('attendance.manage') ? ['label' => 'Attendance · All employees', 'href' => '/admin/attendance'] : null,
+    user_can('attendance.manage') ? ['label' => 'Attendance · Monthly report', 'href' => '/admin/attendance/report'] : null,
+    user_can('requests.approve') ? ['label' => 'Attendance · Approve requests', 'href' => '/admin/requests'] : null,
+    user_can('attendance.manage') ? ['label' => 'Attendance · Work schedules', 'href' => '/admin/attendance/schedules'] : null,
+    user_can('attendance.manage') ? ['label' => 'Attendance · Holidays', 'href' => '/admin/attendance/holidays'] : null,
+]));
+
 if ($navZone === 'admin') {
     $navGroups['Admin'] = [
         ['label' => 'Users', 'href' => '/admin/users'],
@@ -54,22 +81,31 @@ if ($navZone === 'admin') {
         ['label' => 'Settings', 'href' => '/admin/settings'],
         ['label' => 'Translations', 'href' => '/admin/translations'],
         ['label' => 'Email Templates', 'href' => '/admin/email-templates'],
-        ['label' => 'Sent Emails', 'href' => '/admin/emails'],
+        ['label' => 'Emails', 'href' => '/admin/emails'],
+        ['label' => 'Access log', 'href' => '/admin/access-logs'],
         ['label' => 'Scheduled Tasks', 'href' => '/admin/scheduled-tasks'],
         ['label' => 'System info', 'href' => '/admin/system'],
         ['label' => 'Migrations', 'href' => '/admin/system/migrations'],
         ['label' => 'Logs', 'href' => '/admin/system/logs'],
     ];
+
+    $navGroups['Admin'] = array_merge($attendanceAdminItems, $navGroups['Admin']);
+} elseif ($attendanceAdminItems !== []) {
+    // A permission holder who is not admin-zone still needs the management
+    // screens; give them a Management group rather than the full Admin one.
+    $navGroups['Management'] = $attendanceAdminItems;
 }
 
 // Inline icon-per-group map (heroicons-outline style, stroke="currentColor").
 // Static developer-authored markup, not user data — no esc() needed on these.
 $navIcons = [
-    'Dashboard' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>',
-    'Account'   => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" /></svg>',
-    'Workspace' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1H3V7z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7z" /></svg>',
-    'Admin'     => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /></svg>',
-    'Docs'      => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25a8.987 8.987 0 00-3-.512c-2.305 0-4.408.867-6 2.292m0-14.25v14.25" /></svg>',
+    'Dashboard'  => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>',
+    'Account'    => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" /></svg>',
+    'Workspace'  => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1H3V7z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7z" /></svg>',
+    'Admin'      => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" /></svg>',
+    'Attendance' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5V12l3 2" /></svg>',
+    'Management' => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-4-2.8M9 20H4v-2a3 3 0 014-2.8m5 4.8v-2a3 3 0 00-6 0v2m3-8a3 3 0 100-6 3 3 0 000 6zm7 1a2 2 0 100-4 2 2 0 000 4z" /></svg>',
+    'Docs'       => '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25a8.987 8.987 0 00-3-.512c-2.305 0-4.408.867-6 2.292m0-14.25v14.25" /></svg>',
 ];
 $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="8" /></svg>';
 ?>
@@ -136,14 +172,6 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                         : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
                     <?= $navIcons['Dashboard'] ?? $navIconDefault ?>
                     <span class="whitespace-nowrap" x-show="navLabelsVisible()">Dashboard</span>
-                </a>
-                <?php $workspacesActive = url_is('workspaces') || url_is('workspaces/*') || url_is('projects/*'); ?>
-                <a href="/workspaces" @click="sidebarMobileOpen = false"
-                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium <?= $workspacesActive
-                        ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
-                        : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
-                    <?= $navIcons['Workspace'] ?? $navIconDefault ?>
-                    <span class="whitespace-nowrap" x-show="navLabelsVisible()">Workspaces</span>
                 </a>
                 <?php $docsActive = url_is('docs*'); ?>
                 <a href="/docs" @click="sidebarMobileOpen = false"
@@ -286,18 +314,18 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                     <button type="button" class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
                             @click="open = !open" :aria-expanded="open">
                         <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-[#111111] dark:bg-gray-700 dark:text-gray-100">
-                            <?= esc(mb_strtoupper(mb_substr((string) ($user->name ?? '?'), 0, 1))) ?>
+                            <?= esc(mb_strtoupper(mb_substr((string) ($navUser->name ?? '?'), 0, 1))) ?>
                         </span>
                         <span class="hidden text-left sm:block">
-                            <span class="block font-medium leading-none"><?= esc($user->name ?? '') ?></span>
-                            <span class="block text-xs leading-none text-[#787774] dark:text-gray-400"><?= esc($user->email ?? '') ?></span>
+                            <span class="block font-medium leading-none"><?= esc($navUser->name ?? '') ?></span>
+                            <span class="block text-xs leading-none text-[#787774] dark:text-gray-400"><?= esc($navUser->email ?? '') ?></span>
                         </span>
                     </button>
                     <div x-show="open" x-transition x-cloak
                          class="absolute right-0 z-20 mt-2 w-56 rounded-md border border-[#EAEAEA] bg-white py-1 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <div class="border-b border-[#EAEAEA] px-4 py-2 dark:border-gray-700">
-                            <p class="truncate text-sm font-medium"><?= esc($user->name ?? '') ?></p>
-                            <p class="truncate text-xs text-[#787774] dark:text-gray-400"><?= esc($user->email ?? '') ?></p>
+                            <p class="truncate text-sm font-medium"><?= esc($navUser->name ?? '') ?></p>
+                            <p class="truncate text-xs text-[#787774] dark:text-gray-400"><?= esc($navUser->email ?? '') ?></p>
                         </div>
                         <a href="/account" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700">Account</a>
                         <a href="/account/security" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700">Security</a>

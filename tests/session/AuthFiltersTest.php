@@ -34,7 +34,7 @@ final class AuthFiltersTest extends CIUnitTestCase
 
     public function testAuthFilterAllowsAuthenticatedUser(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
         $result = ($this->getFilterCaller(new AuthFilter(), 'before'))();
 
@@ -51,7 +51,7 @@ final class AuthFiltersTest extends CIUnitTestCase
 
     public function testAdminFilterRedirectsNonAdminToDashboard(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
         $result = ($this->getFilterCaller(new AdminFilter(), 'before'))();
 
@@ -61,7 +61,7 @@ final class AuthFiltersTest extends CIUnitTestCase
 
     public function testAdminFilterAllowsGlobalZoneUser(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
 
         $result = ($this->getFilterCaller(new AdminFilter(), 'before'))();
 
@@ -77,7 +77,7 @@ final class AuthFiltersTest extends CIUnitTestCase
 
     public function testGuestFilterRedirectsAuthenticatedAdminToAdminDashboard(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
 
         $result = ($this->getFilterCaller(new GuestFilter(), 'before'))();
 
@@ -87,7 +87,7 @@ final class AuthFiltersTest extends CIUnitTestCase
 
     public function testGuestFilterRedirectsAuthenticatedClientToDashboard(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
         $result = ($this->getFilterCaller(new GuestFilter(), 'before'))();
 

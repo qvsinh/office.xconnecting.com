@@ -28,27 +28,19 @@ auth, users, settings, and a dashboard shell from scratch.
 - System tools: info (PHP/OPcache/extensions), DB migrations run/rollback,
   log viewer, OPcache reset, cache clear, DB-session count + reset.
 
-**Collaboration hub** (internal social/workspace layer)
-- **User groups** — admin-managed groups (teams/departments) + membership.
-- **Workspaces** — any user can create; members join (private or company-visible);
-  owner/admin manage membership and can bulk-add a whole group.
-- **Projects** — live inside a workspace; per-project members + roles; a file
-  manager (upload/download/delete, extension+mime+size allowlist, stored under
-  `writable/uploads/projects/`).
-- **Kanban board & task lists** — columns + cards per project, drag-and-drop
-  (with a touch/mobile "Move" fallback), priority/assignee/due-date, task detail.
-- **Personal API keys** — each user issues scoped tokens (read/write, optional
-  expiry); only a `sha256` hash + prefix is stored, plaintext shown once.
-- **REST API `/api/v1`** — Bearer-token API (for AI agents/scripts) exposing the
-  caller's projects and full task CRUD, membership-scoped and IDOR-guarded.
-- **Dashboards** — a company-wide overview (admin) and a personal one (everyone).
-- **In-app docs** — getting-started + a REST connection guide with copy-paste
-  curl/Python/agent-prompt examples; branded public landing page at `/`.
+**Attendance & leave** (what this deployment is for)
 
-Access model: the global RBAC above governs the **admin area**; the hub features
-use **membership + role** (owner/admin/member/viewer) via
-`app/Helpers/access_helper.php`. See `kanban/done/20260721-*` for the per-feature
-plans and `/docs/api` (in-app) for the API reference.
+- **Check-in / check-out** — one row per employee per day, Vietnam business day,
+  optional office-IP restriction, audited manager corrections, payroll month lock.
+- **Work schedules & holidays** — the baseline every figure is measured against.
+- **Reporting** — today board, monthly report per employee, CSV export for payroll.
+- **Leave & late requests** — employee submits, manager approves; approved leave
+  changes how the attendance sheet reads. Annual-leave quota counted in workdays.
+- **Reminders** — check-out nudges and manager digests via `spark schedule:run`.
+
+> The starter's workspaces / projects / kanban module was **removed** from this
+> deployment (see migration `2026-07-27-020000_DropWorkspaceStack`); restore it
+> from git history if a future project needs it.
 
 **UI**
 - Shared TailAdmin layout: collapsible sidebar (icon rail + accordion groups),

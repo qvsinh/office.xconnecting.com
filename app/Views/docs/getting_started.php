@@ -1,99 +1,124 @@
 <?php
 /**
- * Getting-started walkthrough: the shortest path from a fresh account to a
- * working board. Static content, links to the real feature routes.
+ * In-app guide: how attendance works, for employees and for managers.
+ *
+ * Rewritten when the workspaces/projects/tasks module was removed — the previous
+ * version walked through creating a workspace and a Kanban board and linked to
+ * `/workspaces`, which no longer exists.
+ *
+ * Company hours are not quoted here; the page points at Work schedules instead,
+ * so it can't go stale when the schedule changes.
  */
 $this->extend('layouts/app');
 
-$docsNav = [
-    ['label' => 'Overview', 'href' => '/docs'],
-    ['label' => 'Getting started', 'href' => '/docs/getting-started'],
-    ['label' => 'REST API', 'href' => '/docs/api'],
+helper('auth');
+
+$employeeSteps = [
+    [
+        'title' => 'Check in when you arrive',
+        'body'  => 'Open <a href="/attendance" class="font-medium text-[#111111] hover:underline dark:text-gray-100">My Attendance</a> '
+            . 'and press <strong>Check in</strong>. The time is recorded in Vietnam time (UTC+7).',
+    ],
+    [
+        'title' => 'Check out when you leave',
+        'body'  => 'Press <strong>Check out</strong> on the same page. Pressing it again replaces the time, so an accidental '
+            . 'early tap is nothing to worry about — the last check-out of the day is the one that counts.',
+    ],
+    [
+        'title' => 'Forgot to check out?',
+        'body'  => 'The day shows a <strong>No check-out</strong> flag and its hours are not counted. You cannot fix it '
+            . 'yourself: ask your manager to correct it, which is recorded with their name so the change stays traceable.',
+    ],
+    [
+        'title' => 'Check your month',
+        'body'  => '<a href="/attendance/report" class="font-medium text-[#111111] hover:underline dark:text-gray-100">My Month</a> '
+            . 'shows every day — hours worked, lateness, status. It is the same data your manager sees.',
+    ],
+    [
+        'title' => 'Ask for a day off, or to arrive late',
+        'body'  => 'Use <a href="/requests" class="font-medium text-[#111111] hover:underline dark:text-gray-100">My Requests</a>. '
+            . 'A manager approves it before it counts. Only <strong>annual</strong> leave draws down your balance, and only '
+            . 'working days count — a Friday-to-Monday break costs two days, and public holidays cost none.',
+    ],
 ];
 
-$steps = [
+$managerSteps = [
     [
-        'title' => 'Create a workspace',
-        'body'  => 'A workspace groups the people and projects for a team or client. Go to '
-            . '<a href="/workspaces" class="font-medium text-[#111111] hover:underline dark:text-gray-100">Workspaces</a>'
-            . ' and click "+ Create workspace".',
+        'title' => 'Set the working day',
+        'body'  => 'Under <strong>Work schedules</strong>: arrival, departure, lunch window, and which weekdays count. '
+            . 'Lateness, absence and paid hours are all measured against this, so get it right first.',
     ],
     [
-        'title' => 'Invite members or add a group',
-        'body'  => 'Open the workspace and add teammates one by one, or attach an existing admin-managed group so everyone in it gets access at once.',
+        'title' => 'Enter the public holidays',
+        'body'  => 'Under <strong>Holidays</strong> — paste the year in one go. Until a date is listed, a public holiday '
+            . 'counts as an absence for everybody.',
     ],
     [
-        'title' => 'Create a project',
-        'body'  => 'Inside the workspace, create a project. Each project gets its own Kanban board and file storage.',
+        'title' => 'Watch the day',
+        'body'  => 'The <strong>Today</strong> board shows who is in, late, absent, or missing a check-out. Before the start '
+            . 'time a missing check-in reads "Not in yet", not "Absent" — nobody is absent at 08:00.',
     ],
     [
-        'title' => 'Add tasks on the board',
-        'body'  => 'Open the project board, add columns if you need more than the defaults, and create tasks with a priority, assignee, and due date.',
+        'title' => 'Correct mistakes',
+        'body'  => 'Under <strong>All employees</strong>. Every correction records who made it and keeps the employee\'s '
+            . 'original times, because this data feeds payroll.',
     ],
     [
-        'title' => 'Upload files',
-        'body'  => 'Use the Files tab on a project to share documents with everyone who has access to it.',
+        'title' => 'Close the month',
+        'body'  => 'On the <strong>Monthly report</strong>: export the CSV, then press <strong>Close month</strong>. After '
+            . 'that, corrections to that month are refused — the exported file is the payroll record.',
     ],
 ];
 ?>
 
 <?php $this->section('content') ?>
-<div class="mx-auto max-w-7xl lg:flex lg:gap-8">
+<div class="mx-auto max-w-3xl">
 
-    <nav class="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Docs">
-        <?php foreach ($docsNav as $item) : ?>
-            <a href="<?= esc($item['href'], 'attr') ?>"
-               class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium <?= url_is($item['href'])
-                    ? 'bg-[#111111] text-white dark:bg-gray-100 dark:text-gray-900'
-                    : 'bg-[#F7F6F3] text-[#787774] dark:bg-gray-800 dark:text-gray-300' ?>">
-                <?= esc($item['label']) ?>
-            </a>
-        <?php endforeach ?>
-    </nav>
-
-    <nav class="hidden lg:block lg:w-56 lg:shrink-0" aria-label="Docs">
-        <div class="sticky top-6 space-y-1">
-            <?php foreach ($docsNav as $item) : ?>
-                <a href="<?= esc($item['href'], 'attr') ?>"
-                   class="block rounded-md px-3 py-2 text-sm font-medium <?= url_is($item['href'])
-                        ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
-                        : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
-                    <?= esc($item['label']) ?>
-                </a>
-            <?php endforeach ?>
-        </div>
-    </nav>
-
-    <div class="min-w-0 max-w-3xl flex-1">
-        <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Getting started</h1>
-        <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
-            The shortest path from a new account to a working board.
+    <div>
+        <h1 class="text-xl font-semibold tracking-tight">Getting started</h1>
+        <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
+            How attendance works here. Times are Vietnam time (UTC+7) throughout.
         </p>
+    </div>
 
-        <ol class="mt-6 space-y-6">
-            <?php foreach ($steps as $i => $step) : ?>
-                <li class="flex gap-4">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111111] text-sm font-semibold text-white dark:bg-gray-100 dark:text-gray-900">
-                        <?= (int) ($i + 1) ?>
-                    </span>
-                    <div class="min-w-0 pt-0.5">
-                        <h2 class="text-base font-semibold dark:text-gray-100"><?= esc($step['title']) ?></h2>
-                        <!-- $step['body'] is developer-authored markup (a fixed set of trusted
-                             strings above), not user input — safe to render raw for the inline link. -->
-                        <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400"><?= $step['body'] ?></p>
-                    </div>
+    <h2 class="mt-8 text-base font-semibold tracking-tight">For everyone</h2>
+    <ol class="mt-3 space-y-3">
+        <?php foreach ($employeeSteps as $index => $step) : ?>
+            <li class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <p class="font-medium">
+                    <span class="mr-2 text-[#787774] dark:text-gray-400"><?= esc((string) ($index + 1)) ?>.</span>
+                    <?= esc($step['title']) ?>
+                </p>
+                <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= $step['body'] ?></p>
+            </li>
+        <?php endforeach ?>
+    </ol>
+
+    <?php if (user_can('attendance.manage')) : ?>
+        <h2 class="mt-10 text-base font-semibold tracking-tight">For managers</h2>
+        <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
+            In order — the first two decide whether every number below them is right.
+        </p>
+        <ol class="mt-3 space-y-3">
+            <?php foreach ($managerSteps as $index => $step) : ?>
+                <li class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <p class="font-medium">
+                        <span class="mr-2 text-[#787774] dark:text-gray-400"><?= esc((string) ($index + 1)) ?>.</span>
+                        <?= esc($step['title']) ?>
+                    </p>
+                    <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= $step['body'] ?></p>
                 </li>
             <?php endforeach ?>
         </ol>
 
-        <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-[#F7F6F3] p-6 dark:border-gray-700 dark:bg-gray-800/60">
-            <h2 class="text-base font-semibold dark:text-gray-100">Next: connect an AI agent</h2>
-            <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
-                Once you have a project with tasks, you can let an AI agent read and manage them
-                through the REST API.
-            </p>
-            <a href="/docs/api" class="mt-3 inline-block text-sm font-medium text-[#111111] hover:underline dark:text-gray-100">Read the REST API guide →</a>
+        <div class="mt-6 rounded-lg border border-[#E5C07B] bg-[#FDF6E7] p-4 text-sm text-[#7A5B14] dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200" role="alert">
+            <p class="font-medium">Two things that need a server admin, not this screen</p>
+            <ul class="mt-2 list-inside list-disc space-y-1">
+                <li>The reminder and digest jobs only run if the OS cron calls <code>php spark schedule:run</code>.</li>
+                <li>Restricting check-in to the office network stays off until <code>attendance_ip_enforce</code> is set
+                    to <code>1</code> in Settings, with the office address in <code>attendance_office_ips</code>.</li>
+            </ul>
         </div>
-    </div>
+    <?php endif ?>
 </div>
 <?php $this->endSection() ?>

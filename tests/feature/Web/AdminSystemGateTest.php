@@ -43,7 +43,7 @@ final class AdminSystemGateTest extends CIUnitTestCase
 
     public function testNonAdminClientIsRejectedBySystemInfoAndMigrationsGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'gate-system-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'gate-system-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->get('/admin/system')->assertRedirectTo('/dashboard');

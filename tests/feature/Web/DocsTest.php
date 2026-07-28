@@ -6,11 +6,11 @@ use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\Web\WebAuthFixture;
 
 /**
- * Route + rendering coverage for the in-app docs area (`Docs` controller —
- * see `kanban/processing/20260721-09-docs.md`). All three pages sit behind
- * `authFilter`; `docs/api` additionally carries the real `api/v1` base URL
- * and the `Bearer` auth-header hint so the copy-paste examples stay
- * accurate as the API surface changes.
+ * Route + rendering coverage for the in-app docs area (`Docs` controller). Both
+ * pages sit behind `authFilter`.
+ *
+ * The `docs/api` page was removed with the projects/tasks module — the REST API
+ * is down to `GET /api/v1/me`, which needs no page of its own.
  *
  * @internal
  */
@@ -32,7 +32,7 @@ final class DocsTest extends CIUnitTestCase
 
     public function testIndexRendersForAuthenticatedUser(): void
     {
-        $user = $this->seedWebUser(['email' => 'docs-index@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'docs-index@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/docs');
@@ -42,25 +42,12 @@ final class DocsTest extends CIUnitTestCase
 
     public function testGettingStartedRendersForAuthenticatedUser(): void
     {
-        $user = $this->seedWebUser(['email' => 'docs-getting-started@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'docs-getting-started@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/docs/getting-started');
 
         $result->assertStatus(200);
-    }
-
-    public function testApiRendersForAuthenticatedUserWithBaseUrlAndBearerHint(): void
-    {
-        $user = $this->seedWebUser(['email' => 'docs-api@example.com', 'zone' => 'client']);
-        $this->loginAs($user);
-
-        $result = $this->withSession()->get('/docs/api');
-
-        $result->assertStatus(200);
-        $body = (string) $result->response()->getBody();
-        $this->assertStringContainsString(rtrim(base_url('api/v1'), '/'), $body);
-        $this->assertStringContainsString('Bearer', $body);
     }
 
     public function testGuestIsRedirectedToLoginFromDocsIndex(): void
@@ -81,12 +68,4 @@ final class DocsTest extends CIUnitTestCase
         $result->assertRedirectTo('/login');
     }
 
-    public function testGuestIsRedirectedToLoginFromDocsApi(): void
-    {
-        $this->withSession(['basicAuthAuthenticated' => 1]);
-
-        $result = $this->get('/docs/api');
-
-        $result->assertRedirectTo('/login');
-    }
 }

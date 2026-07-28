@@ -16,7 +16,7 @@ class UserModel extends Model
      * Sortable columns for the admin user list (`searchAdmin()`); anything
      * else falls back to `login_at`.
      */
-    public const SORT_ALLOWLIST = ['id', 'name', 'email', 'company', 'zone', 'env', 'status', 'login_at', 'created_at'];
+    public const SORT_ALLOWLIST = ['id', 'name', 'email', 'company', 'zone', 'status', 'login_at', 'created_at'];
 
     /**
      * Columns searched by a `keyword` filter term in `searchAdmin()`.
@@ -28,7 +28,7 @@ class UserModel extends Model
      * `password`/`google2fa_secret` so the admin list result set never
      * carries a secret into the view layer, even by accident.
      */
-    private const LIST_COLUMNS = 'id, name, email, company, zone, env, status, login_at, created_at';
+    private const LIST_COLUMNS = 'id, name, email, company, zone, status, login_at, created_at';
 
     protected $table            = 'users';
     protected $primaryKey       = 'id';
@@ -44,7 +44,6 @@ class UserModel extends Model
         'phone_number',
         'zone',
         'role_id',
-        'env',
         'status',
         'two_factor_method',
         'google2fa_secret',
@@ -52,6 +51,11 @@ class UserModel extends Model
         'timezone',
         'login_at',
         'note',
+        // Which `work_schedules` row measures this employee's attendance;
+        // NULL falls back to the company default (attendance card 01b).
+        'work_schedule_id',
+        // Per-employee annual leave quota; NULL falls back to the site setting.
+        'annual_leave_days',
         'created_at',
     ];
     protected $useTimestamps = false;
@@ -127,36 +131,6 @@ class UserModel extends Model
     }
 
     /**
-     * Active users not already a member of the given workspace, `id, name,
-     * email` only — backs the add-member picker on `Workspaces::show()`.
-     *
-     * @return list<object>
-     */
-    public function activeUsersNotInWorkspace(int $workspaceId): array
-    {
-        return $this->select('id, name, email')
-            ->where('status', 1)
-            ->whereNotIn('id', static fn (BaseBuilder $builder) => $builder->select('user_id')->from('workspace_members')->where('workspace_id', $workspaceId))
-            ->orderBy('name', 'ASC')
-            ->findAll();
-    }
-
-    /**
-     * Active users not already a member of the given project, `id, name,
-     * email` only — backs the add-member picker on `Projects::show()`.
-     *
-     * @return list<object>
-     */
-    public function activeUsersNotInProject(int $projectId): array
-    {
-        return $this->select('id, name, email')
-            ->where('status', 1)
-            ->whereNotIn('id', static fn (BaseBuilder $builder) => $builder->select('user_id')->from('project_members')->where('project_id', $projectId))
-            ->orderBy('name', 'ASC')
-            ->findAll();
-    }
-
-    /**
      * Admin list search (`Admin\Users::index()`): keyword LIKE across
      * name/email/company, optional `zone`/`status` filters. `id` is always a
      * secondary sort key in the same direction so ties (e.g. many rows
@@ -194,22 +168,81 @@ class UserModel extends Model
     }
 
     /**
-     * Count of active (`status=1`), non-soft-deleted `zone=global` users —
+     * The employee roster attendance is reported over: active (`status = 1`),
+     * non-soft-deleted, both zones (admins are employees too and also check in).
+     *
+     * Bounded so a large tenant can't OOM a report page. Extracted because the
+     * management filter, the today board and the monthly report all need exactly
+     * this set — three copies would drift the day someone changes the definition.
+     *
+     * @return list<object>
+     */
+    public function activeRoster(int $limit = 500): array
+    {
+        return $this->select('id, name, email, work_schedule_id')
+            ->where('status', 1)
+            ->orderBy('name', 'ASC')
+            ->findAll($limit);
+    }
+
+    /**
+     * Active users who hold `$permission` — the digest recipients (card 01d).
+     *
+     * Mirrors `user_can()`'s semantics exactly: an admin-zone user is an implicit
+     * super-user and always qualifies, everyone else needs a role that grants the
+     * named permission. Two rules in two places would eventually disagree about
+     * who is a manager.
+     *
+     * @return list<object>
+     */
+    public function withPermission(string $permission): array
+    {
+        return $this->select('users.id, users.name, users.email')
+            ->where('users.status', 1)
+            ->groupStart()
+            ->where('users.zone', 'admin')
+            ->orWhereIn('users.role_id', static fn (BaseBuilder $builder) => $builder
+                ->select('role_permissions.role_id')
+                ->from('role_permissions')
+                ->join('permissions', 'permissions.id = role_permissions.permission_id')
+                ->where('permissions.name', $permission))
+            ->groupEnd()
+            ->orderBy('users.name', 'ASC')
+            ->findAll();
+    }
+
+    /**
+     * `userId => work_schedule_id` for many employees in one query — the bulk
+     * lookup `AttendanceCalendar::warmSchedules()` needs so a monthly report
+     * does not read one `users` row per person.
+     *
+     * @param list<int> $ids
+     *
+     * @return array<int, int|null>
+     */
+    public function scheduleAssignments(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $rows = $this->select('id, work_schedule_id')->whereIn('id', $ids)->findAll();
+
+        return array_reduce($rows, static function (array $carry, object $row): array {
+            $carry[(int) $row->id] = ($row->work_schedule_id ?? null) === null ? null : (int) $row->work_schedule_id;
+
+            return $carry;
+        }, []);
+    }
+
+    /**
+     * Count of active (`status=1`), non-soft-deleted `zone=admin` users —
      * backs the last-admin lockout guard in `Admin\Users::update()` so an
      * admin can never demote/deactivate the last remaining admin.
      */
     public function countActiveAdmins(): int
     {
-        return $this->where('zone', 'global')->where('status', 1)->countAllResults();
-    }
-
-    /**
-     * Count non-soft-deleted users in the given environment (`env` column,
-     * e.g. 'LIVE'/'TESTING') — backs the admin dashboard users-by-env widget.
-     */
-    public function countByEnv(string $env): int
-    {
-        return $this->where('env', $env)->countAllResults();
+        return $this->where('zone', 'admin')->where('status', 1)->countAllResults();
     }
 
     /**
@@ -222,7 +255,7 @@ class UserModel extends Model
     private function applyAdminFilters(BaseBuilder $builder, array $filters): void
     {
         $zone = (string) ($filters['zone'] ?? '');
-        if (in_array($zone, ['global', 'client'], true)) {
+        if (in_array($zone, ['admin', 'user'], true)) {
             $builder->where('zone', $zone);
         }
 

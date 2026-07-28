@@ -54,7 +54,7 @@ final class Auth2faLoginTest extends CIUnitTestCase
     public function testVerify2faWithCorrectCodeCompletesLoginAndStampsLoginAt(): void
     {
         $secret = (new Google2FA())->generateSecretKey();
-        $user   = $this->seedWebUser(['email' => '2fa-verify-correct@example.com', 'zone' => 'client', 'two_factor_method' => 'google2fa', 'google2fa_secret' => $secret]);
+        $user   = $this->seedWebUser(['email' => '2fa-verify-correct@example.com', 'zone' => 'user', 'two_factor_method' => 'google2fa', 'google2fa_secret' => $secret]);
 
         $this->withSession(['basicAuthAuthenticated' => 1]);
         $this->post('/login', $this->withCsrf(['email' => $user->email, 'password' => self::WEB_AUTH_TEST_PASSWORD]));
@@ -118,7 +118,7 @@ final class Auth2faLoginTest extends CIUnitTestCase
 
     public function testShowVerify2faRedirectsAuthenticatedUserToDashboard(): void
     {
-        $user = $this->seedWebUser(['email' => 'already-authed@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'already-authed@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/verify-2fa');

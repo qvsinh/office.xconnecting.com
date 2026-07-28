@@ -59,7 +59,8 @@ class Account extends BaseController
     {
         $rules = [
             'current_password' => 'required',
-            'password'         => 'required|min_length[5]',
+            // Shared policy — see App\Validation\PasswordRules.
+            'password'         => 'required|strong_password',
             'password_confirm' => 'required|matches[password]',
         ];
 

@@ -65,7 +65,7 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">Sent Emails</h1>
+            <h1 class="text-xl font-semibold tracking-tight">Emails</h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Read-only log of messages sent by the platform.</p>
         </div>
     </div>

@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Models\UserModel;
+use App\Validation\PasswordRules;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -51,14 +52,23 @@ class ResetUserPassword extends BaseCommand
         $password = (string) ($params[1] ?? '');
 
         if ($password === '') {
-            $password = (string) CLI::prompt('New password', null, 'required|min_length[5]');
+            CLI::write('Required: ' . implode('; ', PasswordRules::describe()) . '.', 'yellow');
+            $password = (string) CLI::prompt('New password', null, 'required|strong_password');
+
             if ($password !== (string) CLI::prompt('Confirm password', null, 'required')) {
                 CLI::error('Passwords do not match.');
 
                 return EXIT_ERROR;
             }
-        } elseif (strlen($password) < 5) {
-            CLI::error('Password must be at least 5 characters.');
+        }
+
+        // Same policy as the web forms — see App\Validation\PasswordRules. Also
+        // re-checked after the prompt so the argument form cannot bypass it.
+        $error = null;
+
+        if (! (new PasswordRules())->strong_password($password, $error)) {
+            CLI::error($error ?? 'Password does not meet the policy.');
+            CLI::write('Required: ' . implode('; ', PasswordRules::describe()) . '.', 'yellow');
 
             return EXIT_ERROR;
         }

@@ -54,7 +54,7 @@ final class AdminSystemLogsTest extends CIUnitTestCase
 
     public function testNonAdminClientIsRejectedByAdminGateOnEveryLogsRoute(): void
     {
-        $client = $this->seedWebUser(['email' => 'gate-logs-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'gate-logs-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->get('/admin/system/logs')->assertRedirectTo('/dashboard');
@@ -66,7 +66,7 @@ final class AdminSystemLogsTest extends CIUnitTestCase
 
     public function testAdminCanPreviewDownloadAndDeleteAnAllowlistedFile(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-logs@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-logs@example.com', 'zone' => 'admin']);
         $this->seedFixtureLog();
         $this->loginAs($admin);
 
@@ -94,7 +94,7 @@ final class AdminSystemLogsTest extends CIUnitTestCase
 
     public function testDeleteAllRemovesOnlyRealLogFiles(): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-logs-all@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-logs-all@example.com', 'zone' => 'admin']);
         $this->seedFixtureLog(self::FIXTURE_A);
         $this->seedFixtureLog(self::FIXTURE_B);
         $this->loginAs($admin);
@@ -113,7 +113,7 @@ final class AdminSystemLogsTest extends CIUnitTestCase
      */
     public function testPreviewRejectsPathTraversalAndUnallowlistedNames(string $malicious): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-logs-trav1@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-logs-trav1@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system/logs/preview?file=' . rawurlencode($malicious));
@@ -126,7 +126,7 @@ final class AdminSystemLogsTest extends CIUnitTestCase
      */
     public function testDownloadRejectsPathTraversalAndUnallowlistedNames(string $malicious): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-logs-trav2@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-logs-trav2@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system/logs/download?file=' . rawurlencode($malicious));
@@ -139,7 +139,7 @@ final class AdminSystemLogsTest extends CIUnitTestCase
      */
     public function testDeleteRejectsPathTraversalAndUnallowlistedNamesAndDeletesNothing(string $malicious): void
     {
-        $admin = $this->seedWebUser(['email' => 'admin-logs-trav3@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'admin-logs-trav3@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/system/logs/delete', $this->withCsrf(['file' => $malicious]));

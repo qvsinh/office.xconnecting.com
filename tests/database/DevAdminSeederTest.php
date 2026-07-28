@@ -23,7 +23,7 @@ final class DevAdminSeederTest extends CIUnitTestCase
         $admin     = $userModel->findActiveByEmail('admin@xconnecting.com');
 
         $this->assertNotNull($admin);
-        $this->assertSame('global', $admin->zone);
+        $this->assertSame('admin', $admin->zone);
         $this->assertSame(1, (int) $admin->status);
     }
 

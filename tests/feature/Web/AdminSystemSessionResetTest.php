@@ -57,7 +57,7 @@ final class AdminSystemSessionResetTest extends CIUnitTestCase
 
     public function testNonAdminClientIsRejected(): void
     {
-        $client = $this->seedWebUser(['email' => 'session-reset-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'session-reset-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->post('/admin/system/sessions/reset', $this->withCsrf([]))->assertRedirectTo('/dashboard');
@@ -65,7 +65,7 @@ final class AdminSystemSessionResetTest extends CIUnitTestCase
 
     public function testAdminResetHandlesEveryBranchGracefully(): void
     {
-        $admin = $this->seedWebUser(['email' => 'session-reset-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'session-reset-admin@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/system/sessions/reset', $this->withCsrf([]));

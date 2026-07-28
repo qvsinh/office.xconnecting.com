@@ -19,10 +19,13 @@ class NotificationModel extends Model
     protected $returnType       = 'object';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['user_id', 'task_id', 'message', 'is_read'];
-    protected $useTimestamps    = true;
-    protected $createdField     = 'created_at';
-    protected $updatedField     = 'updated_at';
+
+    // `task_id` dropped with the tasks module; the column still exists on the
+    // table but nothing writes it, so it stays out of the allowlist.
+    protected $allowedFields = ['user_id', 'message', 'is_read'];
+    protected $useTimestamps = true;
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
 
     /**
      * Paginated, newest-first list for the full `/notifications` page.

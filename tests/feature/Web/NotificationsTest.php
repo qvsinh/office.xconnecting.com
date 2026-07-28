@@ -56,7 +56,7 @@ final class NotificationsTest extends CIUnitTestCase
 
     public function testMutationWithoutCsrfTokenIsRejected(): void
     {
-        $user = $this->seedWebUser(['email' => 'nocsrf-notif@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'nocsrf-notif@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->post('/notifications/mark-read', ['id' => 1]);
@@ -67,8 +67,8 @@ final class NotificationsTest extends CIUnitTestCase
 
     public function testUnreadCountReturnsSuccessEnvelopeScopedToCaller(): void
     {
-        $userA = $this->seedWebUser(['email' => 'unread-a@example.com', 'zone' => 'client']);
-        $userB = $this->seedWebUser(['email' => 'unread-b@example.com', 'zone' => 'client']);
+        $userA = $this->seedWebUser(['email' => 'unread-a@example.com', 'zone' => 'user']);
+        $userB = $this->seedWebUser(['email' => 'unread-b@example.com', 'zone' => 'user']);
         $this->seedRow(['user_id' => $userA->id, 'is_read' => 0]);
         $this->seedRow(['user_id' => $userA->id, 'is_read' => 1]);
         $this->seedRow(['user_id' => $userB->id, 'is_read' => 0]);
@@ -85,8 +85,8 @@ final class NotificationsTest extends CIUnitTestCase
 
     public function testFeedReturnsRecentItemsAndUnreadCountScopedToCaller(): void
     {
-        $userA = $this->seedWebUser(['email' => 'feed-a@example.com', 'zone' => 'client']);
-        $userB = $this->seedWebUser(['email' => 'feed-b@example.com', 'zone' => 'client']);
+        $userA = $this->seedWebUser(['email' => 'feed-a@example.com', 'zone' => 'user']);
+        $userB = $this->seedWebUser(['email' => 'feed-b@example.com', 'zone' => 'user']);
         $this->seedRow(['user_id' => $userA->id, 'message' => 'for A', 'is_read' => 0]);
         $this->seedRow(['user_id' => $userB->id, 'message' => 'for B', 'is_read' => 0]);
 
@@ -131,7 +131,7 @@ final class NotificationsTest extends CIUnitTestCase
 
     public function testMarkReadWithMissingIdReturns404(): void
     {
-        $user = $this->seedWebUser(['email' => 'missing-id@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'missing-id@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->post('/notifications/mark-read', $this->withCsrf(['id' => 999999]));
@@ -141,8 +141,8 @@ final class NotificationsTest extends CIUnitTestCase
 
     public function testMarkAllReadOnlyAffectsTheCallersRowsAndReturnsZeroUnread(): void
     {
-        $userA = $this->seedWebUser(['email' => 'markall-a@example.com', 'zone' => 'client']);
-        $userB = $this->seedWebUser(['email' => 'markall-b@example.com', 'zone' => 'client']);
+        $userA = $this->seedWebUser(['email' => 'markall-a@example.com', 'zone' => 'user']);
+        $userB = $this->seedWebUser(['email' => 'markall-b@example.com', 'zone' => 'user']);
         $this->seedRow(['user_id' => $userA->id, 'is_read' => 0]);
         $this->seedRow(['user_id' => $userA->id, 'is_read' => 0]);
         $otherUnread = $this->seedRow(['user_id' => $userB->id, 'is_read' => 0]);
@@ -178,8 +178,8 @@ final class NotificationsTest extends CIUnitTestCase
      */
     private function seedTwoUsersAndARowForA(): array
     {
-        $userA = $this->seedWebUser(['email' => 'notif-a@example.com', 'zone' => 'client']);
-        $userB = $this->seedWebUser(['email' => 'notif-b@example.com', 'zone' => 'client']);
+        $userA = $this->seedWebUser(['email' => 'notif-a@example.com', 'zone' => 'user']);
+        $userB = $this->seedWebUser(['email' => 'notif-b@example.com', 'zone' => 'user']);
         $rowA  = $this->seedRow(['user_id' => $userA->id, 'is_read' => 0]);
 
         return [$userA, $userB, $rowA];

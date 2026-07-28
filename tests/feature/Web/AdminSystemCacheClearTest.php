@@ -36,7 +36,7 @@ final class AdminSystemCacheClearTest extends CIUnitTestCase
 
     public function testNonAdminClientIsRejected(): void
     {
-        $client = $this->seedWebUser(['email' => 'cache-clear-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'cache-clear-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->post('/admin/system/cache/clear', $this->withCsrf([]))->assertRedirectTo('/dashboard');
@@ -44,7 +44,7 @@ final class AdminSystemCacheClearTest extends CIUnitTestCase
 
     public function testAdminCanClearCache(): void
     {
-        $admin = $this->seedWebUser(['email' => 'cache-clear-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'cache-clear-admin@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/system/cache/clear', $this->withCsrf([]));

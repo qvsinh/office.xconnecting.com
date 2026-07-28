@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\RoleModel;
 use App\Models\UserModel;
+use App\Validation\PasswordRules;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -42,6 +43,23 @@ class Users extends BaseController
         ]);
     }
 
+    /**
+     * A fresh password that satisfies the policy, for the "Generate" button in
+     * the create/edit modals.
+     *
+     * Generated here rather than in JavaScript on purpose: the policy lives in
+     * `PasswordRules` alone. A JavaScript generator would be a second copy of
+     * the character-class rules, and the day the policy changes the browser
+     * would hand out passwords the server then rejects.
+     *
+     * Not secret in itself — an unused random string, admin-only, over TLS. It
+     * becomes a credential only once the admin submits the form.
+     */
+    public function generatePassword(): ResponseInterface
+    {
+        return $this->jsonSuccess('OK', ['password' => PasswordRules::generate()]);
+    }
+
     public function create(): ResponseInterface
     {
         if (! $this->validate($this->userValidationRules(false))) {
@@ -50,9 +68,14 @@ class Users extends BaseController
 
         $password = (string) $this->request->getPost('password');
         // ponytail: admin left password blank -> generate a random one instead of
-        // blocking creation; never surfaced back to the client or logged.
+        // blocking creation. Note it is never returned or logged, so a blank
+        // field produces an account nobody can sign into until a reset — the
+        // "Generate" button exists so the admin has a password to hand over.
+        // Generated through PasswordRules so the auto-password satisfies the very
+        // policy the form enforces (the old bin2hex() was hex-only, i.e. no
+        // uppercase and no special character).
         if ($password === '') {
-            $password = bin2hex(random_bytes(8));
+            $password = PasswordRules::generate();
         }
 
         $zone = (string) $this->request->getPost('zone');
@@ -63,7 +86,6 @@ class Users extends BaseController
             'password' => $this->hashPassword($password),
             'zone'     => $zone,
             'role_id'  => $this->roleIdForZone($zone),
-            'env'      => (string) $this->request->getPost('env'),
             'status'   => (int) $this->request->getPost('status'),
             'language' => trim((string) $this->request->getPost('language')) ?: 'en',
             'timezone' => trim((string) $this->request->getPost('timezone')) ?: 'Asia/Tokyo',
@@ -90,7 +112,6 @@ class Users extends BaseController
             'email'    => $user->email,
             'company'  => $user->company ?? null,
             'zone'     => $user->zone,
-            'env'      => $user->env,
             'status'   => (int) $user->status,
             'language' => $user->language,
             'timezone' => $user->timezone,
@@ -124,7 +145,6 @@ class Users extends BaseController
             'email'    => trim((string) $this->request->getPost('email')),
             'zone'     => $newZone,
             'role_id'  => $this->roleIdForZone($newZone),
-            'env'      => (string) $this->request->getPost('env'),
             'status'   => $newStatus,
             'language' => trim((string) $this->request->getPost('language')) ?: $existing->language,
             'timezone' => trim((string) $this->request->getPost('timezone')) ?: $existing->timezone,
@@ -233,12 +253,13 @@ class Users extends BaseController
         $rules = [
             'name'     => 'required|max_length[255]',
             'email'    => $emailRule,
-            'zone'     => 'required|in_list[global,client]',
-            'env'      => 'required|in_list[LIVE,TESTING]',
+            'zone'     => 'required|in_list[admin,user]',
             'status'   => 'permit_empty|in_list[0,1]',
             'language' => 'permit_empty|max_length[5]',
             'timezone' => 'permit_empty|max_length[30]',
-            'password' => 'permit_empty|min_length[5]',
+            // Blank means "auto-generate" on create / "keep current" on update;
+            // anything typed must satisfy the shared policy.
+            'password' => 'permit_empty|strong_password',
         ];
 
         if ($isUpdate) {
@@ -253,15 +274,17 @@ class Users extends BaseController
      * - an admin can never demote (`zone !== global`) or deactivate
      *   (`status = 0`) their own account, regardless of how many other
      *   admins exist;
-     * - the last remaining active `zone=global` admin can never be demoted
+     * - the last remaining active `zone=admin` admin can never be demoted
      *   or deactivated by anyone, or every admin session would lock out.
      *
      * Returns a user-facing failure message, or null when the change is safe.
      */
     private function lockoutGuardMessage(object $existing, string $newZone, int $newStatus): ?string
     {
-        $wasActiveAdmin = $existing->zone === 'global' && (int) $existing->status === 1;
-        $willLoseAdmin  = $newZone !== 'global' || $newStatus !== 1;
+        $wasActiveAdmin = zone_is_admin($existing->zone) && (int) $existing->status === 1;
+        // `$newZone` comes from validated input (`in_list[admin,user]`), so the
+        // canonical value is the only thing that can arrive here.
+        $willLoseAdmin = $newZone !== 'admin' || $newStatus !== 1;
 
         if (! $wasActiveAdmin || ! $willLoseAdmin) {
             return null;
@@ -294,7 +317,7 @@ class Users extends BaseController
      */
     private function roleIdForZone(string $zone): ?int
     {
-        $roleName = $zone === 'global' ? 'admin' : 'user';
+        $roleName = zone_is_admin($zone) ? 'admin' : 'user';
         $role     = model(RoleModel::class)->findByName($roleName);
 
         return $role->id ?? null;

@@ -76,7 +76,7 @@ final class SeedRolesAndPermissionsTest extends CIUnitTestCase
             'name'     => 'Legacy Admin',
             'email'    => 'legacy-admin@example.com',
             'password' => 'irrelevant-hash',
-            'zone'     => 'global',
+            'zone'     => 'admin',
             'status'   => 1,
         ]);
 
@@ -95,7 +95,7 @@ final class SeedRolesAndPermissionsTest extends CIUnitTestCase
             'name'     => 'Legacy Client',
             'email'    => 'legacy-client@example.com',
             'password' => 'irrelevant-hash',
-            'zone'     => 'client',
+            'zone'     => 'user',
             'status'   => 1,
         ]);
 

@@ -40,7 +40,7 @@ class AdminUserSeeder extends Seeder
             'name'              => 'Administrator',
             'email'             => $email,
             'password'          => hash($authConfig->password_algorithm, $password . $authConfig->password_salt),
-            'zone'              => 'global',
+            'zone'              => 'admin',
             'status'            => 1,
             'two_factor_method' => 'none',
             'role_id'           => $adminRole->id ?? null,

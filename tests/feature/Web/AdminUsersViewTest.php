@@ -37,9 +37,38 @@ final class AdminUsersViewTest extends CIUnitTestCase
         session()->destroy();
     }
 
+    /**
+     * `/admin/users/view/N` passes the *viewed* user as `$user`. Before the
+     * layout owned its own `$navUser`, that shadowed the chrome and the topbar
+     * showed the person being looked at instead of the admin doing the looking
+     * — a silently wrong identity, worse than a blank one.
+     */
+    public function testHeaderShowsTheAdminNotTheUserBeingViewed(): void
+    {
+        $admin = $this->seedWebUser([
+            'email' => 'lookingadmin@example.com',
+            'name'  => 'Looking Admin',
+            'zone'  => 'admin',
+        ]);
+        $viewed = $this->seedWebUser([
+            'email' => 'lookedat@example.com',
+            'name'  => 'Looked At Person',
+        ]);
+        $this->loginAs($admin);
+
+        $html = (string) $this->withSession()->get('/admin/users/view/' . $viewed->id)->getBody();
+
+        // The viewed user appears in the page body...
+        $this->assertStringContainsString('Looked At Person', $html);
+
+        // ...but the header block renders the signed-in admin.
+        $this->assertStringContainsString('Looking Admin', $html);
+        $this->assertStringContainsString('lookingadmin@example.com', $html);
+    }
+
     public function testIndexRendersTheListWithSearchFormAndAddUserControl(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-users-admin@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-users-admin@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/users');
@@ -53,8 +82,8 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testDetailRendersProfileActAsButtonAndApiKeysLink(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'view-users-admin2@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'view-users-target@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'view-users-admin2@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'view-users-target@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/users/view/' . $target->id);
@@ -65,8 +94,8 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testNoteViewRendersTheNoteEditor(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'view-users-admin3@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'view-users-note-target@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'view-users-admin3@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'view-users-note-target@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/users/note/' . $target->id);
@@ -78,10 +107,10 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testNameAndCompanyXssIsEscapedOnListAndDetailPages(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'view-users-admin4@example.com', 'zone' => 'global']);
+        $admin  = $this->seedWebUser(['email' => 'view-users-admin4@example.com', 'zone' => 'admin']);
         $target = $this->seedWebUser([
             'email' => 'view-users-xss@example.com',
-            'zone'  => 'client',
+            'zone'  => 'user',
             'name'  => self::XSS_SCRIPT,
         ]);
         // `company` is intentionally not in UserModel::$allowedFields (no
@@ -106,8 +135,8 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testAdminNoteXssIsEscapedOnDetailAndNotePages(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'view-users-admin5@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'view-users-note-xss@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'view-users-admin5@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'view-users-note-xss@example.com', 'zone' => 'user']);
         model(UserModel::class)->update($target->id, ['note' => self::XSS_SCRIPT]);
         $this->loginAs($admin);
 
@@ -130,8 +159,8 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testPasswordHashNeverAppearsInIndexOrEditResponses(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'view-users-admin6@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['email' => 'view-users-pwd@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'view-users-admin6@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['email' => 'view-users-pwd@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
         $hash = model(UserModel::class)->find($target->id)->password;
 
@@ -148,8 +177,8 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testActingAsBannerAppearsWhileImpersonatingAndDisappearsAfterStopActing(): void
     {
-        $admin  = $this->seedWebUser(['email' => 'view-users-admin7@example.com', 'zone' => 'global']);
-        $target = $this->seedWebUser(['name' => 'Banner Target', 'email' => 'view-users-banner@example.com', 'zone' => 'client']);
+        $admin  = $this->seedWebUser(['email' => 'view-users-admin7@example.com', 'zone' => 'admin']);
+        $target = $this->seedWebUser(['name' => 'Banner Target', 'email' => 'view-users-banner@example.com', 'zone' => 'user']);
         $this->loginAs($admin);
 
         $noBanner = $this->withSession()->get('/dashboard');
@@ -183,7 +212,7 @@ final class AdminUsersViewTest extends CIUnitTestCase
 
     public function testClientSessionIsBlockedFromUsersIndexByAdminGate(): void
     {
-        $client = $this->seedWebUser(['email' => 'view-users-client-gate@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'view-users-client-gate@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $result = $this->withSession()->get('/admin/users');

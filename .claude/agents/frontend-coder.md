@@ -42,11 +42,12 @@ set available to you (pick the most specific):**
 
 | Task | Skill |
 |------|-------|
-| General "make this look good" / taste pass (default) | **stitch-design-taste** |
+| General "make this look good" / taste pass (default) | **hallmark** |
+| Cross-discipline review of a finished screen/flow | **better-interface** |
 | View-layer / component structure patterns | **frontend-patterns** |
 | Greenfield page or component design | **design-taste-frontend** (or **design-taste-frontend-v1**) |
 | Clean, minimal admin/content UI (fits TailAdmin) | **minimalist-ui** |
-| Alt taste reference | **gpt-taste** |
+| Alt taste reference | **gpt-taste** / **stitch-design-taste** |
 | Premium / marketing / hero sections | **high-end-visual-design** |
 | Glassy / depth / iOS-flavoured visuals | **liquid-glass-design** |
 | Bold, editorial, high-contrast looks | **industrial-brutalist-ui** |
@@ -56,6 +57,12 @@ set available to you (pick the most specific):**
 | Brand tokens (map to the Tailwind theme config) | **brandkit** |
 | Slide/deck-style layouts | **frontend-slides** |
 | Diagrams in the UI | **diagram-design** |
+
+**`hallmark` is the default taste pass** (greenfield pages, redesigns, audits, design extraction from
+a screenshot/URL). **`better-interface` is the review pass** — run it after the markup exists; it
+coordinates `better-accessibility`, `better-layout`, `better-writing`, `better-typography`,
+`better-colors`, and `better-ui`. Load one of those directly instead when the task is narrow (e.g.
+only contrast, only copy, only focus states).
 
 The skills are framework-agnostic — map their spacing/typography/colour/hierarchy advice onto
 **Tailwind utility classes** and TailAdmin patterns. If a suggestion conflicts with this project's
@@ -72,8 +79,9 @@ hard rules, the project rules win. Skip the skill only for trivial edits (typo, 
 ### UI feedback: toast, confirm modal, alert (Alpine — MUST use these)
 
 All three are **shared Alpine components defined once in the base layout** and reused everywhere.
-**When you build them the first time, load a UI/UX skill** (`minimalist-ui` or `stitch-design-taste`)
-to design the look, then implement with Alpine + Tailwind + `x-transition`. After they exist, just
+**When you build them the first time, load a UI/UX skill** (`hallmark`, or `minimalist-ui` for the
+admin-shell look) to design the look, then implement with Alpine + Tailwind + `x-transition`.
+Modals/toasts are focus-trap and live-region territory — run `better-accessibility` on them. After they exist, just
 call them — read the layout's contract before using.
 
 - **Toast** — transient success/error/info feedback (auto-dismiss). Fire via an Alpine event:
@@ -126,7 +134,7 @@ Send the CI4 CSRF token on every state-changing request. Match the fetch/CSRF he
 ## Workflow
 
 1. Read the plan from the kanban board (`kanban/processing/{task}.md`, or `kanban/plan/` if not yet moved) — the "Frontend (Views)" section. If you are the first coder to start this task, move the plan file from `kanban/plan/` to `kanban/processing/`.
-2. Invoke the relevant design skill for non-trivial visual work (default **stitch-design-taste**).
+2. Invoke the relevant design skill for non-trivial visual work (default **hallmark**).
 3. Locate the shared layout and read 2–3 sibling views first — match indentation, section names,
    asset includes, and the toast/confirm/fetch contracts.
 4. Verify the backend contract: check the controller method rendering this view and the `$data` keys
@@ -134,7 +142,9 @@ Send the CI4 CSRF token on every state-changing request. Match the fetch/CSRF he
 5. Implement the view, applying the design skill's guidance through Tailwind/TailAdmin. Keep PHP in
    the view to display logic only.
 6. `esc()` all dynamic output.
-7. Smoke-test in the browser when possible (or ask the `tester` agent).
+7. Run **`better-interface`** over the finished screen (quick mode for a component, full for a new
+   page/flow) and fix what it flags. Narrow task → load the single `better-*` skill instead.
+8. Smoke-test in the browser when possible (or ask the `tester` agent).
 
 ## Final reply format
 
@@ -143,7 +153,8 @@ Send the CI4 CSRF token on every state-changing request. Match the fetch/CSRF he
 - {file:line} — {what changed}
 
 ## UI checklist
-- [ ] Design skill consulted (which: ______)
+- [ ] Design skill consulted (which: ______ — default hallmark)
+- [ ] better-interface review pass run (mode: quick / full / single better-* skill: ______)
 - [ ] Tailwind/TailAdmin components only (no jQuery/Bootstrap/tabler)
 - [ ] Interactivity via Alpine; AJAX via fetch with CSRF
 - [ ] UI/UX skill loaded when building/altering toast, confirm modal, or alert

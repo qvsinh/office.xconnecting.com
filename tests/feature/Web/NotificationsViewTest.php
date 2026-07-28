@@ -37,7 +37,7 @@ final class NotificationsViewTest extends CIUnitTestCase
 
     public function testIndexRendersListPageWithMarkAllReadControl(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-notif-index@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-notif-index@example.com', 'zone' => 'user']);
         $this->seedRow(['user_id' => $user->id, 'message' => 'first message']);
         $this->loginAs($user);
 
@@ -52,7 +52,7 @@ final class NotificationsViewTest extends CIUnitTestCase
 
     public function testIndexShowsPaginationWhenTotalExceedsPageSize(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-notif-paginate@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-notif-paginate@example.com', 'zone' => 'user']);
         for ($i = 0; $i < 16; $i++) {
             $this->seedRow(['user_id' => $user->id, 'message' => "msg {$i}"]);
         }
@@ -67,8 +67,8 @@ final class NotificationsViewTest extends CIUnitTestCase
 
     public function testIndexOnlyShowsTheCallersOwnNotifications(): void
     {
-        $userA = $this->seedWebUser(['email' => 'view-notif-a@example.com', 'zone' => 'client']);
-        $userB = $this->seedWebUser(['email' => 'view-notif-b@example.com', 'zone' => 'client']);
+        $userA = $this->seedWebUser(['email' => 'view-notif-a@example.com', 'zone' => 'user']);
+        $userB = $this->seedWebUser(['email' => 'view-notif-b@example.com', 'zone' => 'user']);
         $this->seedRow(['user_id' => $userA->id, 'message' => 'AFirstMsg']);
         $this->seedRow(['user_id' => $userA->id, 'message' => 'ASecondMsg']);
         $this->seedRow(['user_id' => $userB->id, 'message' => 'BOnlyMsg']);
@@ -95,7 +95,7 @@ final class NotificationsViewTest extends CIUnitTestCase
      */
     public function testMessageWithScriptTagIsEscapedAndBoundViaXTextNeverXHtml(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-notif-xss@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-notif-xss@example.com', 'zone' => 'user']);
         $this->seedRow(['user_id' => $user->id, 'message' => self::XSS_SCRIPT]);
         $this->loginAs($user);
 
@@ -111,7 +111,7 @@ final class NotificationsViewTest extends CIUnitTestCase
 
     public function testAuthenticatedPageIncludesNotificationBellAndSidebarLink(): void
     {
-        $user = $this->seedWebUser(['email' => 'view-notif-bell@example.com', 'zone' => 'client']);
+        $user = $this->seedWebUser(['email' => 'view-notif-bell@example.com', 'zone' => 'user']);
         $this->loginAs($user);
 
         $result = $this->withSession()->get('/dashboard');

@@ -32,7 +32,7 @@ final class AuthLoginTest extends CIUnitTestCase
 
     public function testLoginSuccessAdminRedirectsToAdminDashboard(): void
     {
-        $this->seedUser(['email' => 'admin@example.com', 'zone' => 'global']);
+        $this->seedUser(['email' => 'admin@example.com', 'zone' => 'admin']);
 
         $result = $this->postLogin('admin@example.com', self::FIXTURE_TEST_PASSWORD);
 
@@ -45,7 +45,7 @@ final class AuthLoginTest extends CIUnitTestCase
 
     public function testLoginSuccessClientRedirectsToDashboard(): void
     {
-        $this->seedUser(['email' => 'client@example.com', 'zone' => 'client']);
+        $this->seedUser(['email' => 'client@example.com', 'zone' => 'user']);
 
         $result = $this->postLogin('client@example.com', self::FIXTURE_TEST_PASSWORD);
 
@@ -66,7 +66,7 @@ final class AuthLoginTest extends CIUnitTestCase
 
     public function testLoginRegeneratesSessionIdToPreventFixation(): void
     {
-        $this->seedUser(['email' => 'fixation@example.com', 'zone' => 'client']);
+        $this->seedUser(['email' => 'fixation@example.com', 'zone' => 'user']);
 
         // CIUnitTestCase swaps in MockSession, which doesn't touch the real
         // PHP session id (session_start() is stubbed out) but does flip
@@ -147,7 +147,7 @@ final class AuthLoginTest extends CIUnitTestCase
             'name'              => 'Test User',
             'email'             => 'user@example.com',
             'password'          => hash($authConfig->password_algorithm, self::FIXTURE_TEST_PASSWORD . $authConfig->password_salt),
-            'zone'              => 'client',
+            'zone'              => 'user',
             'status'            => 1,
             'two_factor_method' => 'none',
             'language'          => 'en',

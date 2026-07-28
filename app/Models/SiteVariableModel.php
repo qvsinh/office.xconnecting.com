@@ -44,15 +44,40 @@ class SiteVariableModel extends Model
     }
 
     /**
+     * Typed lookup by `name` (the UNIQUE key) — the counterpart to
+     * `findVariable()` for callers that hold a setting name rather than an id,
+     * e.g. an upsert. Returns null for an unknown or soft-deleted row.
+     */
+    public function findByName(string $name): ?object
+    {
+        $row = $this->where('name', $name)->first();
+
+        return is_object($row) ? $row : null;
+    }
+
+    /**
      * Read a stored variable's value by name, falling back to `$default`
      * when the name is unknown or soft-deleted. Used by `get_site_variable()`
      * (app_helper) so stored settings take effect app-wide.
      */
     public function getValue(string $name, ?string $default = null): ?string
     {
-        $row = $this->where('name', $name)->first();
+        $row = $this->findByName($name);
 
-        return is_object($row) && $row->value !== null ? $row->value : $default;
+        return $row !== null && $row->value !== null ? $row->value : $default;
+    }
+
+    /**
+     * Create-or-update by name. One place, so a caller can't half-implement the
+     * upsert and hit the UNIQUE(name) key.
+     */
+    public function setValue(string $name, string $value): void
+    {
+        $existing = $this->findByName($name);
+
+        $existing === null
+            ? $this->insert(['name' => $name, 'value' => $value])
+            : $this->update((int) $existing->id, ['value' => $value]);
     }
 
     /**

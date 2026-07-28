@@ -9,7 +9,6 @@ $this->extend('layouts/app');
 $docsNav = [
     ['label' => 'Overview', 'href' => '/docs'],
     ['label' => 'Getting started', 'href' => '/docs/getting-started'],
-    ['label' => 'REST API', 'href' => '/docs/api'],
 ];
 ?>
 
@@ -44,11 +43,11 @@ $docsNav = [
     <div class="min-w-0 max-w-3xl flex-1">
         <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Documentation</h1>
         <p class="mt-1 text-sm leading-6 text-[#787774] dark:text-gray-400">
-            Everything you need to run projects in this hub, and to connect an AI agent or script
-            to your data through the REST API.
+            How attendance works here — checking in and out, requesting leave, and (for managers)
+            setting the working day and closing a month for payroll.
         </p>
 
-        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+        <div class="mt-6 grid gap-5">
             <a href="/docs/getting-started"
                class="rounded-lg border border-[#EAEAEA] bg-white p-6 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#111111] dark:text-gray-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -56,21 +55,11 @@ $docsNav = [
                 </svg>
                 <h2 class="mt-3 text-base font-semibold dark:text-gray-100">Getting started</h2>
                 <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
-                    Create a workspace, invite your team, and get a project on the board.
+                    Check in and out, read your month, and request a day off. Managers: the setup
+                    order that makes every other number correct.
                 </p>
             </a>
 
-            <a href="/docs/api"
-               class="rounded-lg border border-[#EAEAEA] bg-white p-6 transition-colors hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#111111] dark:text-gray-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15.75l-4.5-4.5 4.5-4.5m7.5 9l4.5-4.5-4.5-4.5" />
-                </svg>
-                <h2 class="mt-3 text-base font-semibold dark:text-gray-100">REST API</h2>
-                <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
-                    Connect an AI agent or script with a personal API key: list projects, read and
-                    write tasks.
-                </p>
-            </a>
         </div>
     </div>
 </div>

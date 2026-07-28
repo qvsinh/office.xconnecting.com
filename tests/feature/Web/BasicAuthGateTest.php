@@ -118,7 +118,7 @@ final class BasicAuthGateTest extends CIUnitTestCase
 
     public function testGatePassThenAppLoginReachesAdminDashboard(): void
     {
-        $user = $this->seedUser(['name' => 'Ada Admin', 'email' => 'gate-admin@example.com', 'zone' => 'global']);
+        $user = $this->seedUser(['name' => 'Ada Admin', 'email' => 'gate-admin@example.com', 'zone' => 'admin']);
 
         $gate = $this->post('/basic-auth', $this->withCsrf([
             'username' => self::GATE_USERNAME,
@@ -193,7 +193,7 @@ final class BasicAuthGateTest extends CIUnitTestCase
             'name'              => 'Test User',
             'email'             => 'user@example.com',
             'password'          => hash($authConfig->password_algorithm, self::TEST_PASSWORD . $authConfig->password_salt),
-            'zone'              => 'client',
+            'zone'              => 'user',
             'status'            => 1,
             'two_factor_method' => 'none',
             'language'          => 'en',

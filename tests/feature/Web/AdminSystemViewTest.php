@@ -40,7 +40,7 @@ final class AdminSystemViewTest extends CIUnitTestCase
 
     public function testAdminCanRenderSystemInfoPage(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-system-info@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-system-info@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system');
@@ -54,7 +54,7 @@ final class AdminSystemViewTest extends CIUnitTestCase
 
     public function testSystemInfoRenderedHtmlContainsNoKnownSecretValue(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-system-nosecret@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-system-nosecret@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system');
@@ -80,7 +80,7 @@ final class AdminSystemViewTest extends CIUnitTestCase
 
     public function testAdminCanRenderMigrationsPage(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-system-migrations@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-system-migrations@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->get('/admin/system/migrations');
@@ -97,7 +97,7 @@ final class AdminSystemViewTest extends CIUnitTestCase
 
     public function testAdminCanRenderLogsPageWithAFixtureFileListed(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-system-logs@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-system-logs@example.com', 'zone' => 'admin']);
         file_put_contents(WRITEPATH . 'logs/' . self::FIXTURE_LOG, "line one\n");
         $this->loginAs($admin);
 
@@ -118,7 +118,7 @@ final class AdminSystemViewTest extends CIUnitTestCase
      */
     public function testLogPreviewReturnsRawContentAndViewBindsItViaXTextNeverXHtml(): void
     {
-        $admin = $this->seedWebUser(['email' => 'view-system-logs-xss@example.com', 'zone' => 'global']);
+        $admin = $this->seedWebUser(['email' => 'view-system-logs-xss@example.com', 'zone' => 'admin']);
         file_put_contents(WRITEPATH . 'logs/' . self::FIXTURE_LOG, self::XSS_SCRIPT . "\n");
         $this->loginAs($admin);
 
@@ -156,7 +156,7 @@ final class AdminSystemViewTest extends CIUnitTestCase
 
     public function testNonAdminClientIsBlockedFromAllThreeSystemPages(): void
     {
-        $client = $this->seedWebUser(['email' => 'view-system-gate-client@example.com', 'zone' => 'client']);
+        $client = $this->seedWebUser(['email' => 'view-system-gate-client@example.com', 'zone' => 'user']);
         $this->loginAs($client);
 
         $this->withSession()->get('/admin/system')->assertRedirectTo('/dashboard');

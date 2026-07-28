@@ -27,14 +27,14 @@ final class AuthHelperTest extends CIUnitTestCase
 
     public function testIsAuthenticatedIsTrueWithSession(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
         $this->assertTrue(is_authenticated());
     }
 
     public function testIsAdminTrueForGlobalZone(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
 
         $this->assertTrue(is_admin());
         $this->assertFalse(is_client());
@@ -42,7 +42,7 @@ final class AuthHelperTest extends CIUnitTestCase
 
     public function testIsClientTrueForClientZone(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
         $this->assertTrue(is_client());
         $this->assertFalse(is_admin());
@@ -56,24 +56,24 @@ final class AuthHelperTest extends CIUnitTestCase
 
     public function testCurrentZoneIsClientWithoutSession(): void
     {
-        $this->assertSame('client', current_zone());
+        $this->assertSame('user', current_zone());
         $this->assertFalse(is_working_admin());
     }
 
     public function testCurrentZoneIsGlobalForAuthenticatedAdminNotActingAs(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
 
-        $this->assertSame('global', current_zone());
+        $this->assertSame('admin', current_zone());
         $this->assertTrue(is_working_admin());
     }
 
     public function testCurrentZoneIsClientWhenAdminActsAsClient(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
-        session()->set('userWorking', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
+        session()->set('userWorking', (object) ['zone' => 'user']);
 
-        $this->assertSame('client', current_zone());
+        $this->assertSame('user', current_zone());
         $this->assertFalse(is_working_admin());
         // Authorization is untouched: is_admin() still reflects userAuthenticated.
         $this->assertTrue(is_admin());
@@ -81,9 +81,9 @@ final class AuthHelperTest extends CIUnitTestCase
 
     public function testCurrentZoneIsClientForAuthenticatedClient(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
-        $this->assertSame('client', current_zone());
+        $this->assertSame('user', current_zone());
         $this->assertFalse(is_working_admin());
     }
 
@@ -94,21 +94,21 @@ final class AuthHelperTest extends CIUnitTestCase
 
     public function testUserCanIsTrueForAnAdminZoneUserRegardlessOfPermission(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'global']);
+        session()->set('userAuthenticated', (object) ['zone' => 'admin']);
 
         $this->assertTrue(user_can('nothing.was.ever.granted'));
     }
 
     public function testUserCanIsFalseWhenTheWorkingUserHasNoRoleId(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client', 'role_id' => null]);
+        session()->set('userAuthenticated', (object) ['zone' => 'user', 'role_id' => null]);
 
         $this->assertFalse(user_can('users.manage'));
     }
 
     public function testUserCanIsFalseWhenTheWorkingUserObjectHasNoRoleIdPropertyAtAll(): void
     {
-        session()->set('userAuthenticated', (object) ['zone' => 'client']);
+        session()->set('userAuthenticated', (object) ['zone' => 'user']);
 
         $this->assertFalse(user_can('users.manage'));
     }

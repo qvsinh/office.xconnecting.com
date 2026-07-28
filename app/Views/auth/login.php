@@ -92,6 +92,8 @@ helper('setting');
                     const body = new URLSearchParams();
                     body.set('email', this.email);
                     body.set('password', this.password);
+                    // Device context for the admin access log; diagnostics only.
+                    body.set('client_screen', screen.width + 'x' + screen.height);
                     body.set(csrfName, csrfHashMeta.content);
 
                     let res, json;

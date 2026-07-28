@@ -147,6 +147,49 @@ final class AccountTest extends CIUnitTestCase
         $result->assertStatus(400);
     }
 
+    /**
+     * The shared policy (App\Validation\PasswordRules) has to actually reach
+     * this endpoint — a rule that is defined but not wired up protects nothing.
+     *
+     * @dataProvider weakPasswordProvider
+     */
+    public function testChangePasswordRejectsAPasswordThatFailsThePolicy(string $weak, string $expectedHint): void
+    {
+        $user = $this->seedWebUser(['email' => 'pw-weak-' . md5($weak) . '@example.com']);
+        $this->loginAs($user);
+
+        $result = $this->withSession()->post('/account/change-password', $this->withCsrf([
+            'current_password' => self::WEB_AUTH_TEST_PASSWORD,
+            'password'         => $weak,
+            'password_confirm' => $weak,
+        ]));
+
+        $result->assertStatus(400);
+        $this->assertStringContainsString($expectedHint, json_decode($result->getJSON(), true)['message']);
+
+        // ...and the stored hash is untouched.
+        $authConfig = config('Auth');
+        $this->assertSame(
+            hash($authConfig->password_algorithm, self::WEB_AUTH_TEST_PASSWORD . $authConfig->password_salt),
+            model(UserModel::class)->find($user->id)->password,
+        );
+    }
+
+    /**
+     * @return list<array{0: string, 1: string}>
+     */
+    public static function weakPasswordProvider(): array
+    {
+        return [
+            'too short'    => ['Ab1!def', 'at least 8 characters'],
+            'no special'   => ['Str0ngpass1', 'special character'],
+            'no uppercase' => ['str0ng!pass', 'uppercase'],
+            'no number'    => ['Strong!pass', 'number'],
+            'no lowercase' => ['STR0NG!PASS', 'lowercase'],
+            'letters only' => ['abcdefghij', 'uppercase'],
+        ];
+    }
+
     public function testChangePasswordSuccessRehashesPasswordAndNeverEchoesIt(): void
     {
         $user = $this->seedWebUser(['email' => 'pw-success@example.com']);

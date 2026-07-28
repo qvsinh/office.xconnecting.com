@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Validation\PasswordRules;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Validation\StrictRules\CreditCardRules;
 use CodeIgniter\Validation\StrictRules\FileRules;
@@ -21,6 +22,9 @@ class Validation extends BaseConfig
      * @var list<string>
      */
     public array $ruleSets = [
+        // The shared `strong_password` rule — every path that sets a password
+        // validates through it (see App\Validation\PasswordRules).
+        PasswordRules::class,
         Rules::class,
         FormatRules::class,
         FileRules::class,
