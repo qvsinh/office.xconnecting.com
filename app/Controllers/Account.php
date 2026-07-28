@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -255,13 +256,11 @@ class Account extends BaseController
 
     private function verifyPassword(string $plain, string $hash): bool
     {
-        return hash_equals($hash, $this->hashPassword($plain));
+        return (new PasswordHasher())->verify($plain, $hash);
     }
 
     private function hashPassword(string $plain): string
     {
-        $authConfig = config('Auth');
-
-        return hash($authConfig->password_algorithm, $plain . $authConfig->password_salt);
+        return (new PasswordHasher())->hash($plain);
     }
 }

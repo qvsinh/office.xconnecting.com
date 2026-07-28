@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\PasswordHasher;
 use App\Models\RoleModel;
 use App\Validation\PasswordRules;
 use App\Models\UserModel;
@@ -33,7 +34,7 @@ final class AdminUsersTest extends CIUnitTestCase
         session()->destroy();
     }
 
-    public function testCreateStoresMd5HashedPasswordAndNeverEchoesIt(): void
+    public function testCreateStoresAHashedPasswordAndNeverEchoesIt(): void
     {
         $admin = $this->seedWebUser(['email' => 'creator@example.com', 'zone' => 'admin']);
         $this->loginAs($admin);
@@ -53,7 +54,10 @@ final class AdminUsersTest extends CIUnitTestCase
 
         $row = model(UserModel::class)->findActiveByEmail('newuser@example.com');
         $this->assertNotNull($row);
-        $this->assertSame(hash('md5', 'PlainPass1!'), $row->password);
+        // Stored hashed, never in the clear, and not the old unsalted MD5.
+        $this->assertTrue((new PasswordHasher())->verify('PlainPass1!', $row->password));
+        $this->assertNotSame(hash('md5', 'PlainPass1!'), $row->password);
+        $this->assertStringStartsWith('$2y$', (string) $row->password);
     }
 
     public function testCreateWithBlankPasswordAutoGeneratesAValidHash(): void
@@ -73,7 +77,10 @@ final class AdminUsersTest extends CIUnitTestCase
         $row = model(UserModel::class)->findActiveByEmail('autopass@example.com');
         $this->assertNotNull($row);
         $this->assertNotSame('', $row->password);
-        $this->assertSame(32, strlen($row->password)); // md5 hex length
+        // A real bcrypt hash of *something* — the generated password is never
+        // returned, so this is the strongest available check that one was stored.
+        $this->assertStringStartsWith('$2y$', (string) $row->password);
+        $this->assertFalse((new PasswordHasher())->verify('', $row->password));
     }
 
     public function testCreateAssignsAdminRoleIdForGlobalZoneAndUserRoleIdForClientZone(): void
@@ -136,13 +143,9 @@ final class AdminUsersTest extends CIUnitTestCase
         $created = model(UserModel::class)->findActiveByEmail('autopw@example.com');
         $this->assertNotNull($created);
         // The generated password is never returned, so assert on what we can:
-        // a hash was stored, and it is not the hash of an empty password.
-        $authConfig = config('Auth');
+        // a hash was stored, and it is not a hash of the empty string.
         $this->assertNotSame('', (string) $created->password);
-        $this->assertNotSame(
-            hash($authConfig->password_algorithm, '' . $authConfig->password_salt),
-            $created->password,
-        );
+        $this->assertFalse((new PasswordHasher())->verify('', $created->password));
     }
 
     public function testUpdateRejectsAWeakPasswordAndLeavesTheHashAlone(): void
@@ -237,7 +240,9 @@ final class AdminUsersTest extends CIUnitTestCase
         $update->assertStatus(200);
 
         $reloaded = model(UserModel::class)->find($target->id);
-        $this->assertSame(hash('md5', 'BrandNewPass1!'), $reloaded->password);
+        $hasher   = new PasswordHasher();
+        $this->assertTrue($hasher->verify('BrandNewPass1!', $reloaded->password));
+        $this->assertFalse($hasher->verify(self::WEB_AUTH_TEST_PASSWORD, $reloaded->password));
         $this->assertNotSame($target->password, $reloaded->password);
     }
 

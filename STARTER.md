@@ -7,8 +7,10 @@ auth, users, settings, and a dashboard shell from scratch.
 ## What's included
 
 **Auth & access**
-- Email/password login (md5-compatible `Config\Auth`; swap the algorithm for a
-  fresh project), logout, guest/auth route filters.
+- Email/password login — bcrypt via `App\Libraries\PasswordHasher`, tuned in
+  `.env` (`auth.password_algorithm`, `auth.password_cost`). Pre-existing unsalted
+  MD5 rows still verify and are re-hashed on next successful login, so a ported
+  database needs no forced reset. Logout, guest/auth route filters.
 - Optional **basic-auth site gate** in front of login (enable by setting
   `app.basic.auth.username`/`password` in `.env`; auto-bypassed when empty).
 - **Two-factor auth** (Google Authenticator / TOTP) — self-service enrol/disable.

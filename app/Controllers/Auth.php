@@ -3,9 +3,11 @@
 namespace App\Controllers;
 
 use App\Libraries\AccessLogger;
+use App\Libraries\PasswordHasher;
 use App\Models\AccessLogModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use Throwable;
 
 /**
  * Web password login. Ported from
@@ -50,12 +52,11 @@ class Auth extends BaseController
         $email    = (string) $this->request->getPost('email');
         $password = (string) $this->request->getPost('password');
 
-        $userModel    = model(UserModel::class);
-        $user         = $userModel->findActiveByEmail($email);
-        $authConfig   = config('Auth');
-        $passwordHash = hash($authConfig->password_algorithm, $password . $authConfig->password_salt);
+        $userModel = model(UserModel::class);
+        $user      = $userModel->findActiveByEmail($email);
+        $hasher    = new PasswordHasher();
 
-        if (! $user || ! hash_equals($user->password, $passwordHash) || (int) $user->status !== 1) {
+        if (! $user || ! $hasher->verify($password, $user->password) || (int) $user->status !== 1) {
             return $this->response->setStatusCode(401)->setJSON([
                 'status'    => 'failed',
                 'message'   => 'Invalid or inactive account.',
@@ -65,6 +66,21 @@ class Auth extends BaseController
 
         if ($user->two_factor_method !== 'none') {
             return $this->beginPending2fa($user);
+        }
+
+        // The one moment the plaintext is in hand, so the one moment a stale hash
+        // can be upgraded: pre-migration MD5 rows, or rows written before
+        // `auth.password_cost` was raised. Silent and per-account — no forced
+        // reset, and a failure here must not block a valid login.
+        if ($hasher->needsRehash($user->password)) {
+            try {
+                $userModel->update($user->id, ['password' => $hasher->hash($password)]);
+            } catch (Throwable $e) {
+                log_message('error', 'Could not upgrade the password hash for user #{id}: {msg}', [
+                    'id'  => $user->id,
+                    'msg' => $e->getMessage(),
+                ]);
+            }
         }
 
         $userModel->stampLogin((int) $user->id);

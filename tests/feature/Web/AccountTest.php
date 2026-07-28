@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -167,12 +168,13 @@ final class AccountTest extends CIUnitTestCase
         $result->assertStatus(400);
         $this->assertStringContainsString($expectedHint, json_decode($result->getJSON(), true)['message']);
 
-        // ...and the stored hash is untouched.
-        $authConfig = config('Auth');
-        $this->assertSame(
-            hash($authConfig->password_algorithm, self::WEB_AUTH_TEST_PASSWORD . $authConfig->password_salt),
-            model(UserModel::class)->find($user->id)->password,
-        );
+        // ...and the stored password is untouched: the original still verifies
+        // and the rejected one does not. (Comparing hash strings would fail
+        // regardless — bcrypt salts every hash, so it never repeats.)
+        $stored = model(UserModel::class)->find($user->id)->password;
+        $hasher = new PasswordHasher();
+        $this->assertTrue($hasher->verify(self::WEB_AUTH_TEST_PASSWORD, $stored));
+        $this->assertFalse($hasher->verify($weak, $stored));
     }
 
     /**
@@ -207,9 +209,13 @@ final class AccountTest extends CIUnitTestCase
         $this->assertArrayNotHasKey('password', $json);
         $result->assertDontSee('NewPassw0rd!');
 
-        $authConfig   = config('Auth');
-        $expectedHash = hash($authConfig->password_algorithm, 'NewPassw0rd!' . $authConfig->password_salt);
-        $this->assertSame($expectedHash, model(UserModel::class)->find($user->id)->password);
+        $stored = model(UserModel::class)->find($user->id)->password;
+        // Salted hashes are not predictable, so assert the property that matters:
+        // the new password verifies against what was stored, and the old one no
+        // longer does.
+        $hasher = new PasswordHasher();
+        $this->assertTrue($hasher->verify('NewPassw0rd!', $stored));
+        $this->assertFalse($hasher->verify(self::WEB_AUTH_TEST_PASSWORD, $stored));
     }
 
     // --- Google 2FA enrollment ---

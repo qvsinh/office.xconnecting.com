@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -22,11 +23,9 @@ final class ResetUserPasswordCommandTest extends CIUnitTestCase
     protected $refresh   = true;
     protected $namespace = null;
 
-    private function expectedHash(string $plain): string
+    private function assertPasswordIs(string $plain, ?string $stored): void
     {
-        $cfg = config('Auth');
-
-        return hash($cfg->password_algorithm, $plain . $cfg->password_salt);
+        $this->assertTrue((new PasswordHasher())->verify($plain, $stored), "Stored hash does not match '{$plain}'.");
     }
 
     private function seedUser(string $email): int
@@ -47,7 +46,7 @@ final class ResetUserPasswordCommandTest extends CIUnitTestCase
         command('user:reset-password ' . $id . ' NewPass123!');
 
         $user = (new UserModel())->find($id);
-        $this->assertSame($this->expectedHash('NewPass123!'), $user->password);
+        $this->assertPasswordIs('NewPass123!', $user->password);
     }
 
     public function testResetsByEmail(): void
@@ -57,7 +56,7 @@ final class ResetUserPasswordCommandTest extends CIUnitTestCase
         command('user:reset-password by-email@example.com AnotherPass1!');
 
         $user = (new UserModel())->find($id);
-        $this->assertSame($this->expectedHash('AnotherPass1!'), $user->password);
+        $this->assertPasswordIs('AnotherPass1!', $user->password);
     }
 
     public function testUnknownIdentifierLeavesNoChangeAndReports(): void

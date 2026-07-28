@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use App\Validation\PasswordRules;
 use CodeIgniter\CLI\BaseCommand;
@@ -74,8 +75,7 @@ class ResetUserPassword extends BaseCommand
         }
 
         // Hash identically to Auth::login() so the reset password verifies.
-        $authConfig = config('Auth');
-        $hash       = hash($authConfig->password_algorithm, $password . $authConfig->password_salt);
+        $hash = (new PasswordHasher())->hash($password);
 
         $userModel->update($user->id, ['password' => $hash]);
 

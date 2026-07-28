@@ -2,6 +2,7 @@
 
 namespace App\Database\Seeds;
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\Database\Seeder;
 
@@ -23,12 +24,10 @@ class DevAdminSeeder extends Seeder
             return;
         }
 
-        $authConfig = config('Auth');
-
         $userModel->insert([
             'name'              => 'Dev Admin',
             'email'             => self::EMAIL,
-            'password'          => hash($authConfig->password_algorithm, 'Proxy@2026!' . $authConfig->password_salt),
+            'password'          => (new PasswordHasher())->hash('Proxy@2026!'),
             'zone'              => 'admin',
             'status'            => 1,
             'two_factor_method' => 'none',

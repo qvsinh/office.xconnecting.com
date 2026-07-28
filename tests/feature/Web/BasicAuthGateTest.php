@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\Config\Services;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -186,13 +187,12 @@ final class BasicAuthGateTest extends CIUnitTestCase
      */
     private function seedUser(array $overrides = []): object
     {
-        $authConfig = config('Auth');
         $userModel  = model(UserModel::class);
 
         $id = $userModel->insert(array_merge([
             'name'              => 'Test User',
             'email'             => 'user@example.com',
-            'password'          => hash($authConfig->password_algorithm, self::TEST_PASSWORD . $authConfig->password_salt),
+            'password'          => (new PasswordHasher())->hash(self::TEST_PASSWORD),
             'zone'              => 'user',
             'status'            => 1,
             'two_factor_method' => 'none',

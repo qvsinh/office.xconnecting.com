@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Libraries\PasswordHasher;
 use App\Models\RoleModel;
 use App\Models\UserModel;
 use App\Validation\PasswordRules;
@@ -304,9 +305,7 @@ class Users extends BaseController
 
     private function hashPassword(string $plain): string
     {
-        $authConfig = config('Auth');
-
-        return hash($authConfig->password_algorithm, $plain . $authConfig->password_salt);
+        return (new PasswordHasher())->hash($plain);
     }
 
     /**

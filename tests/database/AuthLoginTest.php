@@ -1,5 +1,9 @@
 <?php
 
+use CodeIgniter\Config\Factories;
+use CodeIgniter\Config\Services;
+use Config\Auth as AuthConfig;
+use App\Libraries\PasswordHasher;
 use App\Controllers\Auth;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -140,13 +144,12 @@ final class AuthLoginTest extends CIUnitTestCase
      */
     private function seedUser(array $overrides = []): object
     {
-        $authConfig = config('Auth');
         $userModel  = model(UserModel::class);
 
         $id = $userModel->insert(array_merge([
             'name'              => 'Test User',
             'email'             => 'user@example.com',
-            'password'          => hash($authConfig->password_algorithm, self::FIXTURE_TEST_PASSWORD . $authConfig->password_salt),
+            'password'          => (new PasswordHasher())->hash(self::FIXTURE_TEST_PASSWORD),
             'zone'              => 'user',
             'status'            => 1,
             'two_factor_method' => 'none',
@@ -166,6 +169,93 @@ final class AuthLoginTest extends CIUnitTestCase
         service('superglobals')->setPostArray($data);
         service('superglobals')->setRequestArray($data);
 
+        // ControllerTestTrait caches the IncomingRequest it built, and an
+        // IncomingRequest snapshots the superglobals at construction. Without
+        // dropping it, a *second* postLogin() in one test method is validated
+        // against the first call's input.
+        Services::resetSingle('request');
+        Services::resetSingle('validation');
+        $this->withRequest(service('incomingrequest', null, false));
+
         return $this->controller(Auth::class)->execute('login');
+    }
+
+    // ------------------------------------------- legacy hash self-migration
+
+    /**
+     * An account still holding the pre-migration unsalted MD5 digest must log in
+     * normally, and the row must be rewritten with a modern hash on the way
+     * through — that is the whole migration strategy. Nobody has the plaintext
+     * except the person typing it, so login is the only place this can happen.
+     */
+    public function testALegacyMd5PasswordLogsInAndIsUpgradedInPlace(): void
+    {
+        $user = $this->seedUser([
+            'email'    => 'legacy@example.com',
+            'password' => md5(self::FIXTURE_TEST_PASSWORD),
+        ]);
+
+        $this->assertSame(32, strlen((string) $user->password), 'Fixture should start as a bare MD5 digest.');
+
+        $result = $this->postLogin('legacy@example.com', self::FIXTURE_TEST_PASSWORD);
+
+        $result->assertJSONFragment(['status' => 'success']);
+
+        $stored = model(UserModel::class)->find($user->id)->password;
+        $hasher = new PasswordHasher();
+
+        $this->assertStringStartsWith('$2y$', (string) $stored, 'The MD5 row should have been rehashed.');
+        $this->assertFalse($hasher->needsRehash($stored));
+        $this->assertTrue($hasher->verify(self::FIXTURE_TEST_PASSWORD, $stored));
+
+        // And the upgraded row keeps working on the next login.
+        session()->destroy();
+        $this->postLogin('legacy@example.com', self::FIXTURE_TEST_PASSWORD)
+            ->assertJSONFragment(['status' => 'success']);
+    }
+
+    public function testAWrongPasswordAgainstALegacyHashIsStillRejectedAndLeavesItAlone(): void
+    {
+        $user = $this->seedUser([
+            'email'    => 'legacy2@example.com',
+            'password' => md5(self::FIXTURE_TEST_PASSWORD),
+        ]);
+
+        $result = $this->postLogin('legacy2@example.com', 'not-the-password');
+
+        $result->assertStatus(401);
+        // A failed attempt must not touch the stored hash — otherwise a wrong
+        // guess would be enough to overwrite somebody's credentials.
+        $this->assertSame(md5(self::FIXTURE_TEST_PASSWORD), model(UserModel::class)->find($user->id)->password);
+    }
+
+    /**
+     * Raising `auth.password_cost` must not force a reset: the old hash verifies,
+     * then gets rewritten at the new cost.
+     */
+    public function testRaisingTheCostRehashesOnNextLogin(): void
+    {
+        $cheap = new PasswordHasher($this->authConfig(4));
+        $user  = $this->seedUser(['email' => 'cheap@example.com', 'password' => $cheap->hash(self::FIXTURE_TEST_PASSWORD)]);
+
+        $this->assertSame(4, password_get_info((string) $user->password)['options']['cost']);
+
+        // The app-wide config the controller will read.
+        Factories::injectMock('config', 'Auth', $this->authConfig(6));
+
+        $this->postLogin('cheap@example.com', self::FIXTURE_TEST_PASSWORD)
+            ->assertJSONFragment(['status' => 'success']);
+
+        $stored = model(UserModel::class)->find($user->id)->password;
+        $this->assertSame(6, password_get_info((string) $stored)['options']['cost']);
+    }
+
+    private function authConfig(int $cost): AuthConfig
+    {
+        $config                     = new AuthConfig();
+        $config->password_algorithm = 'bcrypt';
+        $config->password_cost      = $cost;
+
+        return $config;
     }
 }

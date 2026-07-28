@@ -21,41 +21,36 @@ The repo's local `.env` uses `development`. On a public host that setting:
 
 This is the single most important line in the production `.env`.
 
-### 0.2 Password hashing is unsalted MD5 — fix it now or accept it
+### 0.2 Password hashing — already fixed, one thing to know
 
-`app/Config/Auth.php` stores passwords as:
+Passwords are hashed with **bcrypt** through `password_hash()`, configured in
+`.env`:
 
-```php
-public string $password_algorithm = 'md5';
-public string $password_salt      = '';
+```ini
+auth.password_algorithm = 'bcrypt'   # bcrypt | argon2i | argon2id | default
+auth.password_cost      = 12         # bcrypt only; +1 doubles hash and crack time
 ```
 
-`hash('md5', $plain . '')` is an unsalted MD5 digest: no per-user salt, no work
-factor, and reversible through public rainbow tables for anything but a long
-random password. This is inherited from the starter, not introduced by the
-attendance work.
+They used to be an **unsalted MD5** digest inherited from the starter — one
+digest per password, no work factor, crackable from public rainbow tables. All
+hashing and verification now goes through `App\Libraries\PasswordHasher`, which
+replaced seven scattered copies of `hash($algo, $plain . $salt)`.
 
-**The cheapest moment to fix it is before the first real employee account
-exists.** Right now the production database is empty, so there is nothing to
-migrate. Once fifty people have passwords, the same change needs a dual-verify
-migration and a forced reset cycle.
+**Old rows migrate themselves.** `PasswordHasher::verify()` still accepts a
+legacy MD5 digest, and `Auth::login()` rewrites the row with a bcrypt hash the
+moment the owner signs in successfully — login is the only place the plaintext
+exists, so it is the only place this can happen. Nobody is locked out and no
+forced reset is needed. The same mechanism re-hashes everyone if you later raise
+`auth.password_cost`.
 
-A proper fix replaces `hash(...)` with `password_hash()` / `password_verify()`
-at these seven call sites:
+Once every row has migrated, check with:
 
-| File | Line |
-|---|---|
-| `app/Controllers/Auth.php` | 56 (verify) |
-| `app/Controllers/Account.php` | 265 (hash) |
-| `app/Controllers/Admin/Users.php` | 309 (hash) |
-| `app/Commands/ResetUserPassword.php` | 78 |
-| `app/Commands/UserPassword.php` | 56 |
-| `app/Database/Seeds/AdminUserSeeder.php` | 42 |
-| `app/Database/Seeds/DevAdminSeeder.php` | 31 |
+```sql
+SELECT COUNT(*) FROM users WHERE password NOT LIKE '$%';
+```
 
-If you deploy as-is: set long generated passwords for every account (the
-**Generate** button in `/admin/users` produces policy-compliant ones), and treat
-the password column as compromised if the database ever leaks.
+When that returns 0, you can set `auth.legacy_algorithm = ''` to stop accepting
+legacy digests at all.
 
 ---
 
@@ -156,6 +151,11 @@ session.savePath          = 'ci_sessions'
 session.matchIP           = false
 session.timeToUpdate      = 300
 session.regenerateDestroy = false
+
+# Password hashing (see §0.2). bcrypt is the safe default; raise the cost as
+# hardware improves — existing rows re-hash themselves on next login.
+auth.password_algorithm = 'bcrypt'
+auth.password_cost      = 12
 
 encryption.key    =            # fill via `php spark key:generate`
 encryption.driver = OpenSSL

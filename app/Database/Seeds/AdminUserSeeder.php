@@ -3,6 +3,7 @@
 namespace App\Database\Seeds;
 
 use App\Models\RoleModel;
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Database\Seeder;
@@ -33,13 +34,12 @@ class AdminUserSeeder extends Seeder
         }
 
         $password   = (string) (env('app.admin.password') ?: 'admin1234');
-        $authConfig = config('Auth');
         $adminRole  = model(RoleModel::class)->findByName('admin');
 
         $userModel->insert([
             'name'              => 'Administrator',
             'email'             => $email,
-            'password'          => hash($authConfig->password_algorithm, $password . $authConfig->password_salt),
+            'password'          => (new PasswordHasher())->hash($password),
             'zone'              => 'admin',
             'status'            => 1,
             'two_factor_method' => 'none',

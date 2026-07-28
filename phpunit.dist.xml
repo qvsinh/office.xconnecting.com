@@ -47,6 +47,10 @@
         <server name="CODEIGNITER_SCREAM_DEPRECATIONS" value="0"/>
         <!-- Tests must exercise the real auth path, never the RUNNING_MODE=dev bypass. -->
         <env name="RUNNING_MODE" value="testing"/>
+        <!-- bcrypt's minimum work factor: the suite seeds hundreds of users, and
+             at the production cost of 12 each hash costs ~250ms. Correctness is
+             unaffected — only how long the digest takes to compute. -->
+        <env name="auth.password_cost" value="4"/>
         <!-- Directory containing phpunit.xml -->
         <const name="HOMEPATH" value="./"/>
         <!-- Directory containing the Paths config file -->

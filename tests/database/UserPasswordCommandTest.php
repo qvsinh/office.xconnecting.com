@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\PasswordHasher;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -32,10 +33,9 @@ final class UserPasswordCommandTest extends CIUnitTestCase
 
         command('user:password cli@example.com "NewFixtureValue1!"');
 
-        $authConfig = config('Auth');
-        $expected   = hash($authConfig->password_algorithm, 'NewFixtureValue1!' . $authConfig->password_salt);
-
-        $this->assertSame($expected, $userModel->find($id)->password);
+        $this->assertTrue(
+            (new PasswordHasher())->verify('NewFixtureValue1!', $userModel->find($id)->password),
+        );
     }
 
     public function testCommandFailsLoudlyForUnknownEmail(): void

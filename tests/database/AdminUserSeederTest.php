@@ -1,5 +1,6 @@
 <?php
 
+use App\Libraries\PasswordHasher;
 use App\Database\Seeds\AdminUserSeeder;
 use App\Models\RoleModel;
 use App\Models\UserModel;
@@ -35,8 +36,7 @@ final class AdminUserSeederTest extends CIUnitTestCase
         $this->assertSame(1, (int) $admin->status);
         $this->assertSame((int) $adminRole->id, (int) $admin->role_id);
 
-        $authConfig = config('Auth');
-        $this->assertSame(hash($authConfig->password_algorithm, 'admin1234' . $authConfig->password_salt), $admin->password);
+        $this->assertTrue((new PasswordHasher())->verify('admin1234', $admin->password));
     }
 
     public function testSeederIsANoOpWhenAdminAlreadyExists(): void
