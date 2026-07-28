@@ -89,7 +89,10 @@ final class AuthedPagesRenderTest extends CIUnitTestCase
         // 1. It renders at all.
         $result->assertStatus(200);
 
-        $html = (string) $result->getBody();
+        // Raw body, not `$result->getBody()`: that forwards to DOMParser and
+        // returns libxml's re-serialization, so this would check a rewritten page
+        // instead of the one the browser receives.
+        $html = (string) $result->response()->getBody();
 
         // 2. Its inline JavaScript parses. Skipped (not failed) where node is
         //    unavailable, so the render assertion above still runs everywhere.

@@ -51,8 +51,12 @@ helper('setting');
 
                 <div class="mb-6">
                     <label for="password" class="form-label">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="current-password" required
-                           x-model="password" class="form-input">
+                    <div class="relative">
+                        <input id="password" name="password" autocomplete="current-password" required
+                               :type="passwordShown ? 'text' : 'password'"
+                               x-model="password" class="form-input pr-10">
+                        <?= view('_password_reveal', ['shown' => 'passwordShown', 'controls' => 'password']) ?>
+                    </div>
                     <p x-show="fieldErrors.password" x-cloak class="mt-1 text-xs text-red-700 dark:text-red-400" x-text="fieldErrors.password"></p>
                 </div>
 
@@ -69,6 +73,7 @@ helper('setting');
             return {
                 email: '',
                 password: '',
+                passwordShown: false,
                 submitting: false,
                 errorMessage: '',
                 fieldErrors: {},
