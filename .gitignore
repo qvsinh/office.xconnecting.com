@@ -11,8 +11,11 @@ phpunit.xml
 .ignores
 vendor
 writable/logs/*
+!writable/logs/index.html
 writable/debugbar/*
+!writable/debugbar/index.html
 writable/cache/*
+!writable/cache/index.html
 
 
 # Claude Code runtime

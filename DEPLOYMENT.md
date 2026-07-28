@@ -107,15 +107,34 @@ rebuilds every table**.
 
 ### Permissions
 
+The code itself only needs to be readable:
+
 ```bash
 sudo chown -R $USER:www-data /var/www/office.xcn.vn
 sudo find /var/www/office.xcn.vn -type d -exec chmod 750 {} \;
 sudo find /var/www/office.xcn.vn -type f -exec chmod 640 {} \;
-sudo chmod -R 770 /var/www/office.xcn.vn/writable
 ```
 
-`writable/` must be writable by `www-data` (logs, cache, session fallback,
-uploads). Nothing else needs to be.
+`writable/` is the exception, and it needs more than a chmod: git cannot store an
+empty directory, so `writable/logs`, `writable/cache` and `writable/debugbar`
+**do not exist in a fresh clone** (their contents are gitignored and no file
+inside them is tracked). The first request would die trying to write a log.
+
+```bash
+sudo scripts/prepare-writable.sh
+```
+
+The script creates whatever is missing, sets the group to the web user with mode
+`2775` (setgid, so files PHP-FPM creates stay readable to the deploy user), drops
+an `index.html` guard in each directory, then **proves** each one is writable by
+actually writing to it as the web user. It exits non-zero if any check fails, so
+a deploy script can stop instead of serving a broken site. Safe to re-run on
+every deploy — pass an explicit user (`sudo scripts/prepare-writable.sh nginx`)
+if PHP-FPM does not run as `www-data`.
+
+Ownership deliberately stays with the deploy user and the web server gets in
+through the group. Handing `writable/` to `www-data` outright would let a
+compromised PHP process rewrite files it should only be able to append to.
 
 ---
 
@@ -456,6 +475,7 @@ curl -I https://office.xcn.vn/          # 200 or 302 to /login, never 500
 cd /var/www/office.xcn.vn
 git pull
 composer install --no-dev --optimize-autoloader
+sudo scripts/prepare-writable.sh    # new writable/ dirs, and re-assert permissions
 php spark migrate
 php spark cache:clear                # drops the config cache from `optimize`
 php spark optimize                   # rebuild it from the new code
