@@ -79,21 +79,40 @@ final class UiOverhaulTest extends CIUnitTestCase
         $this->assertStringNotContainsString('Acting as', $body);
     }
 
-    public function testDashboardAndLoginShipTheXCloakFoucGuard(): void
+    /**
+     * `[x-cloak]{display:none}` has to reach the browser before Alpine renders,
+     * or every collapsed panel flashes open on load.
+     *
+     * It used to be an inline `<style>` in the layout *and* in each standalone
+     * auth page — four copies, one per template, and a new template that forgot
+     * one would flash. It now lives in the compiled stylesheet, which is a
+     * render-blocking `<head>` link and therefore lands just as early.
+     *
+     * So this asserts the property, not the mechanism: the rule is in the CSS the
+     * page loads, and the page loads that CSS.
+     */
+    public function testEveryPageShipsTheXCloakFoucGuard(): void
     {
-        $client = $this->seedWebUser(['email' => 'ui-xcloak@example.com']);
-        $this->loginAs($client);
+        $css = (string) file_get_contents(FCPATH . 'css/app.css');
+        $this->assertMatchesRegularExpression('/\[x-cloak\]\s*\{[^}]*display:\s*none/', $css, 'The compiled CSS must define the x-cloak guard.');
 
-        $dashboard = $this->withSession()->get('/dashboard');
-        $dashboard->assertStatus(200);
-        $this->assertStringContainsString('[x-cloak]', (string) $dashboard->response()->getBody());
-        $this->assertStringContainsString('display:none', str_replace(' ', '', (string) $dashboard->response()->getBody()));
+        // Admin zone, so /admin/users renders rather than redirecting.
+        $this->loginAs($this->seedWebUser(['email' => 'ui-xcloak@example.com', 'zone' => 'admin']));
+
+        foreach (['/dashboard', '/admin/users'] as $page) {
+            $body = (string) $this->withSession()->get($page)->response()->getBody();
+            $this->assertStringContainsString('/css/app.css', $body, $page . ' must load the compiled stylesheet.');
+        }
 
         session()->destroy();
-        $login = $this->withSession(['basicAuthAuthenticated' => 1])->get('/login');
-        $login->assertStatus(200);
-        $this->assertStringContainsString('[x-cloak]', (string) $login->response()->getBody());
-        $this->assertStringContainsString('display:none', str_replace(' ', '', (string) $login->response()->getBody()));
+
+        // The standalone auth templates do not extend the layout, so they are the
+        // ones that historically drifted.
+        foreach ([['/login', ['basicAuthAuthenticated' => 1]], ['/basic-auth', []]] as [$page, $session]) {
+            $result = $session === [] ? $this->get($page) : $this->withSession($session)->get($page);
+            $result->assertStatus(200);
+            $this->assertStringContainsString('/css/app.css', (string) $result->response()->getBody(), $page . ' must load the compiled stylesheet.');
+        }
     }
 
     public function testDashboardShipsDarkModePrePaintScriptAndToggle(): void

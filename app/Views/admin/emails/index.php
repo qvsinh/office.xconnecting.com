@@ -85,14 +85,7 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
                 <?php endforeach ?>
             </select>
         </div>
-        <div>
-            <label for="limit" class="form-label">Per page</label>
-            <select id="limit" name="limit" class="form-select">
-                <?php foreach ([25, 50, 100] as $opt) : ?>
-                    <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
-                <?php endforeach ?>
-            </select>
-        </div>
+        <input type="hidden" name="limit" value="<?= esc((string) $limit, 'attr') ?>">
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
         <button type="submit" class="btn-secondary">Search</button>
@@ -116,7 +109,11 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
                         <td class="px-4 py-3 font-medium"><?= esc((string) ($item->to_email ?? '—')) ?></td>
                         <td class="max-w-sm truncate px-4 py-3 text-[#787774] dark:text-gray-400" title="<?= esc((string) ($item->subject ?? ''), 'attr') ?>"><?= esc((string) ($item->subject ?? '—')) ?></td>
                         <td class="px-4 py-3"><?= $statusBadge((int) ($item->status ?? 0)) ?></td>
-                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400"><?= esc((string) ($item->created_at ?? '—')) ?></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400">
+                            <?php if (($item->created_at ?? null) !== null && $item->created_at !== '') : ?>
+                                <span data-timeago="<?= esc((string) $item->created_at, 'attr') ?>"><?= esc((string) $item->created_at) ?></span>
+                            <?php else : ?>&mdash;<?php endif ?>
+                        </td>
                         <td class="whitespace-nowrap px-4 py-3 text-right">
                             <button type="button" class="text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="openShow(<?= esc(json_encode((string) $item->id), 'attr') ?>)">View</button>
                         </td>
@@ -131,18 +128,14 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
         </table>
     </div>
 
-    <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
-        <p><?= esc((string) $total) ?> email<?= $total === 1 ? '' : 's' ?> total</p>
-        <div class="flex items-center gap-2">
-            <?php if ($page > 1) : ?>
-                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
-            <?php endif ?>
-            <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
-            <?php if ($page < $totalPages) : ?>
-                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
-            <?php endif ?>
-        </div>
-    </div>
+    <?= view('_pagination', [
+        'total'      => $total,
+        'page'       => $page,
+        'totalPages' => $totalPages,
+        'limit'      => $limit,
+        'pageUrl'    => $pageUrl,
+        'noun'       => 'email',
+    ]) ?>
 
     <!-- Detail modal (read-only) -->
     <div x-show="showOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4 py-8"

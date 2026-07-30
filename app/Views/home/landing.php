@@ -28,7 +28,7 @@ $features = [
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css?v=<?= esc(asset_version(), 'attr') ?>">
 </head>
 <body class="flex min-h-full flex-col bg-gray-50 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100">
 

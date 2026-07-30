@@ -114,7 +114,11 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
 <head>
     <meta charset="utf-8">
     <script>
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+        var dark = localStorage.getItem('theme') === 'dark';
+        if (dark) document.documentElement.classList.add('dark');
+        // Paint the canvas now: the dark background lives on <body> via the
+        // external stylesheet, so <html> would flash white on every navigation.
+        document.documentElement.style.backgroundColor = dark ? '#111827' : '#f9fafb';
         // Pre-paint sidebar state (mirrors the dark-mode toggle above): read the
         // persisted desktop expanded/collapsed choice before Alpine boots so the
         // sidebar's initial width matches on first paint — no reload flash.
@@ -130,8 +134,54 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>[x-cloak] { display: none !important; }</style>
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css?v=<?= esc(asset_version(), 'attr') ?>">
+    <script>
+        /*
+         * "3 hours ago" for a stored timestamp, with the exact value in the title.
+         *
+         * Timestamps are stored UTC (Config\App::$appTimezone = 'UTC'), and the
+         * `Z` below is what says so — without it the browser would read
+         * "2026-07-30 09:00:00" as local time and be hours out.
+         *
+         * NOT for the attendance screens: those already render Vietnam-local
+         * times, and hydrating them here would convert twice.
+         */
+        window.timeAgo = function (value) {
+            if (!value) return '\u2014';
+
+            const at = new Date(String(value).replace(' ', 'T') + 'Z');
+            if (isNaN(at)) return String(value);
+
+            let seconds = Math.round((Date.now() - at.getTime()) / 1000);
+            const future = seconds < 0;
+            seconds = Math.abs(seconds);
+
+            const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const units = [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]];
+
+            for (const [unit, size] of units) {
+                if (seconds >= size) {
+                    const amount = Math.floor(seconds / size);
+                    return rtf.format(future ? amount : -amount, unit);
+                }
+            }
+
+            return rtf.format(future ? seconds : -seconds, 'second');
+        };
+
+        // Progressive enhancement: the server already rendered the raw value as
+        // the element's text, so with JavaScript off the page still reads
+        // correctly — and `assertSee('2026-07-30 09:00:00')` still passes.
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-timeago]').forEach(function (el) {
+                const raw = el.getAttribute('data-timeago');
+                if (!raw) return;
+
+                el.textContent = window.timeAgo(raw);
+                el.setAttribute('title', raw + ' UTC');
+            });
+        });
+    </script>
     <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -205,7 +255,13 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
                             </svg>
                         </button>
-                        <div class="grid transition-all duration-200 ease-in-out"
+                        <!--
+                          x-cloak, because the row-size class comes from :class and
+                          therefore does not exist until Alpine binds. Without it
+                          every group renders open on first paint, the nav overflows,
+                          and its scrollbar flashes before collapsing.
+                        -->
+                        <div x-cloak class="grid transition-all duration-200 ease-in-out"
                              :class="(open && navLabelsVisible()) ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
                             <div class="overflow-hidden">
                                 <div class="space-y-1 pt-1">
@@ -260,7 +316,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                 <div x-data="{ dark: document.documentElement.classList.contains('dark') }">
                     <button type="button"
                             class="rounded-md p-2 text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                            @click="dark = !dark; document.documentElement.classList.toggle('dark', dark); localStorage.setItem('theme', dark ? 'dark' : 'light')"
+                            @click="dark = !dark; document.documentElement.classList.toggle('dark', dark); document.documentElement.style.backgroundColor = dark ? '#111827' : '#f9fafb'; localStorage.setItem('theme', dark ? 'dark' : 'light')"
                             :aria-pressed="dark" aria-label="Toggle dark mode">
                         <svg x-show="!dark" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />

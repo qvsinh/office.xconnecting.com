@@ -12,7 +12,14 @@ helper('setting');
 <html lang="en" class="h-full">
 <head>
     <meta charset="utf-8">
-    <script>if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');</script>
+    <script>(function () {
+        // Paint the canvas before the first frame. The dark background otherwise
+        // lives only on <body> via the external stylesheet, so <html> stays white
+        // and every full-page navigation flashes white before the CSS lands.
+        var dark = localStorage.getItem('theme') === 'dark';
+        if (dark) document.documentElement.classList.add('dark');
+        document.documentElement.style.backgroundColor = dark ? '#111827' : '#f9fafb';
+    })();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Authentication — <?= esc(site_name()) ?></title>
     <meta name="csrf-token-name" content="<?= esc(csrf_token(), 'attr') ?>">
@@ -22,8 +29,7 @@ helper('setting');
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>[x-cloak] { display: none !important; }</style>
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css?v=<?= esc(asset_version(), 'attr') ?>">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="flex h-full min-h-screen items-center justify-center bg-gray-50 px-4 font-sans text-[#111111] antialiased dark:bg-gray-900 dark:text-gray-100">

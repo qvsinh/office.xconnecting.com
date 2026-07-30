@@ -98,14 +98,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 <option value="0" <?= ($filters['status'] ?? '') === '0' ? 'selected' : '' ?>>Inactive</option>
             </select>
         </div>
-        <div>
-            <label for="limit" class="form-label">Per page</label>
-            <select id="limit" name="limit" class="form-select">
-                <?php foreach ([25, 50, 100] as $opt) : ?>
-                    <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
-                <?php endforeach ?>
-            </select>
-        </div>
+        <input type="hidden" name="limit" value="<?= esc((string) $limit, 'attr') ?>">
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
         <button type="submit" class="btn-secondary">Search</button>
@@ -140,7 +133,11 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                                 <?= (int) $item->status === 1 ? 'Active' : 'Inactive' ?>
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400"><?= esc($item->login_at ?? '—') ?></td>
+                        <td class="px-4 py-3 text-xs text-[#787774] dark:text-gray-400">
+                            <?php if (($item->login_at ?? null) !== null && $item->login_at !== '') : ?>
+                                <span data-timeago="<?= esc((string) $item->login_at, 'attr') ?>"><?= esc((string) $item->login_at) ?></span>
+                            <?php else : ?>&mdash;<?php endif ?>
+                        </td>
                         <td class="whitespace-nowrap px-4 py-3 text-right">
                             <a href="/admin/users/view/<?= (int) $item->id ?>" class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100">View</a>
                             <button type="button" class="mr-3 text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="openEdit(<?= (int) $item->id ?>)">Edit</button>
@@ -158,18 +155,14 @@ $sortMark = static function (string $col) use ($sort, $order): string {
         </table>
     </div>
 
-    <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
-        <p><?= esc((string) $total) ?> user<?= $total === 1 ? '' : 's' ?> total</p>
-        <div class="flex items-center gap-2">
-            <?php if ($page > 1) : ?>
-                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
-            <?php endif ?>
-            <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
-            <?php if ($page < $totalPages) : ?>
-                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
-            <?php endif ?>
-        </div>
-    </div>
+    <?= view('_pagination', [
+        'total'      => $total,
+        'page'       => $page,
+        'totalPages' => $totalPages,
+        'limit'      => $limit,
+        'pageUrl'    => $pageUrl,
+        'noun'       => 'user',
+    ]) ?>
 
     <!-- Create modal -->
     <div x-show="createOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"

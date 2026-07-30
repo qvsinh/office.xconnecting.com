@@ -60,14 +60,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
             <input type="text" id="keyword" name="keyword" value="<?= esc($filters['keyword'] ?? '', 'attr') ?>"
                    placeholder="Name, slug or description" class="form-input">
         </div>
-        <div>
-            <label for="limit" class="form-label">Per page</label>
-            <select id="limit" name="limit" class="form-select">
-                <?php foreach ([25, 50, 100] as $opt) : ?>
-                    <option value="<?= esc((string) $opt, 'attr') ?>" <?= $limit === $opt ? 'selected' : '' ?>><?= esc((string) $opt) ?></option>
-                <?php endforeach ?>
-            </select>
-        </div>
+        <input type="hidden" name="limit" value="<?= esc((string) $limit, 'attr') ?>">
         <input type="hidden" name="sort" value="<?= esc($sort, 'attr') ?>">
         <input type="hidden" name="order" value="<?= esc($order, 'attr') ?>">
         <button type="submit" class="btn-secondary">Search</button>
@@ -111,18 +104,14 @@ $sortMark = static function (string $col) use ($sort, $order): string {
         </table>
     </div>
 
-    <div class="mt-4 flex items-center justify-between text-sm text-[#787774] dark:text-gray-400">
-        <p><?= esc((string) $total) ?> group<?= $total === 1 ? '' : 's' ?> total</p>
-        <div class="flex items-center gap-2">
-            <?php if ($page > 1) : ?>
-                <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
-            <?php endif ?>
-            <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
-            <?php if ($page < $totalPages) : ?>
-                <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
-            <?php endif ?>
-        </div>
-    </div>
+    <?= view('_pagination', [
+        'total'      => $total,
+        'page'       => $page,
+        'totalPages' => $totalPages,
+        'limit'      => $limit,
+        'pageUrl'    => $pageUrl,
+        'noun'       => 'group',
+    ]) ?>
 
     <!-- Create modal -->
     <div x-show="createOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"

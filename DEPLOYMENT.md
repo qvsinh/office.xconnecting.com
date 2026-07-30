@@ -176,6 +176,11 @@ session.regenerateDestroy = false
 auth.password_algorithm = 'bcrypt'
 auth.password_cost      = 12
 
+# Cache-busting token appended to /css/app.css. **Bump this on every deploy that
+# changes the stylesheet.** Leave it set: with no value, asset_version()
+# randomises per render, which disables browser caching of the CSS entirely.
+asset.version = 'v1'
+
 encryption.key    =            # fill via `php spark key:generate`
 encryption.driver = OpenSSL
 
@@ -495,4 +500,7 @@ Two things that bite:
 - **OPcache serves stale PHP** until PHP-FPM is reloaded. `/admin/system` also
   exposes an OPcache reset.
 - **Browsers cache `/css/app.css`.** After a view change, rebuild and commit the
-  CSS on your machine (`npm run build`), and hard-refresh once deployed.
+  CSS on your machine (`scripts/build-assets.sh`), then **bump `asset.version` in
+  the server's `.env`** — that is what changes the `?v=` on the link and makes
+  every browser fetch the new file. Without the bump, returning visitors keep the
+  old stylesheet.
