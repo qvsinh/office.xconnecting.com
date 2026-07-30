@@ -662,4 +662,78 @@ final class AdminUsersTest extends CIUnitTestCase
         $login->assertStatus(200);
         $this->assertSame('success', json_decode($login->getJSON(), true)['status']);
     }
+
+    // ------------------------------------------------- create-form defaults
+
+    /**
+     * The "Add user" modal opens pre-filled, so the common case is open ->
+     * Generate -> Create.
+     *
+     * Asserted on the raw body: `$result->getBody()` is forwarded to DOMParser and
+     * returns libxml's rewrite of the page, which is not what the browser runs.
+     */
+    public function testTheCreateFormShipsDatedDummyDefaults(): void
+    {
+        helper('attendance');
+        $this->loginAs($this->seedWebUser(['email' => 'defaults@example.com', 'zone' => 'admin']));
+
+        $html  = (string) $this->withSession()->get('/admin/users')->response()->getBody();
+        $stamp = str_replace('-', '', attendance_today());
+
+        $this->assertStringContainsString('"name":"User' . $stamp . '"', $html);
+        $this->assertStringContainsString('"email":"admin+' . substr($stamp, 2) . '@xconnecting.com"', $html);
+
+        // The password must NOT be pre-filled — a fixed default would be a shared
+        // credential, and a blank field is what makes "Generate" the obvious move.
+        $this->assertStringContainsString('"password":""', $html);
+    }
+
+    /**
+     * The defaults are only a starting point: the admin can still type over them,
+     * and the server takes whatever arrives rather than the dummy values.
+     */
+    public function testTheDefaultsAreNotForcedOnTheServer(): void
+    {
+        $this->loginAs($this->seedWebUser(['email' => 'override@example.com', 'zone' => 'admin']));
+
+        $this->withSession()->post('/admin/users/create', $this->withCsrf([
+            'name'     => 'Real Person',
+            'email'    => 'real.person@xconnecting.com',
+            'password' => 'Str0ng!Pass1',
+            'zone'     => 'admin',
+            'status'   => 1,
+        ]))->assertStatus(200);
+
+        $created = model(UserModel::class)->where('email', 'real.person@xconnecting.com')->first();
+        $this->assertNotNull($created);
+        $this->assertSame('Real Person', $created->name);
+        $this->assertSame('admin', $created->zone);
+    }
+
+    /**
+     * Two accounts on one day: the second needs a different address, and the
+     * server says so rather than silently creating a duplicate.
+     */
+    public function testASecondAccountOnTheSameDayIsRejectedUntilTheEmailChanges(): void
+    {
+        helper('attendance');
+        $this->loginAs($this->seedWebUser(['email' => 'dup@example.com', 'zone' => 'admin']));
+
+        $email = 'admin+' . substr(str_replace('-', '', attendance_today()), 2) . '@xconnecting.com';
+        $body  = [
+            'name'     => 'First',
+            'email'    => $email,
+            'password' => 'Str0ng!Pass1',
+            'zone'     => 'user',
+            'status'   => 1,
+        ];
+
+        $this->withSession()->post('/admin/users/create', $this->withCsrf($body))->assertStatus(200);
+
+        $second = $this->withSession()->post('/admin/users/create', $this->withCsrf($body));
+        $second->assertStatus(400);
+        $this->assertStringContainsStringIgnoringCase('email', (string) json_decode($second->getJSON(), true)['message']);
+
+        $this->assertSame(1, model(UserModel::class)->where('email', $email)->countAllResults());
+    }
 }

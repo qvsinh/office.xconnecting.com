@@ -13,7 +13,28 @@
  */
 $this->extend('layouts/app');
 
+helper('attendance');
+
 $totalPages = max(1, (int) ceil($total / max($limit, 1)));
+
+// Pre-filled "Add user" values, so the common case is two clicks: open, Generate,
+// Create. Dated from `attendance_today()` rather than a fresh date() call, so
+// "today" means the same Asia/Ho_Chi_Minh business day the rest of the app uses.
+//
+// Only a starting point — every field stays editable, and the email is unique per
+// day, so creating a second account on one day needs the address changed (the
+// server's is_unique rule says so plainly).
+$stamp = str_replace('-', '', attendance_today()); // 20260730
+
+$createDefaults = [
+    'name'     => 'User' . $stamp,
+    'email'    => 'admin+' . substr($stamp, 2) . '@xconnecting.com', // ymd, per request
+    'password' => '',
+    'zone'     => 'user',
+    'status'   => 1,
+    'language' => 'en',
+    'timezone' => 'Asia/Tokyo',
+];
 
 $queryBase = [
     'keyword' => $filters['keyword'] ?? '',
@@ -283,6 +304,11 @@ $sortMark = static function (string $col) use ($sort, $order): string {
     </form>
 
     <script>
+        // Data in a <script> body needs json_encode with the JSON_HEX_* flags —
+        // esc($v, 'js') emits \x22…\x22 here, which is a syntax error, and a script
+        // that fails to parse kills every Alpine handler on the component.
+        const CREATE_DEFAULTS = <?= json_encode($createDefaults, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
         function usersAdmin() {
             return {
                 creating: false,
@@ -290,7 +316,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 generatingPassword: false,
                 createPasswordShown: false,
                 editPasswordShown: false,
-                createForm: { name: '', email: '', password: '', zone: 'user', status: 1, language: 'en', timezone: 'Asia/Tokyo' },
+                createForm: { ...CREATE_DEFAULTS },
                 editing: false,
                 editOpen: false,
                 editLoading: false,
@@ -329,7 +355,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 },
 
                 openCreate() {
-                    this.createForm = { name: '', email: '', password: '', zone: 'user', status: 1, language: 'en', timezone: 'Asia/Tokyo' };
+                    this.createForm = { ...CREATE_DEFAULTS };
                     this.createPasswordShown = false;
                     this.createOpen = true;
                 },
