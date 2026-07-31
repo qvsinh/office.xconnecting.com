@@ -33,7 +33,9 @@ $createDefaults = [
     'zone'     => 'user',
     'status'   => 1,
     'language' => 'en',
-    'timezone' => 'Asia/Tokyo',
+    // attendance_tz(), not a literal: the company timezone already has one
+    // home, and 'Asia/Tokyo' here was a leftover from the starter.
+    'timezone' => attendance_tz(),
 ];
 
 $queryBase = [
@@ -206,7 +208,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                     </div>
                     <div>
                         <label for="create_timezone" class="form-label">Timezone</label>
-                        <input id="create_timezone" type="text" x-model="createForm.timezone" maxlength="30" placeholder="Asia/Tokyo" class="form-input">
+                        <input id="create_timezone" type="text" x-model="createForm.timezone" maxlength="30" placeholder="<?= esc(attendance_tz(), 'attr') ?>" class="form-input">
                     </div>
                 </div>
                 <label class="flex items-center gap-2 text-sm dark:text-gray-200">

@@ -736,4 +736,97 @@ final class AdminUsersTest extends CIUnitTestCase
 
         $this->assertSame(1, model(UserModel::class)->where('email', $email)->countAllResults());
     }
+
+    // ------------------------------------------------------------- timezone
+
+    /**
+     * The company is in Vietnam, so a new account defaults to Vietnam time. The
+     * value comes from `attendance_tz()` rather than a literal, so the timezone
+     * has one home; `Asia/Tokyo` was a starter leftover.
+     */
+    public function testTheCreateFormDefaultsToTheCompanyTimezone(): void
+    {
+        helper('attendance');
+        $this->loginAs($this->seedWebUser(['email' => 'tz-form@example.com', 'zone' => 'admin']));
+
+        $html = (string) $this->withSession()->get('/admin/users')->response()->getBody();
+
+        $this->assertSame('Asia/Ho_Chi_Minh', attendance_tz());
+        $this->assertStringContainsString('"timezone":"Asia\/Ho_Chi_Minh"', $html);
+
+        // The placeholder must agree with the default rather than contradict it.
+        // Decoded first: this view escapes attributes with `esc($v, 'attr')`,
+        // which turns the slash into `&#x2F;` — invisible to the user, but a raw
+        // string match would miss it.
+        $decoded = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
+        $this->assertStringContainsString('placeholder="Asia/Ho_Chi_Minh"', $decoded);
+
+        $this->assertStringNotContainsString('Asia/Tokyo', $decoded, 'No starter leftover should reach the page.');
+    }
+
+    /**
+     * Clearing the field must not fall back to the old default — that fallback is
+     * what applies whenever the input arrives empty.
+     */
+    public function testAnEmptyTimezoneFallsBackToTheCompanyTimezone(): void
+    {
+        helper('attendance');
+        $this->loginAs($this->seedWebUser(['email' => 'tz-blank@example.com', 'zone' => 'admin']));
+
+        $this->withSession()->post('/admin/users/create', $this->withCsrf([
+            'name'     => 'No Timezone',
+            'email'    => 'no-tz@example.com',
+            'password' => 'Str0ng!Pass1',
+            'zone'     => 'user',
+            'status'   => 1,
+            'timezone' => '',
+        ]))->assertStatus(200);
+
+        $created = model(UserModel::class)->where('email', 'no-tz@example.com')->first();
+        $this->assertSame(attendance_tz(), $created->timezone);
+    }
+
+    /**
+     * An explicit timezone still wins — the default is a starting point, and
+     * someone working abroad can be recorded as such.
+     */
+    public function testAnExplicitTimezoneIsKept(): void
+    {
+        $this->loginAs($this->seedWebUser(['email' => 'tz-explicit@example.com', 'zone' => 'admin']));
+
+        $this->withSession()->post('/admin/users/create', $this->withCsrf([
+            'name'     => 'Abroad',
+            'email'    => 'abroad@example.com',
+            'password' => 'Str0ng!Pass1',
+            'zone'     => 'user',
+            'status'   => 1,
+            'timezone' => 'Europe/Berlin',
+        ]))->assertStatus(200);
+
+        $this->assertSame('Europe/Berlin', model(UserModel::class)->where('email', 'abroad@example.com')->first()->timezone);
+    }
+
+    /**
+     * The schema default matters too: `AdminUserSeeder` and the spark commands
+     * insert without a timezone, so they never touch the form's default.
+     */
+    public function testTheColumnDefaultIsTheCompanyTimezone(): void
+    {
+        helper('attendance');
+
+        $db = db_connect();
+        $db->resetDataCache();
+
+        $column = null;
+
+        foreach ($db->getFieldData('users') as $field) {
+            if ($field->name === 'timezone') {
+                $column = $field;
+                break;
+            }
+        }
+
+        $this->assertNotNull($column, 'users.timezone should exist.');
+        $this->assertSame(attendance_tz(), $column->default, 'A row inserted without a timezone must land on Vietnam time.');
+    }
 }

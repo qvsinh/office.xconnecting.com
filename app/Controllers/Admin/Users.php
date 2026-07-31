@@ -63,6 +63,8 @@ class Users extends BaseController
 
     public function create(): ResponseInterface
     {
+        helper('attendance'); // attendance_tz() — the company timezone default
+
         if (! $this->validate($this->userValidationRules(false))) {
             return $this->jsonFailed($this->validator->getErrors());
         }
@@ -89,7 +91,7 @@ class Users extends BaseController
             'role_id'  => $this->roleIdForZone($zone),
             'status'   => (int) $this->request->getPost('status'),
             'language' => trim((string) $this->request->getPost('language')) ?: 'en',
-            'timezone' => trim((string) $this->request->getPost('timezone')) ?: 'Asia/Tokyo',
+            'timezone' => trim((string) $this->request->getPost('timezone')) ?: attendance_tz(),
         ]);
 
         return $this->jsonSuccess('User has been created successfully.');
