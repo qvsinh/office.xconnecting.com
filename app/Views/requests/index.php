@@ -75,8 +75,8 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
                     <th scope="col" class="px-4 py-3">Dates</th>
                     <th scope="col" class="px-4 py-3">Type</th>
-                    <th scope="col" class="px-4 py-3 text-right">Days</th>
-                    <th scope="col" class="px-4 py-3">Reason</th>
+                    <th scope="col" class="hidden px-4 py-3 text-right sm:table-cell">Days</th>
+                    <th scope="col" class="hidden px-4 py-3 sm:table-cell">Reason</th>
                     <th scope="col" class="px-4 py-3">Status</th>
                     <th scope="col" class="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -91,10 +91,10 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                             <?php endif ?>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3"><?= esc(leave_request_label($item)) ?></td>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                        <td class="hidden whitespace-nowrap px-4 py-3 text-right tabular-nums sm:table-cell">
                             <?= $item->type === LeaveRequestModel::TYPE_LATE ? '—' : esc(rtrim(rtrim(number_format($requestDays[(int) $item->id] ?? 0, 1, '.', ''), '0'), '.')) ?>
                         </td>
-                        <td class="max-w-xs truncate px-4 py-3 text-[#787774] dark:text-gray-400" title="<?= esc((string) $item->reason, 'attr') ?>"><?= esc((string) $item->reason) ?></td>
+                        <td class="hidden max-w-xs truncate px-4 py-3 text-[#787774] sm:table-cell dark:text-gray-400" title="<?= esc((string) $item->reason, 'attr') ?>"><?= esc((string) $item->reason) ?></td>
                         <td class="whitespace-nowrap px-4 py-3">
                             <?= view('requests/_status_pill', ['status' => $item->status]) ?>
                             <?php if (($item->review_note ?? null) !== null) : ?>

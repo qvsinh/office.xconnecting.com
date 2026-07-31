@@ -69,24 +69,24 @@ $stats = [
         <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
-                    <th scope="col" class="px-4 py-3">Date</th>
-                    <th scope="col" class="px-4 py-3">Day</th>
-                    <th scope="col" class="px-4 py-3">In</th>
-                    <th scope="col" class="px-4 py-3">Out</th>
-                    <th scope="col" class="px-4 py-3">Worked</th>
-                    <th scope="col" class="px-4 py-3">Status</th>
+                    <th scope="col" class="px-3 py-3 sm:px-4">Date</th>
+                    <th scope="col" class="hidden px-3 py-3 sm:px-4 sm:table-cell">Day</th>
+                    <th scope="col" class="px-3 py-3 sm:px-4">In</th>
+                    <th scope="col" class="px-3 py-3 sm:px-4">Out</th>
+                    <th scope="col" class="hidden px-3 py-3 sm:px-4 sm:table-cell">Worked</th>
+                    <th scope="col" class="px-3 py-3 sm:px-4">Status</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
                 <?php foreach ($days as $date => $day) : ?>
                     <?php $row = $rows[$date] ?? null; ?>
                     <tr>
-                        <td class="whitespace-nowrap px-4 py-3 font-medium tabular-nums"><?= esc((string) $date) ?></td>
-                        <td class="whitespace-nowrap px-4 py-3 text-[#787774] dark:text-gray-400"><?= esc($weekday((string) $date)) ?></td>
-                        <td class="whitespace-nowrap px-4 py-3 tabular-nums"><?= esc(attendance_local_time($row->checkin_at ?? null)) ?></td>
-                        <td class="whitespace-nowrap px-4 py-3 tabular-nums"><?= esc(attendance_local_time($row->checkout_at ?? null)) ?></td>
-                        <td class="whitespace-nowrap px-4 py-3 tabular-nums"><?= esc(attendance_format_duration($day->worked_seconds)) ?></td>
-                        <td class="whitespace-nowrap px-4 py-3"><?= view('attendance/_status_pill', ['day' => $day]) ?></td>
+                        <td class="whitespace-nowrap px-3 py-3 sm:px-4 font-medium tabular-nums"><?= esc((string) $date) ?></td>
+                        <td class="hidden whitespace-nowrap px-3 py-3 sm:px-4 text-[#787774] sm:table-cell dark:text-gray-400"><?= esc($weekday((string) $date)) ?></td>
+                        <td class="whitespace-nowrap px-3 py-3 sm:px-4 tabular-nums"><?= esc(attendance_local_time($row->checkin_at ?? null)) ?></td>
+                        <td class="whitespace-nowrap px-3 py-3 sm:px-4 tabular-nums"><?= esc(attendance_local_time($row->checkout_at ?? null)) ?></td>
+                        <td class="hidden whitespace-nowrap px-3 py-3 sm:px-4 tabular-nums sm:table-cell"><?= esc(attendance_format_duration($day->worked_seconds)) ?></td>
+                        <td class="whitespace-nowrap px-3 py-3 sm:px-4"><?= view('attendance/_status_pill', ['day' => $day]) ?></td>
                     </tr>
                 <?php endforeach ?>
                 <?php if ($days === []) : ?>

@@ -281,7 +281,17 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
             </nav>
         </aside>
 
-        <div class="flex min-h-screen flex-1 flex-col transition-all duration-200 ease-linear"
+        <!--
+          min-w-0 is load-bearing, not decoration.
+
+          A flex item defaults to `min-width: auto`, meaning it refuses to shrink
+          below its content's intrinsic width. This column holds the tables, so
+          without it the column grew to the widest table (up to 1081px on
+          /admin/attendance/report) and took the header and the whole page with it
+          — every table page scrolled sideways on a phone, and the
+          `overflow-x-auto` wrappers never got the chance to scroll instead.
+        -->
+        <div class="flex min-h-screen min-w-0 flex-1 flex-col transition-all duration-200 ease-linear"
              :class="sidebarExpanded ? 'lg:pl-72' : 'lg:pl-20'">
             <?php if ($actingAsUser !== null) : ?>
                 <!-- Acting-as banner: lives INSIDE the content column (not at the

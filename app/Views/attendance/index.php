@@ -143,9 +143,9 @@ if ($impersonating) {
                     <th scope="col" class="px-4 py-3">Date</th>
                     <th scope="col" class="px-4 py-3">Check-in</th>
                     <th scope="col" class="px-4 py-3">Check-out</th>
-                    <th scope="col" class="px-4 py-3">Worked</th>
+                    <th scope="col" class="hidden px-4 py-3 sm:table-cell">Worked</th>
                     <th scope="col" class="px-4 py-3">Status</th>
-                    <th scope="col" class="px-4 py-3">Note</th>
+                    <th scope="col" class="hidden px-4 py-3 sm:table-cell">Note</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
@@ -159,9 +159,9 @@ if ($impersonating) {
                                 <span class="ml-1 rounded-full border border-[#E5C07B] px-2 py-0.5 text-xs font-medium text-[#7A5B14] dark:border-amber-700/60 dark:text-amber-200">missing</span>
                             <?php endif ?>
                         </td>
-                        <td class="whitespace-nowrap px-4 py-3 tabular-nums"><?= esc(attendance_format_duration($evaluations[$row->work_date]->worked_seconds ?? attendance_worked_seconds($row->checkin_at, $row->checkout_at))) ?></td>
+                        <td class="hidden whitespace-nowrap px-4 py-3 tabular-nums sm:table-cell"><?= esc(attendance_format_duration($evaluations[$row->work_date]->worked_seconds ?? attendance_worked_seconds($row->checkin_at, $row->checkout_at))) ?></td>
                         <td class="whitespace-nowrap px-4 py-3"><?= view('attendance/_status_pill', ['day' => $evaluations[$row->work_date] ?? null]) ?></td>
-                        <td class="px-4 py-3 text-[#787774] dark:text-gray-400">
+                        <td class="hidden px-4 py-3 text-[#787774] sm:table-cell dark:text-gray-400">
                             <?= esc((string) ($row->note ?? '—')) ?>
                             <?php if ($row->edited_at !== null) : ?>
                                 <span class="ml-1 rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300">corrected</span>

@@ -304,4 +304,71 @@ final class UiPlaybookTest extends CIUnitTestCase
             'migrations'      => ['/admin/system/migrations'],
         ];
     }
+
+    // ----------------------------------------------------------------- mobile
+
+    /**
+     * Regression: the content column must be allowed to shrink below its content.
+     *
+     * A flex item defaults to `min-width: auto`, so it refuses to go narrower than
+     * its widest child. This column holds the tables, so without `min-w-0` it grew
+     * to the widest table and dragged the header and the whole page with it —
+     * measured at +137px on /attendance and +706px on /admin/attendance/report at
+     * a 375px viewport, i.e. every table page scrolled sideways on a phone while
+     * the `overflow-x-auto` wrappers sat there unused.
+     *
+     * One class, every page. Asserted here because it looks like decoration and is
+     * exactly the kind of thing a later tidy-up deletes.
+     */
+    public function testTheContentColumnCanShrinkBelowItsTables(): void
+    {
+        $this->asAdmin('mobile@example.com');
+
+        $body = (string) $this->withSession()->get('/admin/users')->response()->getBody();
+
+        $this->assertMatchesRegularExpression(
+            '/<div class="flex min-h-screen min-w-0 flex-1 flex-col/',
+            $body,
+            'The main content column needs min-w-0, or every table page overflows horizontally.',
+        );
+    }
+
+    /**
+     * The employee-facing tables drop their least essential columns below `sm` so
+     * they fit a phone without sideways scrolling. Measured: /attendance,
+     * /attendance/report and /requests all fit at 360px.
+     *
+     * @dataProvider narrowTableProvider
+     */
+    public function testEmployeeTablesHideLowPriorityColumnsOnSmallScreens(string $page, int $expected): void
+    {
+        $this->asAdmin('narrow@example.com');
+
+        $body = (string) $this->withSession()->get($page)->response()->getBody();
+
+        $this->assertSame(
+            $expected,
+            preg_match_all('/<th[^>]*\bhidden\b[^>]*sm:table-cell/', $body),
+            $page . ' should hide exactly ' . $expected . ' header cells below sm.',
+        );
+
+        // Every hidden header needs its body cells hidden too, or the columns
+        // shift out of alignment at narrow widths.
+        $this->assertGreaterThanOrEqual(
+            $expected,
+            preg_match_all('/<t[dh][^>]*\bhidden\b[^>]*sm:table-cell/', $body),
+        );
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: int}>
+     */
+    public static function narrowTableProvider(): array
+    {
+        return [
+            'my attendance' => ['/attendance', 2],        // Worked, Note
+            'my report'     => ['/attendance/report', 2], // Day, Worked
+            'my requests'   => ['/requests', 2],          // Days, Reason
+        ];
+    }
 }
