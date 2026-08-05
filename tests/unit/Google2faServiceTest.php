@@ -47,9 +47,23 @@ final class Google2faServiceTest extends CIUnitTestCase
         $url = $service->otpauthUrl('user@example.com', $secret);
 
         $this->assertStringStartsWith('otpauth://totp/', $url);
-        // Issuer is URL-encoded in the otpauth URL ('CI4 Starter' -> 'CI4%20Starter').
-        $this->assertStringContainsString('CI4%20Starter', $url);
         $this->assertStringContainsString($secret, $url);
+
+        // The issuer appears twice — as the label prefix and as the `issuer`
+        // parameter — and authenticator apps show a duplicated entry if the two
+        // disagree. Asserted against each other rather than against a literal, so
+        // renaming the issuer does not need this test edited.
+        $this->assertSame(
+            1,
+            preg_match('#^otpauth://totp/([^:]+):[^?]+\?.*\bissuer=([^&]+)#', $url, $parts),
+            'Unexpected otpauth URL shape: ' . $url,
+        );
+        $this->assertSame($parts[1], $parts[2], 'The label prefix and the issuer parameter must match.');
+
+        // It must not still be the starter's placeholder — that is what every
+        // enrolling user saw on their phone until it was renamed.
+        $this->assertNotSame('CI4%20Starter', $parts[2], 'The authenticator issuer is still the starter default.');
+        $this->assertSame('Office XCN', urldecode($parts[2]));
     }
 
     public function testQrCodeDataUriReturnsANonEmptySvgDataUri(): void

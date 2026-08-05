@@ -6,12 +6,17 @@ use Config\Mail;
 /**
  * `Config\Mail` and the `mail.` env group.
  *
+ * SparkPost is deliberately absent: no library, no caller, so its three keys could
+ * never do anything and were removed along with `mail.provider` (one transport
+ * makes a selector pointless).
+ *
  * The mapping is the whole point of the class, and it is easy to get silently
  * wrong: CI4 matches env keys to property names character for character, and a
  * mistyped key does not error — the property just keeps its default. That already
- * bit this config once, when a rewrite left `mail.provider = ''aws''` in `.env`
- * and the doubled quotes parsed as an empty string, so `provider` silently fell
- * back while `mail.aws.*` kept working.
+ * bit this config once, when a rewrite left doubled quotes in `.env` and the value
+ * parsed as an empty string while the `mail.aws.*` keys kept working, so
+ * `testTheProjectEnvIsWiredToTheGroup()` reads the real file rather than an
+ * injected value.
  *
  * @internal
  */
@@ -62,27 +67,16 @@ final class MailConfigTest extends CIUnitTestCase
         });
     }
 
-    public function testTheSparkpostGroupMapsIntoTheArrayProperty(): void
+    public function testTheSenderMaps(): void
     {
         $this->withEnv([
-            'mail.sparkpost.key'    => 'sp-probe-key',
-            'mail.sparkpost.isSMTP' => '1',
+            'mail.sender.name'     => 'Probe Sender',
+            'mail.sender.email'    => 'probe@example.com',
+            'mail.supporter.email' => 'help@example.com',
         ], function (Mail $mail): void {
-            $this->assertSame('sp-probe-key', $mail->sparkpost['key']);
-            $this->assertSame('1', $mail->sparkpost['isSMTP']);
-        });
-    }
-
-    public function testTheSenderAndProviderMap(): void
-    {
-        $this->withEnv([
-            'mail.provider'     => 'sparkpost',
-            'mail.sender.name'  => 'Probe Sender',
-            'mail.sender.email' => 'probe@example.com',
-        ], function (Mail $mail): void {
-            $this->assertSame('sparkpost', $mail->provider);
             $this->assertSame('Probe Sender', $mail->sender['name']);
             $this->assertSame('probe@example.com', $mail->sender['email']);
+            $this->assertSame('help@example.com', $mail->supporter['email']);
         });
     }
 
@@ -93,9 +87,8 @@ final class MailConfigTest extends CIUnitTestCase
     {
         $mail = config('Mail');
 
-        $this->assertNotSame('', $mail->provider, 'mail.provider is not reaching the config — check for stray quotes in .env.');
-        $this->assertContains($mail->provider, ['aws', 'sparkpost']);
-        $this->assertNotSame('', $mail->sender['email'], 'mail.sender.email is not reaching the config.');
+        $this->assertNotSame('', $mail->sender['email'], 'mail.sender.email is not reaching the config — check for stray quotes in .env.');
+        $this->assertNotSame('', $mail->supporter['email'], 'mail.supporter.email is not reaching the config.');
     }
 
     // -------------------------------------------------------------- switches
@@ -139,7 +132,6 @@ final class MailConfigTest extends CIUnitTestCase
     public function testSesNeedsAllThreeValuesToCountAsConfigured(): void
     {
         $complete = [
-            'mail.provider'              => 'aws',
             'mail.aws.access_key_id'     => 'AKIAPROBE0000000000',
             'mail.aws.secret_access_key' => 'secret',
             'mail.aws.region'            => 'ap-northeast-1',
@@ -155,28 +147,20 @@ final class MailConfigTest extends CIUnitTestCase
         ));
     }
 
-    public function testSparkpostOnlyNeedsItsKey(): void
-    {
-        $this->withEnv([
-            'mail.provider'      => 'sparkpost',
-            'mail.sparkpost.key' => 'sp-probe-key',
-        ], fn (Mail $mail) => $this->assertTrue($mail->configured()));
-
-        $this->withEnv([
-            'mail.provider'      => 'sparkpost',
-            'mail.sparkpost.key' => '',
-        ], fn (Mail $mail) => $this->assertFalse($mail->configured()));
-    }
-
     /**
-     * As shipped: credentials are present but nothing is switched on, and no
-     * region is set. Pinned so the state is explicit rather than surprising.
+     * As shipped: the switch is off and the credentials are absent, so SES is not
+     * usable. Pinned so the state is explicit rather than surprising — and so
+     * turning mail on without finishing the setup fails here instead of in
+     * production.
      */
     public function testMailIsNotEnabledInThisProject(): void
     {
         $mail = config('Mail');
 
         $this->assertFalse($mail->enabled(), 'Nothing dispatches mail yet; the switch should stay off.');
-        $this->assertFalse($mail->configured(), 'mail.aws.region is unset, so SES is not usable yet.');
+        $this->assertFalse(
+            $mail->configured(),
+            'SES counts as configured only with an access key, a secret and a region.',
+        );
     }
 }

@@ -16,9 +16,18 @@ use PragmaRX\Google2FA\Google2FA;
  */
 class Google2faService
 {
-    // Label shown in the authenticator app. Rename per project (or wire to a
-    // config value) — kept a constant so this crypto helper has no DB coupling.
-    private const ISSUER = 'CI4 Starter';
+    // Label shown in the authenticator app, next to the 6-digit code.
+    //
+    // A constant on purpose: wiring it to site_name() would give this crypto
+    // helper a DB dependency. It said 'CI4 Starter' until now, which is what
+    // everyone enrolling 2FA actually saw on their phone — the `.env` key that
+    // looked like it controlled this (`security.2fa.name`) was never read by
+    // anything and has been removed.
+    //
+    // Changing it is safe: the issuer is only baked into the otpauth:// URI at
+    // enrolment, so existing secrets keep verifying and already-enrolled phones
+    // keep the label they were given.
+    private const ISSUER = 'Office XCN';
 
     private Google2FA $engine;
 

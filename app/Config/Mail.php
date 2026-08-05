@@ -7,14 +7,16 @@ use CodeIgniter\Config\BaseConfig;
 /**
  * Outbound mail settings, all under one `mail.` group in `.env`.
  *
+ * Amazon SES only. The SparkPost settings that came with the starter are gone —
+ * no library was installed for it and no code referenced it, so they were three
+ * values that could never do anything.
+ *
  * CI4 maps `mail.<property>` onto the properties below, and `mail.<property>.<key>`
  * into the array ones — the same mechanism `database.default.hostname` uses. So:
  *
- *   mail.provider                 -> $provider
  *   mail.sending_enable           -> $sending_enable
  *   mail.sender.email             -> $sender['email']
  *   mail.aws.access_key_id        -> $aws['access_key_id']
- *   mail.sparkpost.key            -> $sparkpost['key']
  *
  * Property names stay snake_case to match the env keys exactly — CI4 matches them
  * character for character, and `Config\Auth` already follows this convention.
@@ -22,8 +24,8 @@ use CodeIgniter\Config\BaseConfig;
  * ## Nothing sends mail yet
  *
  * These values are configuration without a consumer: no code in `app/` reads them,
- * no AWS SDK or mail library is installed, and `Config\Email::$protocol` is still
- * PHP's `mail` default with nothing calling it. Attendance reminders are delivered
+ * no AWS SDK is installed, and `Config\Email::$protocol` is still PHP's `mail`
+ * default with nothing calling it. Attendance reminders are delivered
  * in-app only (`NotificationModel`). See DEPLOYMENT.md, "Email send pipeline".
  *
  * This class exists so the settings are named, typed and grouped for when the
@@ -31,11 +33,6 @@ use CodeIgniter\Config\BaseConfig;
  */
 class Mail extends BaseConfig
 {
-    /**
-     * Which transport to use once dispatch exists: `aws` (SES) or `sparkpost`.
-     */
-    public string $provider = 'aws';
-
     /**
      * Master switch, read through `enabled()`.
      *
@@ -78,17 +75,6 @@ class Mail extends BaseConfig
     ];
 
     /**
-     * SparkPost, kept as an alternative transport.
-     *
-     * @var array{key: string, isSMTP: string, debug: string}
-     */
-    public array $sparkpost = [
-        'key'    => '',
-        'isSMTP' => 'false',
-        'debug'  => 'false',
-    ];
-
-    /**
      * Is sending switched on?
      *
      * Tolerant of the spellings people actually write in a `.env` — `no`, `off`,
@@ -107,10 +93,6 @@ class Mail extends BaseConfig
      */
     public function configured(): bool
     {
-        if ($this->provider === 'sparkpost') {
-            return trim($this->sparkpost['key']) !== '';
-        }
-
         return trim($this->aws['access_key_id']) !== ''
             && trim($this->aws['secret_access_key']) !== ''
             && trim($this->aws['region']) !== '';

@@ -179,7 +179,6 @@ auth.password_cost      = 12
 # Outbound mail. Read by Config\Mail; nothing dispatches yet (§8). `region` is
 # required for SES and has no default — SES is regional, and the wrong region
 # fails silently: the credentials look valid and nothing arrives.
-mail.provider       = 'aws'          # aws (SES) | sparkpost
 mail.sending_enable = 'false'        # accepts true/false/yes/no/on/off/1/0
 
 mail.sender.name     = 'No-Reply'
@@ -189,10 +188,6 @@ mail.supporter.email = 'admin@example.com'
 mail.aws.access_key_id     = ''
 mail.aws.secret_access_key = ''
 mail.aws.region            = ''      # e.g. ap-northeast-1
-
-mail.sparkpost.key    = ''
-mail.sparkpost.isSMTP = '0'
-mail.sparkpost.debug  = '0'
 
 # Cache-busting token appended to /css/app.css. **Bump this on every deploy that
 # changes the stylesheet.** Leave it set: with no value, asset_version()
@@ -210,18 +205,13 @@ security.cookieName     = 'csrf_cookie_name'
 security.expires        = 7200
 security.regenerate     = true
 security.redirect       = false
-security.samesite       = 'Lax'
-
-security.2fa.name   = 'Office XCN'
-security.2fa.enable = true
+cookie.samesite         = 'Lax'   # Config\Cookie, not Config\Security
 
 hashid_salt = '<fresh-random-string>'   # signs /api/v1 keys; see note below
 
 language.source = 'db'
 
-app.rpp         = 25
 app.rpp_default = 25
-compress.output = true
 ```
 
 Then:
@@ -243,8 +233,13 @@ Notes on individual keys:
   `X-Forwarded-For`, which would let anyone forge their address past the
   attendance office-IP gate and into the access log. Only set it if you later
   put an ALB or CloudFront in front — and then list *that* proxy's addresses.
-- **Unused leftovers** you can omit: `RUNNING_MODE` (referenced only in a
-  comment) and `app.cost_mode` — nothing in `app/` reads either.
+- **Every key above is read by something.** The starter's dead keys are gone —
+  `RUNNING_MODE`, `app.cost_mode`, `app.rpp`, `compress.output`,
+  `language.source`, `sparkpost.*` and `security.2fa.*` were all inert. Two were
+  actively misleading: `security.samesite` was ignored because SameSite lives on
+  `Config\Cookie` (it is `cookie.samesite` above), and `security.2fa.name` looked
+  like it set the authenticator label while the real label was hardcoded in
+  `Google2faService`.
 - **The `mail.*` group** is read by `Config\Mail` but has no consumer yet: no
   code dispatches mail, and no AWS SDK or mail library is installed (see §8).
   Configure it now if you like; it will not send anything until the pipeline
@@ -446,10 +441,10 @@ under **Settings**.
 ## 8. What this app does *not* do yet
 
 - **Email send pipeline.** Email templates and a sent-email log are managed in
-  the admin, and the transport settings are grouped under `mail.*` in `.env` and
-  typed in `Config\Mail` (`enabled()`, `configured()`), but there is **no
-  dispatch**: nothing calls a mailer, and neither an AWS SDK nor a mail library
-  is installed. `Config\Email::$protocol` is
+  the admin, and the SES settings are grouped under `mail.*` in `.env` and typed
+  in `Config\Mail` (`enabled()`, `configured()`), but there is **no dispatch**:
+  nothing calls a mailer and no AWS SDK is installed. SparkPost support was
+  removed — there was never a library or a caller for it. `Config\Email::$protocol` is
   still the PHP `mail` default and nothing calls it. Attendance reminders are
   delivered **in-app only** (`NotificationModel`) — deliberately, so no setting
   promises an email that never arrives. Wiring SMTP is a separate change.
