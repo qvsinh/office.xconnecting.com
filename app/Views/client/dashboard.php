@@ -37,7 +37,7 @@ $tiles = [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">Dashboard</h1>
+            <h1 class="text-xl font-semibold tracking-tight"><?= esc(lang('dash.title')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 Your attendance for <?= esc($month) ?>. Times in Vietnam time (UTC+7).
             </p>
@@ -49,15 +49,15 @@ $tiles = [
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <dl class="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
                 <div>
-                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Checked in</dt>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('attendance.checked_in')) ?></dt>
                     <dd class="mt-1 text-2xl font-semibold tabular-nums"><?= esc(attendance_local_time($today->checkin_at ?? null)) ?></dd>
                 </div>
                 <div>
-                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Checked out</dt>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('attendance.checked_out')) ?></dt>
                     <dd class="mt-1 text-2xl font-semibold tabular-nums"><?= esc(attendance_local_time($today->checkout_at ?? null)) ?></dd>
                 </div>
                 <div class="col-span-2 sm:col-span-1">
-                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Today</dt>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('dash.today')) ?></dt>
                     <dd class="mt-1 text-2xl font-semibold tabular-nums">
                         <?= esc(attendance_format_duration(attendance_worked_seconds($today->checkin_at ?? null, $today->checkout_at ?? null))) ?>
                     </dd>
@@ -87,8 +87,8 @@ $tiles = [
 
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <a href="/attendance/report" class="rounded-lg border border-[#EAEAEA] bg-white p-4 transition hover:border-[#111111] dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-400">
-            <p class="font-medium">My month</p>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Day-by-day hours, lateness and status.</p>
+            <p class="font-medium"><?= esc(lang('attendance.report_title')) ?></p>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('dash.hint_month')) ?></p>
         </a>
         <a href="/requests" class="rounded-lg border border-[#EAEAEA] bg-white p-4 transition hover:border-[#111111] dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-400">
             <p class="font-medium">
@@ -99,11 +99,11 @@ $tiles = [
                     </span>
                 <?php endif ?>
             </p>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Ask for a day off or to arrive late.</p>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('dash.hint_requests')) ?></p>
         </a>
         <a href="/account" class="rounded-lg border border-[#EAEAEA] bg-white p-4 transition hover:border-[#111111] dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-400">
-            <p class="font-medium">Account</p>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Profile, password and two-factor auth.</p>
+            <p class="font-medium"><?= esc(lang('nav.account')) ?></p>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('dash.hint_account')) ?></p>
         </a>
     </div>
 </div>

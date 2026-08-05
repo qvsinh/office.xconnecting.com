@@ -35,14 +35,14 @@ $tiles = [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">Dashboard</h1>
+            <h1 class="text-xl font-semibold tracking-tight"><?= esc(lang('dash.title')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 Company attendance for <?= esc($date) ?> (Vietnam time).
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="/admin/attendance/today" class="btn-secondary whitespace-nowrap">Today board</a>
-            <a href="/admin/attendance/report" class="btn-primary whitespace-nowrap">Monthly report</a>
+            <a href="/admin/attendance/today" class="btn-secondary whitespace-nowrap"><?= esc(lang('dash.today_board')) ?></a>
+            <a href="/admin/attendance/report" class="btn-primary whitespace-nowrap"><?= esc(lang('dash.monthly_report')) ?></a>
         </div>
     </div>
 
@@ -58,22 +58,22 @@ $tiles = [
 
     <dl class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Employees on the roster</dt>
+            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('dash.roster')) ?></dt>
             <dd class="mt-1 text-lg font-semibold tabular-nums"><?= esc((string) $stats['employees']) ?></dd>
         </div>
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Active accounts</dt>
+            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('dash.active_accounts')) ?></dt>
             <dd class="mt-1 text-lg font-semibold tabular-nums"><?= esc((string) $stats['users']) ?></dd>
         </div>
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Groups</dt>
+            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('dash.groups')) ?></dt>
             <dd class="mt-1 text-lg font-semibold tabular-nums"><?= esc((string) $stats['groups']) ?></dd>
         </div>
         <a href="/admin/requests?status=pending"
            class="rounded-lg border bg-white p-4 transition hover:border-[#111111] dark:bg-gray-800 dark:hover:border-gray-400 <?= $stats['pending_requests'] > 0
                 ? 'border-[#E5C07B] dark:border-amber-700/60'
                 : 'border-[#EAEAEA] dark:border-gray-700' ?>">
-            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Requests awaiting a decision</dt>
+            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('dash.awaiting')) ?></dt>
             <dd class="mt-1 text-lg font-semibold tabular-nums <?= $stats['pending_requests'] > 0 ? 'text-[#7A5B14] dark:text-amber-200' : '' ?>">
                 <?= esc((string) $stats['pending_requests']) ?>
             </dd>
@@ -82,16 +82,16 @@ $tiles = [
 
     <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <a href="/admin/attendance" class="rounded-lg border border-[#EAEAEA] bg-white p-4 transition hover:border-[#111111] dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-400">
-            <p class="font-medium">All employees</p>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Search, filter and correct attendance records.</p>
+            <p class="font-medium"><?= esc(lang('dash.all_employees')) ?></p>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('dash.hint_attendance')) ?></p>
         </a>
         <a href="/admin/attendance/schedules" class="rounded-lg border border-[#EAEAEA] bg-white p-4 transition hover:border-[#111111] dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-400">
-            <p class="font-medium">Work schedules</p>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Office hours, lunch break and working days.</p>
+            <p class="font-medium"><?= esc(lang('dash.work_schedules')) ?></p>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('dash.hint_schedules')) ?></p>
         </a>
         <a href="/admin/attendance/holidays" class="rounded-lg border border-[#EAEAEA] bg-white p-4 transition hover:border-[#111111] dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-400">
-            <p class="font-medium">Holidays</p>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Without these, a public holiday counts as absence.</p>
+            <p class="font-medium"><?= esc(lang('dash.holidays')) ?></p>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('dash.hint_holidays')) ?></p>
         </a>
     </div>
 </div>

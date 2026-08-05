@@ -517,10 +517,31 @@ To add a third language: add its code to `$supportedLocales`, add a label to
 `/admin/translations` (or import them — the screen has a JSON export to copy the
 shape from).
 
-**What is translated today:** the sidebar navigation, the header and the account
-menu. Everything else still holds literal English — page headings, table columns,
-buttons, form labels. The mechanism is finished and proven; converting the
-remaining views is mechanical work, one `lang()` call and one row per string.
+### Conventions
+
+- `location` is the group, `slug` the key: `lang('common.date')`.
+- **`common`** holds anything used on more than one screen, so rewording `Date`
+  lands everywhere at once. Per-screen groups otherwise (`attendance`, `requests`,
+  `account`, `apikeys`, `dash`, `status`, `nav`, `ui`).
+- Uniqueness is `(lang_code, location, slug)` — the same slug may exist in two
+  groups, which is what lets every page have a `title`.
+- `tests/database/TranslationCoverageTest.php` is the gate: it extracts every
+  `lang()` key from the templates and fails if one is missing a row in any
+  supported language. A mistyped key does not error in CodeIgniter — it renders as
+  the key itself — so this is what keeps the conversion honest. Its companion
+  lists seeded keys no view uses, which doubles as the remaining worklist.
+
+### Coverage so far
+
+Translated: the sidebar and header, the account menu, both dashboards,
+notifications, `/attendance`, `/attendance/report`, `/requests`, both status pills,
+the shared pagination footer, and the account pages (profile, security, API keys).
+
+Not yet: the admin CRUD screens (users, settings, groups, translations, emails,
+email templates, scheduled tasks, access logs, holidays, work schedules, the system
+pages, the attendance management screens and the approval queue), the three
+standalone auth screens, and the docs pages. Those still hold literal English.
+Same mechanism, same gate — one `lang()` call and one seeded row per string.
 
 ## 9. First-run configuration (in the admin UI)
 

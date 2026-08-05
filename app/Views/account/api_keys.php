@@ -30,7 +30,7 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">API Keys</h1>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100"><?= esc(lang('apikeys.title')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 Personal access tokens for AI agents and scripts to use the REST API on your behalf.
             </p>
@@ -42,14 +42,14 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
         <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
-                    <th class="px-4 py-3">Name</th>
+                    <th class="px-4 py-3"><?= esc(lang('apikeys.name')) ?></th>
                     <th class="px-4 py-3">Token</th>
                     <th class="px-4 py-3">Scopes</th>
                     <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3">Last used</th>
-                    <th class="px-4 py-3">Expires</th>
-                    <th class="px-4 py-3">Created</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    <th class="px-4 py-3"><?= esc(lang('apikeys.last_used')) ?></th>
+                    <th class="px-4 py-3"><?= esc(lang('apikeys.expires')) ?></th>
+                    <th class="px-4 py-3"><?= esc(lang('apikeys.created')) ?></th>
+                    <th class="px-4 py-3 text-right"><?= esc(lang('common.actions')) ?></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
@@ -90,7 +90,7 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
                             <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm0 0L9.5 12.5m-3.7 3.7L4 18l1 3 3-1 1.8-1.8m0 0L12.5 16.5m-2.4 2.4-2-2" />
                             </svg>
-                            <p class="mt-3 text-sm text-[#787774] dark:text-gray-400">No API keys yet.</p>
+                            <p class="mt-3 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('apikeys.none_yet')) ?></p>
                             <button type="button" @click="openCreate()" class="mt-4 btn-primary">+ Create key</button>
                         </td>
                     </tr>
@@ -107,15 +107,15 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
              class="modal-panel relative max-w-md"
              x-trap.noscroll="createOpen" role="dialog" aria-modal="true" aria-labelledby="create-key-title">
             <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                    @click="createOpen = false" aria-label="Close">
+                    @click="createOpen = false" aria-label="<?= esc(lang('common.close'), 'attr') ?>">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <h2 id="create-key-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Create API key</h2>
+            <h2 id="create-key-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90"><?= esc(lang('apikeys.create')) ?></h2>
             <form @submit.prevent="submitCreate" class="mt-4 space-y-4">
                 <div>
-                    <label for="key_name" class="form-label">Name</label>
+                    <label for="key_name" class="form-label"><?= esc(lang('apikeys.name')) ?></label>
                     <input id="key_name" type="text" x-model="createForm.name" required maxlength="100"
                            placeholder="e.g. my-agent" class="form-input">
                 </div>
@@ -130,17 +130,17 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
                 <div>
                     <label for="key_expiry" class="form-label">Expires</label>
                     <select id="key_expiry" x-model="createForm.expires_days" class="form-select">
-                        <option value="0">Never</option>
+                        <option value="0"><?= esc(lang('apikeys.never')) ?></option>
                         <option value="30">30 days</option>
                         <option value="90">90 days</option>
                         <option value="365">365 days</option>
                     </select>
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" class="btn-secondary" @click="createOpen = false">Cancel</button>
+                    <button type="button" class="btn-secondary" @click="createOpen = false"><?= esc(lang('common.cancel')) ?></button>
                     <button type="submit" :disabled="creating" class="btn-primary">
                         <span x-show="!creating">Create</span>
-                        <span x-show="creating" x-cloak>Creating…</span>
+                        <span x-show="creating" x-cloak><?= esc(lang('apikeys.creating')) ?></span>
                     </button>
                 </div>
             </form>
@@ -153,20 +153,20 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
         <div x-show="revealOpen" x-transition
              class="modal-panel relative max-w-md"
              x-trap.noscroll="revealOpen" role="dialog" aria-modal="true" aria-labelledby="reveal-key-title">
-            <h2 id="reveal-key-title" class="text-lg font-semibold text-gray-800 dark:text-white/90">API key created</h2>
+            <h2 id="reveal-key-title" class="text-lg font-semibold text-gray-800 dark:text-white/90"><?= esc(lang('apikeys.created_ok')) ?></h2>
             <div class="mt-4 rounded-md border border-yellow-200 bg-[#FBF3DB] px-4 py-3 text-sm text-[#956400] dark:border-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
                 This is the only time the token is shown — store it securely.
             </div>
             <div class="mt-4 flex items-center gap-2">
                 <code class="block flex-1 overflow-x-auto whitespace-nowrap rounded-md border border-[#EAEAEA] bg-[#F7F6F3] px-3 py-2 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" x-text="revealToken"></code>
-                <button type="button" class="btn-secondary shrink-0" @click="copyToken()">Copy</button>
+                <button type="button" class="btn-secondary shrink-0" @click="copyToken()"><?= esc(lang('account.copy')) ?></button>
             </div>
             <p class="mt-4 text-sm text-[#787774] dark:text-gray-400">
                 Use it as <code>Authorization: Bearer &lt;token&gt;</code> against
                 <code>GET /api/v1/me</code> to verify it works.
             </p>
             <div class="flex justify-end pt-4">
-                <button type="button" class="btn-primary" @click="doneReveal()">Done</button>
+                <button type="button" class="btn-primary" @click="doneReveal()"><?= esc(lang('apikeys.done')) ?></button>
             </div>
         </div>
     </div>

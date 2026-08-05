@@ -28,7 +28,7 @@ $itemsForJs = array_map(static fn (object $item): array => [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Notifications</h1>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100"><?= esc(lang('nav.notifications')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 <span x-text="unread"></span> unread of <?= esc((string) $total) ?> total.
             </p>

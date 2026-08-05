@@ -16,8 +16,8 @@ $this->extend('layouts/app');
 
     <div class="flex items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100">Security</h1>
-            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">Two-factor authentication for your account.</p>
+            <h1 class="text-xl font-semibold tracking-tight dark:text-gray-100"><?= esc(lang('account.security_title')) ?></h1>
+            <p class="mt-1 text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('account.security_intro')) ?></p>
         </div>
         <a href="/account" class="text-sm font-medium text-[#111111] hover:underline dark:text-gray-100">← Profile</a>
     </div>
@@ -25,7 +25,7 @@ $this->extend('layouts/app');
     <div class="mt-6 rounded-lg border border-[#EAEAEA] bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-base font-semibold dark:text-gray-100">Two-factor authentication</h2>
+                <h2 class="text-base font-semibold dark:text-gray-100"><?= esc(lang('account.twofa')) ?></h2>
                 <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                     Status:
                     <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide"
@@ -35,8 +35,8 @@ $this->extend('layouts/app');
             </div>
             <button type="button" x-show="method === 'none' && !enrolling" x-cloak @click="startSetup()"
                     :disabled="startingSetup" class="btn-primary">
-                <span x-show="!startingSetup">Enable 2FA</span>
-                <span x-show="startingSetup" x-cloak>Starting…</span>
+                <span x-show="!startingSetup"><?= esc(lang('account.enable_2fa')) ?></span>
+                <span x-show="startingSetup" x-cloak><?= esc(lang('account.starting')) ?></span>
             </button>
         </div>
 
@@ -49,22 +49,22 @@ $this->extend('layouts/app');
             <div class="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
                 <img :src="qrCode" alt="2FA QR code" class="h-40 w-40 rounded-md border border-[#EAEAEA] dark:border-gray-700">
                 <div class="flex-1">
-                    <label class="form-label">Manual key</label>
+                    <label class="form-label"><?= esc(lang('account.manual_key')) ?></label>
                     <div class="flex items-center gap-2">
                         <code class="block flex-1 rounded-md border border-[#EAEAEA] bg-[#F7F6F3] px-3 py-2 text-xs dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" x-text="secret"></code>
-                        <button type="button" class="text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="copySecret()">Copy</button>
+                        <button type="button" class="text-sm font-medium text-[#111111] hover:underline dark:text-gray-100" @click="copySecret()"><?= esc(lang('account.copy')) ?></button>
                     </div>
                 </div>
             </div>
             <form @submit.prevent="verifySetup" class="space-y-2">
-                <label for="verify_code" class="form-label">Authentication code</label>
+                <label for="verify_code" class="form-label"><?= esc(lang('account.auth_code')) ?></label>
                 <input id="verify_code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" required
                        x-model="verifyCode" placeholder="123456"
                        class="form-input max-w-[200px] tracking-widest">
                 <div class="flex gap-2 pt-2">
                     <button type="submit" :disabled="verifying" class="btn-primary">
-                        <span x-show="!verifying">Verify &amp; enable</span>
-                        <span x-show="verifying" x-cloak>Verifying…</span>
+                        <span x-show="!verifying"><?= lang('account.verify_enable') ?></span>
+                        <span x-show="verifying" x-cloak><?= esc(lang('account.verifying')) ?></span>
                     </button>
                     <button type="button" class="btn-secondary" @click="cancelSetup()">
                         Cancel
@@ -75,24 +75,24 @@ $this->extend('layouts/app');
 
         <!-- Disable: requires current code or account password -->
         <div x-show="method !== 'none' && !enrolling" x-cloak class="mt-6 space-y-3 border-t border-[#EAEAEA] pt-6 dark:border-gray-700">
-            <h3 class="text-sm font-semibold dark:text-gray-100">Disable two-factor authentication</h3>
+            <h3 class="text-sm font-semibold dark:text-gray-100"><?= esc(lang('account.disable_2fa_long')) ?></h3>
             <p class="text-sm text-[#787774] dark:text-gray-400">Confirm with your current authentication code or your account password.</p>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                    <label for="disable_code" class="form-label">Current code</label>
+                    <label for="disable_code" class="form-label"><?= esc(lang('account.current_code')) ?></label>
                     <input id="disable_code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6"
                            x-model="disableCode" placeholder="123456" class="form-input">
                 </div>
                 <div>
-                    <label for="disable_password" class="form-label">Account password</label>
+                    <label for="disable_password" class="form-label"><?= esc(lang('account.account_password')) ?></label>
                     <input id="disable_password" type="password" autocomplete="current-password"
                            x-model="disablePassword" class="form-input">
                 </div>
             </div>
             <div class="flex justify-end pt-2">
                 <button type="button" :disabled="disabling" @click="confirmDisable()" class="btn-danger">
-                    <span x-show="!disabling">Disable 2FA</span>
-                    <span x-show="disabling" x-cloak>Disabling…</span>
+                    <span x-show="!disabling"><?= esc(lang('account.disable_2fa')) ?></span>
+                    <span x-show="disabling" x-cloak><?= esc(lang('account.disabling')) ?></span>
                 </button>
             </div>
         </div>
