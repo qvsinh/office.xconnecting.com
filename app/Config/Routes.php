@@ -189,6 +189,10 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
 // REST API for AI agents (Bearer token, `api_keys` table) — stateless, so no
 // csrf/authFilter/session here; `apikey` resolves+scopes the request instead
 // (see `kanban/processing/20260721-07-rest-api.md`).
+// Language switcher, available before login: the login screen is the first page
+// anyone sees, so it is the first place the choice matters.
+$routes->post('locale/switch', 'Locale::switch', ['filter' => 'csrf']);
+
 $routes->group('api/v1', ['filter' => 'apikey'], static function (RouteCollection $routes) {
     $routes->get('me', 'Api\V1\Me::index');
 

@@ -1,4 +1,7 @@
 <?php
+
+use Config\App;
+
 /**
  * Shared authenticated app shell: TailAdmin-style sidebar + topbar, plus the
  * shared toast / confirm-modal / alert Alpine components (defined once here,
@@ -22,6 +25,23 @@ helper(['auth', 'url', 'setting']);
 /** The signed-in (or acted-as) identity the topbar renders. Never a view variable. */
 $navUser = session('userWorking');
 $navZone ??= is_working_admin() ? 'admin' : 'user';
+
+/*
+ * Language switcher state. The active locale comes from the request, which
+ * `LocaleFilter` has already resolved (session choice -> users.language ->
+ * default), so this never has to repeat that logic.
+ *
+ * Labels are written in their own language — somebody looking for Vietnamese
+ * scans for "Tiếng Việt", not for "Vietnamese". Codes with no label here fall
+ * back to the uppercased code rather than disappearing from the switcher.
+ */
+$navLocaleNames = ['en' => 'English', 'vi' => 'Tiếng Việt'];
+$navLocale      = service('request')->getLocale();
+$navLocales     = [];
+
+foreach (config(App::class)->supportedLocales as $code) {
+    $navLocales[$code] = $navLocaleNames[$code] ?? strtoupper($code);
+}
 
 // Admin-editable brand name (site_name setting; falls back in site_name()).
 $siteName = site_name();
@@ -48,16 +68,16 @@ $dashboardHref = $navZone === 'admin' ? '/admin/dashboard' : '/dashboard';
 // The management screens live in the Admin group below, so a user never sees
 // company-wide links mixed in with their own.
 $navGroups = [
-    'Attendance' => [
-        ['label' => 'My Attendance', 'href' => '/attendance'],
-        ['label' => 'My Month', 'href' => '/attendance/report'],
-        ['label' => 'My Requests', 'href' => '/requests'],
+    lang('nav.attendance') => [
+        ['label' => lang('nav.my_attendance'), 'href' => '/attendance'],
+        ['label' => lang('nav.my_month'), 'href' => '/attendance/report'],
+        ['label' => lang('nav.my_requests'), 'href' => '/requests'],
     ],
-    'Account' => [
-        ['label' => 'Profile', 'href' => '/account'],
-        ['label' => 'Security', 'href' => '/account/security'],
-        ['label' => 'Notifications', 'href' => '/notifications'],
-        ['label' => 'API Keys', 'href' => '/account/api-keys'],
+    lang('nav.account') => [
+        ['label' => lang('nav.profile'), 'href' => '/account'],
+        ['label' => lang('nav.security'), 'href' => '/account/security'],
+        ['label' => lang('nav.notifications'), 'href' => '/notifications'],
+        ['label' => lang('nav.api_keys'), 'href' => '/account/api-keys'],
     ],
 ];
 
@@ -66,34 +86,34 @@ $navGroups = [
 // not admin-zone-gated: a department head holding `attendance.manage` must get
 // them without being made a global admin.
 $attendanceAdminItems = array_values(array_filter([
-    user_can('attendance.manage') ? ['label' => 'Attendance · Today', 'href' => '/admin/attendance/today'] : null,
-    user_can('attendance.manage') ? ['label' => 'Attendance · All employees', 'href' => '/admin/attendance'] : null,
-    user_can('attendance.manage') ? ['label' => 'Attendance · Monthly report', 'href' => '/admin/attendance/report'] : null,
-    user_can('requests.approve') ? ['label' => 'Attendance · Approve requests', 'href' => '/admin/requests'] : null,
-    user_can('attendance.manage') ? ['label' => 'Attendance · Work schedules', 'href' => '/admin/attendance/schedules'] : null,
-    user_can('attendance.manage') ? ['label' => 'Attendance · Holidays', 'href' => '/admin/attendance/holidays'] : null,
+    user_can('attendance.manage') ? ['label' => lang('nav.att_today'), 'href' => '/admin/attendance/today'] : null,
+    user_can('attendance.manage') ? ['label' => lang('nav.att_all'), 'href' => '/admin/attendance'] : null,
+    user_can('attendance.manage') ? ['label' => lang('nav.att_report'), 'href' => '/admin/attendance/report'] : null,
+    user_can('requests.approve') ? ['label' => lang('nav.att_requests'), 'href' => '/admin/requests'] : null,
+    user_can('attendance.manage') ? ['label' => lang('nav.att_schedules'), 'href' => '/admin/attendance/schedules'] : null,
+    user_can('attendance.manage') ? ['label' => lang('nav.att_holidays'), 'href' => '/admin/attendance/holidays'] : null,
 ]));
 
 if ($navZone === 'admin') {
-    $navGroups['Admin'] = [
-        ['label' => 'Users', 'href' => '/admin/users'],
-        ['label' => 'Groups', 'href' => '/admin/groups'],
-        ['label' => 'Settings', 'href' => '/admin/settings'],
-        ['label' => 'Translations', 'href' => '/admin/translations'],
-        ['label' => 'Email Templates', 'href' => '/admin/email-templates'],
-        ['label' => 'Emails', 'href' => '/admin/emails'],
-        ['label' => 'Access log', 'href' => '/admin/access-logs'],
-        ['label' => 'Scheduled Tasks', 'href' => '/admin/scheduled-tasks'],
-        ['label' => 'System info', 'href' => '/admin/system'],
-        ['label' => 'Migrations', 'href' => '/admin/system/migrations'],
-        ['label' => 'Logs', 'href' => '/admin/system/logs'],
+    $navGroups[lang('nav.admin')] = [
+        ['label' => lang('nav.users'), 'href' => '/admin/users'],
+        ['label' => lang('nav.groups'), 'href' => '/admin/groups'],
+        ['label' => lang('nav.settings'), 'href' => '/admin/settings'],
+        ['label' => lang('nav.translations'), 'href' => '/admin/translations'],
+        ['label' => lang('nav.email_templates'), 'href' => '/admin/email-templates'],
+        ['label' => lang('nav.emails'), 'href' => '/admin/emails'],
+        ['label' => lang('nav.access_log'), 'href' => '/admin/access-logs'],
+        ['label' => lang('nav.scheduled_tasks'), 'href' => '/admin/scheduled-tasks'],
+        ['label' => lang('nav.system_info'), 'href' => '/admin/system'],
+        ['label' => lang('nav.migrations'), 'href' => '/admin/system/migrations'],
+        ['label' => lang('nav.logs'), 'href' => '/admin/system/logs'],
     ];
 
-    $navGroups['Admin'] = array_merge($attendanceAdminItems, $navGroups['Admin']);
+    $navGroups[lang('nav.admin')] = array_merge($attendanceAdminItems, $navGroups[lang('nav.admin')]);
 } elseif ($attendanceAdminItems !== []) {
     // A permission holder who is not admin-zone still needs the management
     // screens; give them a Management group rather than the full Admin one.
-    $navGroups['Management'] = $attendanceAdminItems;
+    $navGroups[lang('nav.management')] = $attendanceAdminItems;
 }
 
 // Inline icon-per-group map (heroicons-outline style, stroke="currentColor").
@@ -221,7 +241,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                         ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
                         : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
                     <?= $navIcons['Dashboard'] ?? $navIconDefault ?>
-                    <span class="whitespace-nowrap" x-show="navLabelsVisible()">Dashboard</span>
+                    <span class="whitespace-nowrap" x-show="navLabelsVisible()"><?= esc(lang('nav.dashboard')) ?></span>
                 </a>
                 <?php $docsActive = url_is('docs*'); ?>
                 <a href="/docs" @click="sidebarMobileOpen = false"
@@ -229,7 +249,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                         ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
                         : 'text-[#111111] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' ?>">
                     <?= $navIcons['Docs'] ?? $navIconDefault ?>
-                    <span class="whitespace-nowrap" x-show="navLabelsVisible()">Docs</span>
+                    <span class="whitespace-nowrap" x-show="navLabelsVisible()"><?= esc(lang('nav.docs')) ?></span>
                 </a>
                 <?php foreach ($navGroups as $groupLabel => $groupItems) :
                     $groupActive = false;
@@ -310,13 +330,13 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
             <!-- Topbar -->
             <header class="flex h-16 items-center justify-between border-b border-[#EAEAEA] bg-white px-4 sm:px-6 lg:px-8 dark:border-gray-800 dark:bg-gray-900">
                 <button type="button" class="rounded-md p-2 text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                        @click="toggleSidebar()" aria-label="Toggle sidebar">
+                        @click="toggleSidebar()" aria-label="<?= esc(lang('ui.toggle_sidebar'), 'attr') ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
 
-                <span class="text-sm font-medium text-[#787774] dark:text-gray-400"><?= esc($navZone === 'admin' ? 'Admin console' : 'Client console') ?></span>
+                <span class="text-sm font-medium text-[#787774] dark:text-gray-400"><?= esc($navZone === 'admin' ? lang('ui.admin_console') : lang('ui.client_console')) ?></span>
 
                 <div class="flex items-center gap-2">
                 <!-- Theme toggle: isolated nested Alpine component, never merged
@@ -327,7 +347,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                     <button type="button"
                             class="rounded-md p-2 text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                             @click="dark = !dark; document.documentElement.classList.toggle('dark', dark); document.documentElement.style.backgroundColor = dark ? '#111827' : '#f9fafb'; localStorage.setItem('theme', dark ? 'dark' : 'light')"
-                            :aria-pressed="dark" aria-label="Toggle dark mode">
+                            :aria-pressed="dark" aria-label="<?= esc(lang('ui.toggle_dark'), 'attr') ?>">
                         <svg x-show="!dark" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
@@ -351,7 +371,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                     <div x-show="open" x-transition x-cloak
                          class="absolute right-0 z-20 mt-2 w-80 rounded-md border border-[#EAEAEA] bg-white py-1 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <div class="flex items-center justify-between border-b border-[#EAEAEA] px-4 py-2 dark:border-gray-700">
-                            <p class="text-sm font-medium">Notifications</p>
+                            <p class="text-sm font-medium"><?= esc(lang('nav.notifications')) ?></p>
                             <button type="button" class="text-xs font-medium text-[#111111] hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-100"
                                     :disabled="markingAll || unread === 0" @click="markAllRead()">
                                 Mark all as read
@@ -367,7 +387,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                                     <p class="mt-0.5 text-xs text-[#787774] dark:text-gray-500" x-text="item.created_at"></p>
                                 </button>
                             </template>
-                            <p x-show="!loading && items.length === 0" x-cloak class="px-4 py-6 text-center text-sm text-[#787774] dark:text-gray-400">No notifications yet.</p>
+                            <p x-show="!loading && items.length === 0" x-cloak class="px-4 py-6 text-center text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('ui.no_notifications')) ?></p>
                         </div>
                         <a href="/notifications" class="block border-t border-[#EAEAEA] px-4 py-2 text-center text-sm font-medium text-[#111111] hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700">
                             View all
@@ -393,9 +413,31 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                             <p class="truncate text-sm font-medium"><?= esc($navUser->name ?? '') ?></p>
                             <p class="truncate text-xs text-[#787774] dark:text-gray-400"><?= esc($navUser->email ?? '') ?></p>
                         </div>
-                        <a href="/account" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700">Account</a>
-                        <a href="/account/security" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700">Security</a>
-                        <a href="/logout" class="block border-t border-[#EAEAEA] px-4 py-2 text-sm text-[#9F2F2D] hover:bg-gray-50 dark:border-gray-700 dark:text-red-400 dark:hover:bg-gray-700">Log out</a>
+                        <a href="/account" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700"><?= esc(lang('nav.account')) ?></a>
+                        <a href="/account/security" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700"><?= esc(lang('nav.security')) ?></a>
+                        <?php /*
+                          Language switcher. In the account menu rather than as a
+                          separate header control: it is a personal preference set
+                          once, not something reached for repeatedly, and the header
+                          is already tight at 360px.
+                        */ ?>
+                        <div class="border-t border-[#EAEAEA] px-4 py-2 dark:border-gray-700">
+                            <p class="mb-1 text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('ui.language')) ?></p>
+                            <div class="flex gap-1" x-data="localeSwitcher()">
+                                <?php foreach ($navLocales as $code => $label) : ?>
+                                    <button type="button" @click="choose('<?= esc($code, 'attr') ?>')"
+                                            :disabled="switching"
+                                            class="flex-1 rounded-md border px-2 py-1 text-xs font-medium transition <?= $code === $navLocale
+                                                    ? 'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
+                                                    : 'border-[#EAEAEA] text-[#111111] hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700' ?>"
+                                            <?= $code === $navLocale ? 'aria-current="true"' : '' ?>>
+                                        <?= esc($label) ?>
+                                    </button>
+                                <?php endforeach ?>
+                            </div>
+                        </div>
+
+                        <a href="/logout" class="block border-t border-[#EAEAEA] px-4 py-2 text-sm text-[#9F2F2D] hover:bg-gray-50 dark:border-gray-700 dark:text-red-400 dark:hover:bg-gray-700"><?= esc(lang('ui.log_out')) ?></a>
                     </div>
                 </div>
                 </div>
@@ -474,6 +516,28 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     </div>
 
     <script>
+        function localeSwitcher() {
+            return {
+                switching: false,
+
+                async choose(locale) {
+                    this.switching = true;
+                    const json = await postForm('/locale/switch', { locale });
+                    this.switching = false;
+
+                    if (json && json.status === 'success') {
+                        // Reload rather than swap strings client-side: every label
+                        // on the page was rendered server-side, so a repaint is the
+                        // only honest way to show the new language.
+                        window.location.reload();
+                        return;
+                    }
+
+                    this.$dispatch('toast', { type: 'error', text: (json && json.message) || 'Could not change the language.' });
+                },
+            };
+        }
+
         function appShell() {
             return {
                 // Desktop expanded/collapsed choice, persisted; mirrors the

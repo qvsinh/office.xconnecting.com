@@ -98,10 +98,12 @@ final class TranslationModelTest extends CIUnitTestCase
     {
         $model = new TranslationModel();
         for ($i = 0; $i < 5; $i++) {
-            $model->insert(['lang_code' => 'en', 'slug' => "key_{$i}", 'content' => "value {$i}"]);
+            // 'ja', not 'en': the app now ships seeded en/vi nav strings, so an
+            // exact count against 'en' would measure the seed as well.
+            $model->insert(['lang_code' => 'ja', 'slug' => "key_{$i}", 'content' => "value {$i}"]);
         }
 
-        $filters = ['lang_code' => 'en'];
+        $filters = ['lang_code' => 'ja'];
         $page    = $model->searchAdmin($filters, 'id', 'asc', 2, 0);
 
         $this->assertCount(2, $page);
@@ -111,21 +113,22 @@ final class TranslationModelTest extends CIUnitTestCase
     public function testDistinctLangCodesReturnsUniqueSortedCodes(): void
     {
         $model = new TranslationModel();
-        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
-        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
         $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'goodbye', 'content' => 'さようなら']);
+        $model->insert(['lang_code' => 'ko', 'slug' => 'welcome', 'content' => '환영']);
 
-        $this->assertSame(['en', 'ja'], $model->distinctLangCodes());
+        // en and vi come from the seeded nav/ui strings.
+        $this->assertSame(['en', 'ja', 'ko', 'vi'], $model->distinctLangCodes());
     }
 
     public function testAllByLangReturnsOnlyThatLanguagesRowsOrderedBySlug(): void
     {
         $model = new TranslationModel();
-        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
-        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
-        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $model->insert(['lang_code' => 'ko', 'slug' => 'welcome', 'content' => '환영']);
 
-        $rows = $model->allByLang('en');
+        $rows = $model->allByLang('ja');
 
         $this->assertCount(2, $rows);
         $this->assertSame('goodbye', $rows[0]->slug);
@@ -135,13 +138,13 @@ final class TranslationModelTest extends CIUnitTestCase
     public function testExportForLangReturnsSlugContentMap(): void
     {
         $model = new TranslationModel();
-        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
-        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
-        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'ja', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $model->insert(['lang_code' => 'ko', 'slug' => 'welcome', 'content' => '환영']);
 
         $this->assertSame(
             ['goodbye' => 'Bye', 'welcome' => 'Welcome'],
-            $model->exportForLang('en'),
+            $model->exportForLang('ja'),
         );
     }
 

@@ -68,7 +68,11 @@ final class AdminTranslationsTest extends CIUnitTestCase
         ]));
         $missing->assertStatus(400);
 
-        $this->assertSame(0, model(TranslationModel::class)->countAllResults());
+        // The table is not empty any more — nav/ui strings ship seeded — so this
+        // asserts what the test is actually about: the rejected submission created
+        // nothing.
+        $this->assertSame(0, model(TranslationModel::class)->where('lang_code', '')->countAllResults());
+        $this->assertNull(model(TranslationModel::class)->where('slug', '')->first());
     }
 
     public function testCreateRejectsDuplicateLangCodeAndSlug(): void
@@ -226,18 +230,20 @@ final class AdminTranslationsTest extends CIUnitTestCase
     public function testExportReturnsJsonMapForChosenLanguage(): void
     {
         $admin = $this->seedWebUser(['email' => 'exporter@example.com', 'zone' => 'admin']);
-        model(TranslationModel::class)->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        // `en` and `vi` now ship seeded nav/ui strings, so the exact-map assertion
+        // uses a language that has none of its own.
         model(TranslationModel::class)->insert(['lang_code' => 'ja', 'slug' => 'welcome', 'content' => 'ようこそ']);
+        model(TranslationModel::class)->insert(['lang_code' => 'ko', 'slug' => 'welcome', 'content' => '환영']);
         $this->loginAs($admin);
 
-        $export = $this->withSession()->get('/admin/translations/export?lang_code=en');
+        $export = $this->withSession()->get('/admin/translations/export?lang_code=ja');
 
         $export->assertStatus(200);
         $export->assertHeader('Content-Type', 'application/json; charset=UTF-8');
-        $export->assertHeader('Content-Disposition', 'attachment; filename="translations-en.json"');
+        $export->assertHeader('Content-Disposition', 'attachment; filename="translations-ja.json"');
 
         $body = json_decode($export->response()->getBody(), true);
-        $this->assertSame(['welcome' => 'Welcome'], $body);
+        $this->assertSame(['welcome' => 'ようこそ'], $body, 'Only the chosen language should be exported.');
     }
 
     public function testExportWithoutLangCodeReturnsBadRequest(): void

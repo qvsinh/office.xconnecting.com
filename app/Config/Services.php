@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Libraries\DatabaseLanguage;
 use App\Libraries\Google2faService;
 use CodeIgniter\Config\BaseService;
 
@@ -42,5 +43,34 @@ class Services extends BaseService
         }
 
         return new Google2faService();
+    }
+
+    /**
+     * Replaces CI4's file-only translator with one that also reads the
+     * `translation` table, so `/admin/translations` changes what the app says.
+     *
+     * Same signature and shared-instance behaviour as the framework's own
+     * `language()` service — only the class differs. See
+     * `App\Libraries\DatabaseLanguage` for how the two sources layer.
+     */
+    public static function language(?string $locale = null, bool $getShared = true): DatabaseLanguage
+    {
+        // Resolve the locale *before* the shared lookup, unlike the framework's
+        // own service which only does so on the non-shared path.
+        //
+        // `Language::setLocale(null)` is a no-op, so a shared instance otherwise
+        // keeps whatever locale it was first built with — for the life of the
+        // process. One request per php-fpm process hides that, but anything
+        // handling several requests in one process (spark serve, a worker, the
+        // test suite) then renders every later request in the first one's
+        // language. Passing a concrete locale makes the instance follow the
+        // request it is actually serving.
+        $locale ??= service('request')->getLocale();
+
+        if ($getShared) {
+            return static::getSharedInstance('language', $locale)->setLocale($locale);
+        }
+
+        return new DatabaseLanguage($locale);
     }
 }

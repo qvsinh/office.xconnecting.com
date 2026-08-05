@@ -128,7 +128,10 @@ final class UiOverhaulTest extends CIUnitTestCase
         $this->assertStringContainsString('documentElement.classList', $body);
         // darkMode is compiled into /css/app.css now (no inline tailwind.config).
         $this->assertStringContainsString('/css/app.css', $body);
-        $this->assertStringContainsString('Toggle dark mode', $body);
+        // The label goes through lang('ui.toggle_dark') now, so this asserts the
+        // control is labelled at all rather than pinning one language's wording.
+        $this->assertMatchesRegularExpression('/aria-label="[^"]+"[^>]*>\s*<svg/', $body);
+        $this->assertStringContainsString('Toggle dark mode', html_entity_decode($body, ENT_QUOTES, 'UTF-8'));
     }
 
     public function testDashboardRendersGroupedSidebarSectionHeaders(): void

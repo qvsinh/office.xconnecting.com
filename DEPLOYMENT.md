@@ -489,6 +489,39 @@ Nothing is queued: the mail goes out inline on the employee's request. One SES
 call is fast, and a failure can never fail the check-in — but if the office grows
 enough for that latency to show, move it behind `schedule:run`.
 
+## 8c. Languages
+
+English and Vietnamese, switchable from the account menu in the header.
+
+`lang('group.key')` resolves from the `translation` table, so `/admin/translations`
+genuinely changes what the app says — that screen used to be CRUD over a table
+nothing read. Database rows layer *over* the file strings in `app/Language/`, so
+CodeIgniter's own messages keep working and an administrator can override any
+single string without a deploy.
+
+The table's `location` column is the group and `slug` is the key: a row
+`('vi', 'nav', 'dashboard', 'Trang chủ')` answers `lang('nav.dashboard')`.
+
+Which language a request renders in, most specific first:
+
+1. the switcher's choice, held in the session;
+2. the signed-in user's `users.language`, so it follows them to another browser;
+3. `Config\App::$defaultLocale`.
+
+Anything outside `Config\App::$supportedLocales` is ignored rather than trusted —
+CodeIgniter interpolates the locale into a filesystem path when loading language
+files, so an unchecked value from a form is a path-traversal primitive.
+
+To add a third language: add its code to `$supportedLocales`, add a label to
+`$navLocaleNames` in `app/Views/layouts/app.php`, then add its rows in
+`/admin/translations` (or import them — the screen has a JSON export to copy the
+shape from).
+
+**What is translated today:** the sidebar navigation, the header and the account
+menu. Everything else still holds literal English — page headings, table columns,
+buttons, form labels. The mechanism is finished and proven; converting the
+remaining views is mechanical work, one `lang()` call and one row per string.
+
 ## 9. First-run configuration (in the admin UI)
 
 1. **Settings → attendance** — confirm the workday (08:30–18:00, 90 min lunch,
