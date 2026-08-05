@@ -176,6 +176,24 @@ session.regenerateDestroy = false
 auth.password_algorithm = 'bcrypt'
 auth.password_cost      = 12
 
+# Outbound mail. Read by Config\Mail; nothing dispatches yet (§8). `region` is
+# required for SES and has no default — SES is regional, and the wrong region
+# fails silently: the credentials look valid and nothing arrives.
+mail.provider       = 'aws'          # aws (SES) | sparkpost
+mail.sending_enable = 'false'        # accepts true/false/yes/no/on/off/1/0
+
+mail.sender.name     = 'No-Reply'
+mail.sender.email    = 'no-reply@example.com'
+mail.supporter.email = 'admin@example.com'
+
+mail.aws.access_key_id     = ''
+mail.aws.secret_access_key = ''
+mail.aws.region            = ''      # e.g. ap-northeast-1
+
+mail.sparkpost.key    = ''
+mail.sparkpost.isSMTP = '0'
+mail.sparkpost.debug  = '0'
+
 # Cache-busting token appended to /css/app.css. **Bump this on every deploy that
 # changes the stylesheet.** Leave it set: with no value, asset_version()
 # randomises per render, which disables browser caching of the CSS entirely.
@@ -226,8 +244,11 @@ Notes on individual keys:
   attendance office-IP gate and into the access log. Only set it if you later
   put an ALB or CloudFront in front — and then list *that* proxy's addresses.
 - **Unused leftovers** you can omit: `RUNNING_MODE` (referenced only in a
-  comment), `app.cost_mode`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
-  `sparkpost.*`, `mail.*` — nothing in `app/` reads them (see §8).
+  comment) and `app.cost_mode` — nothing in `app/` reads either.
+- **The `mail.*` group** is read by `Config\Mail` but has no consumer yet: no
+  code dispatches mail, and no AWS SDK or mail library is installed (see §8).
+  Configure it now if you like; it will not send anything until the pipeline
+  exists.
 - **Do not copy `database.tests.*`** to the server. It exists so the test suite
   can wipe a throwaway schema.
 
@@ -425,7 +446,10 @@ under **Settings**.
 ## 8. What this app does *not* do yet
 
 - **Email send pipeline.** Email templates and a sent-email log are managed in
-  the admin, but there is **no SMTP dispatch**. `Config\Email::$protocol` is
+  the admin, and the transport settings are grouped under `mail.*` in `.env` and
+  typed in `Config\Mail` (`enabled()`, `configured()`), but there is **no
+  dispatch**: nothing calls a mailer, and neither an AWS SDK nor a mail library
+  is installed. `Config\Email::$protocol` is
   still the PHP `mail` default and nothing calls it. Attendance reminders are
   delivered **in-app only** (`NotificationModel`) — deliberately, so no setting
   promises an email that never arrives. Wiring SMTP is a separate change.
