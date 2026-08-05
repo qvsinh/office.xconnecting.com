@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Libraries\AccessLogger;
 use App\Libraries\AttendanceCalendar;
+use App\Libraries\AttendanceNotifier;
 use App\Models\AccessLogModel;
 use App\Models\AttendanceDayModel;
 use CodeIgniter\Database\Exceptions\DatabaseException;
@@ -117,6 +118,9 @@ class Attendance extends BaseController
         }
 
         (new AccessLogger())->record(AccessLogModel::EVENT_CHECKIN, $userId, $this->request);
+        // Fire-and-forget: notify() swallows its own failures, so a slow or
+        // misconfigured SES can never turn a valid check-in into an error.
+        (new AttendanceNotifier())->notify(AccessLogModel::EVENT_CHECKIN, $userId, $row);
 
         return $this->jsonSuccess('Checked in at ' . attendance_local_time($row->checkin_at) . '.', [
             'day' => $this->dayPayload($row),
@@ -151,6 +155,7 @@ class Attendance extends BaseController
         }
 
         (new AccessLogger())->record(AccessLogModel::EVENT_CHECKOUT, $userId, $this->request);
+        (new AttendanceNotifier())->notify(AccessLogModel::EVENT_CHECKOUT, $userId, $updated);
 
         return $this->jsonSuccess('Checked out at ' . attendance_local_time($updated->checkout_at) . '.', [
             'day' => $this->dayPayload($updated),

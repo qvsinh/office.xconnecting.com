@@ -11,6 +11,7 @@
     },
     "require": {
         "php": "^8.2",
+        "aws/aws-sdk-php": "^3.344",
         "bacon/bacon-qr-code": "^3.1",
         "codeigniter4/framework": "^4.7",
         "hashids/hashids": "^5.0",

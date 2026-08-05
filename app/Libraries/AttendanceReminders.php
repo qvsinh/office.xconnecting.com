@@ -27,9 +27,14 @@ use CodeIgniter\I18n\Time;
  * Cutoff times are derived from `work_schedules` rather than configured again —
  * a duplicated "18:15" would drift the first time the office hours change.
  *
- * Delivery is in-app (`NotificationModel`) only. This app manages email templates
- * and a sent-email log but has no SMTP dispatch yet (DEPLOYMENT.md, "Email send
- * pipeline"), so there is deliberately no email flag to switch on.
+ * Delivery is in-app (`NotificationModel`) only, deliberately — there is no email
+ * flag to switch on here.
+ *
+ * SES *does* exist now (`App\Libraries\Mailer`, used by `AttendanceNotifier` for
+ * check-in/out), so emailing reminders is a small step. It is not taken yet
+ * because a reminder is a nudge to the person already looking at the app, while a
+ * daily digest to a manager is a different decision about who gets mailed how
+ * often — worth deciding explicitly rather than inheriting.
  */
 class AttendanceReminders
 {

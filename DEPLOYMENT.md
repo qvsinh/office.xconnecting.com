@@ -440,11 +440,8 @@ under **Settings**.
 
 ## 8. What this app does *not* do yet
 
-- **Email send pipeline.** Email templates and a sent-email log are managed in
-  the admin, and the SES settings are grouped under `mail.*` in `.env` and typed
-  in `Config\Mail` (`enabled()`, `configured()`), but there is **no dispatch**:
-  nothing calls a mailer and no AWS SDK is installed. SparkPost support was
-  removed — there was never a library or a caller for it. `Config\Email::$protocol` is
+- **Password reset by the user.** Admins reset passwords; there is no
+  self-service "forgot password" flow. `Config\Email::$protocol` is
   still the PHP `mail` default and nothing calls it. Attendance reminders are
   delivered **in-app only** (`NotificationModel`) — deliberately, so no setting
   promises an email that never arrives. Wiring SMTP is a separate change.
@@ -454,6 +451,43 @@ under **Settings**.
   previous life as an API proxy. Nothing in `app/` uses them.
 
 ---
+
+## 8b. Email (Amazon SES)
+
+Check-in and check-out email the office administrator. The transport is
+`App\Libraries\Mailer` (AWS SDK, `aws/aws-sdk-php`), and every attempt — sent,
+failed or suppressed — is recorded in `/admin/emails`.
+
+**Credentials live in `.env`, behaviour lives in Settings.** An AWS secret key has
+no business in a table `/admin/settings` prints on screen, and the recipient needs
+changing without a deploy.
+
+`.env` (§3): `mail.sending_enable = 'true'` plus all three of
+`mail.aws.access_key_id`, `mail.aws.secret_access_key`, `mail.aws.region`.
+`Config\Mail::configured()` requires all three, so a missing region is reported
+rather than silently swallowed.
+
+`/admin/settings`:
+
+| Setting | Meaning |
+|---|---|
+| `mail_notify_recipient` | who receives check-in/out mail (`admin@xconnecting.com`) |
+| `mail_notify_attendance` | `1` to send, `0` to stop |
+
+Two things to get right on the AWS side:
+
+1. **Verify the sender.** `mail.sender.email` must be a verified SES identity, or
+   every send is refused. In the SES sandbox the *recipient* must be verified too.
+2. **Do not use an IAM user if the box has an instance role.** Give the EC2 role
+   `ses:SendEmail` and leave `mail.aws.*` empty — but note the current `Mailer`
+   passes credentials explicitly, so it needs the keys. Either way, **never** put
+   them in `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`: the SDK's default
+   credential chain reads those and they then shadow the instance role for *every*
+   AWS client in the process, which is how a sibling project broke its S3 uploads.
+
+Nothing is queued: the mail goes out inline on the employee's request. One SES
+call is fast, and a failure can never fail the check-in — but if the office grows
+enough for that latency to show, move it behind `schedule:run`.
 
 ## 9. First-run configuration (in the admin UI)
 

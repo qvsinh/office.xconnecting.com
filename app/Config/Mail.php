@@ -21,15 +21,17 @@ use CodeIgniter\Config\BaseConfig;
  * Property names stay snake_case to match the env keys exactly — CI4 matches them
  * character for character, and `Config\Auth` already follows this convention.
  *
- * ## Nothing sends mail yet
+ * ## Who reads this
  *
- * These values are configuration without a consumer: no code in `app/` reads them,
- * no AWS SDK is installed, and `Config\Email::$protocol` is still PHP's `mail`
- * default with nothing calling it. Attendance reminders are delivered
- * in-app only (`NotificationModel`). See DEPLOYMENT.md, "Email send pipeline".
+ * `App\Libraries\Mailer` — the SES transport — and nothing else. Check-in and
+ * check-out notify the office administrator through it; who receives them and
+ * whether they are sent at all are separate, admin-editable settings
+ * (`mail_notify_recipient`, `mail_notify_attendance`), because a recipient should
+ * be changeable without a deploy while a secret key should not live in a table the
+ * admin UI prints on screen.
  *
- * This class exists so the settings are named, typed and grouped for when the
- * dispatch is built — not because mail works today.
+ * Attendance reminders and digests remain in-app (`NotificationModel`); they do
+ * not use this. See DEPLOYMENT.md §8b.
  */
 class Mail extends BaseConfig
 {

@@ -10,7 +10,8 @@ use Config\Database;
  * the whole point is that nobody has to remember to enable them.
  *
  * There is deliberately no `attendance_email_reminders` flag — this app manages
- * email templates and a sent-email log but has no SMTP dispatch yet (see
+ * in-app notifications for these; SES exists (see `AttendanceNotifier`) but
+ * reminders deliberately do not use it yet (see
  * DEPLOYMENT.md "Email send pipeline"). A setting that silently does nothing is
  * worse than an absent one; add it together with the send pipeline.
  *

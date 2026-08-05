@@ -7,6 +7,7 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use PragmaRX\Google2FA\Google2FA;
+use Throwable;
 
 /**
  * Thin wrapper over `pragmarx/google2fa` (TOTP secret generation + code
@@ -16,18 +17,16 @@ use PragmaRX\Google2FA\Google2FA;
  */
 class Google2faService
 {
-    // Label shown in the authenticator app, next to the 6-digit code.
-    //
-    // A constant on purpose: wiring it to site_name() would give this crypto
-    // helper a DB dependency. It said 'CI4 Starter' until now, which is what
-    // everyone enrolling 2FA actually saw on their phone — the `.env` key that
-    // looked like it controlled this (`security.2fa.name`) was never read by
-    // anything and has been removed.
-    //
-    // Changing it is safe: the issuer is only baked into the otpauth:// URI at
-    // enrolment, so existing secrets keep verifying and already-enrolled phones
-    // keep the label they were given.
-    private const ISSUER = 'Office XCN';
+    /**
+     * Fallback label, used when the setting is missing or the database is
+     * unreachable. Enrolment must not fail because a settings row is absent.
+     */
+    public const DEFAULT_ISSUER = 'Office.XCN';
+
+    /**
+     * Admin-editable setting holding the label.
+     */
+    public const ISSUER_SETTING = 'security_2fa_name';
 
     private Google2FA $engine;
 
@@ -59,7 +58,7 @@ class Google2faService
      */
     public function otpauthUrl(string $accountLabel, string $secret): string
     {
-        return $this->engine->getQRCodeUrl(self::ISSUER, $accountLabel, $secret);
+        return $this->engine->getQRCodeUrl($this->issuer(), $accountLabel, $secret);
     }
 
     /**
@@ -73,5 +72,32 @@ class Google2faService
         $svg      = (new Writer($renderer))->writeString($otpauthUrl);
 
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
+    /**
+     * The label shown beside the 6-digit code, from `security_2fa_name`.
+     *
+     * This reintroduces a database read into what was deliberately a
+     * dependency-free crypto helper. It is a considered trade: the office needs to
+     * rename itself without a deploy, and the previous arrangement was worse —
+     * an env key (`security.2fa.name`) that looked like it controlled this while
+     * the real label was a hardcoded constant nobody noticed said "CI4 Starter".
+     *
+     * Any failure falls back to the constant rather than propagating: a missing
+     * settings table must not stop somebody enrolling in 2FA.
+     */
+    private function issuer(): string
+    {
+        try {
+            helper('setting');
+
+            $label = trim((string) get_site_variable(self::ISSUER_SETTING, self::DEFAULT_ISSUER));
+
+            return $label === '' ? self::DEFAULT_ISSUER : $label;
+        } catch (Throwable $e) {
+            log_message('warning', 'Falling back to the default 2FA issuer: {msg}', ['msg' => $e->getMessage()]);
+
+            return self::DEFAULT_ISSUER;
+        }
     }
 }

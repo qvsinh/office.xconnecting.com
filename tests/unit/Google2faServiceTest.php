@@ -61,9 +61,13 @@ final class Google2faServiceTest extends CIUnitTestCase
         $this->assertSame($parts[1], $parts[2], 'The label prefix and the issuer parameter must match.');
 
         // It must not still be the starter's placeholder — that is what every
-        // enrolling user saw on their phone until it was renamed.
+        // enrolling user saw on their phone until it was fixed.
         $this->assertNotSame('CI4%20Starter', $parts[2], 'The authenticator issuer is still the starter default.');
-        $this->assertSame('Office XCN', urldecode($parts[2]));
+
+        // With no database behind this unit test, the resolver falls back to the
+        // constant — which is the behaviour that matters here: a missing settings
+        // row must never stop somebody enrolling.
+        $this->assertSame(Google2faService::DEFAULT_ISSUER, urldecode($parts[2]));
     }
 
     public function testQrCodeDataUriReturnsANonEmptySvgDataUri(): void
