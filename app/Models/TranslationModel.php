@@ -49,10 +49,11 @@ class TranslationModel extends Model
      * `is_unique` rule can't span two columns. Used by `Admin\Translations`
      * before insert/update; the DB `UNIQUE(lang_code, slug)` key is the backstop.
      */
-    public function existsForLangSlug(string $langCode, string $slug, ?int $excludeId = null): bool
+    public function existsForLangSlug(string $langCode, string $slug, ?int $excludeId = null, string $location = ''): bool
     {
         $builder = $this->builder()
             ->where('lang_code', $langCode)
+            ->where('location', $location)
             ->where('slug', $slug);
 
         if ($excludeId !== null) {

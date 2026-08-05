@@ -75,14 +75,22 @@ final class AdminTranslationsTest extends CIUnitTestCase
         $this->assertNull(model(TranslationModel::class)->where('slug', '')->first());
     }
 
-    public function testCreateRejectsDuplicateLangCodeAndSlug(): void
+    /**
+     * Uniqueness is `(lang_code, location, slug)`, matching the table's key.
+     *
+     * It used to be `(lang_code, slug)`, which meant only one screen in the whole
+     * app could own a slug like `title` or `date`. Scoping it to the group is what
+     * let the views be translated at all.
+     */
+    public function testCreateRejectsADuplicateWithinTheSameLocation(): void
     {
         $admin = $this->seedWebUser(['email' => 'creator3@example.com', 'zone' => 'admin']);
-        model(TranslationModel::class)->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'v1']);
+        model(TranslationModel::class)->insert(['lang_code' => 'en', 'location' => 'probe', 'slug' => 'welcome', 'content' => 'v1']);
         $this->loginAs($admin);
 
         $result = $this->withSession()->post('/admin/translations/create', $this->withCsrf([
             'lang_code' => 'en',
+            'location'  => 'probe',
             'slug'      => 'welcome',
             'content'   => 'v2',
         ]));
@@ -90,7 +98,30 @@ final class AdminTranslationsTest extends CIUnitTestCase
         $result->assertStatus(400);
         $this->assertSame(
             1,
-            model(TranslationModel::class)->where('lang_code', 'en')->where('slug', 'welcome')->countAllResults(),
+            model(TranslationModel::class)->where('lang_code', 'en')->where('location', 'probe')->where('slug', 'welcome')->countAllResults(),
+        );
+    }
+
+    /**
+     * ...and the same slug in another group is allowed, which is the whole point:
+     * `attendance.title` and `requests.title` are different strings.
+     */
+    public function testTheSameSlugIsAllowedInAnotherLocation(): void
+    {
+        $admin = $this->seedWebUser(['email' => 'creator4@example.com', 'zone' => 'admin']);
+        model(TranslationModel::class)->insert(['lang_code' => 'en', 'location' => 'probe_a', 'slug' => 'title', 'content' => 'A']);
+        $this->loginAs($admin);
+
+        $this->withSession()->post('/admin/translations/create', $this->withCsrf([
+            'lang_code' => 'en',
+            'location'  => 'probe_b',
+            'slug'      => 'title',
+            'content'   => 'B',
+        ]))->assertStatus(200);
+
+        $this->assertSame(
+            2,
+            model(TranslationModel::class)->where('lang_code', 'en')->where('slug', 'title')->whereIn('location', ['probe_a', 'probe_b'])->countAllResults(),
         );
     }
 

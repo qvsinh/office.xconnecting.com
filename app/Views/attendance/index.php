@@ -45,9 +45,9 @@ $initial = [
 // it is off, and the card and the banner can't disagree about it.
 $blockedReason = null;
 if ($impersonating) {
-    $blockedReason = 'You are acting as another user. Stop acting as them to record your own attendance.';
+    $blockedReason = lang('attendance.blocked_impersonating');
 } elseif (! $ipAllowed) {
-    $blockedReason = 'You are not on the office network, so attendance cannot be recorded from here.';
+    $blockedReason = lang('attendance.blocked_offsite');
 }
 ?>
 
@@ -56,9 +56,9 @@ if ($impersonating) {
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">My attendance</h1>
+            <h1 class="text-xl font-semibold tracking-tight"><?= esc(lang('attendance.title')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
-                Check in when you arrive and check out when you leave. Times shown in Vietnam time (UTC+7).
+                <?= esc(lang('attendance.intro')) ?>
             </p>
         </div>
         <p class="text-sm text-[#787774] dark:text-gray-400"><?= esc($todayDate) ?></p>
@@ -80,15 +80,15 @@ if ($impersonating) {
 
             <dl class="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
                 <div>
-                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Checked in</dt>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('attendance.checked_in')) ?></dt>
                     <dd class="mt-1 text-2xl font-semibold tabular-nums" x-text="day.checkin_at ?? '—'">—</dd>
                 </div>
                 <div>
-                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Checked out</dt>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('attendance.checked_out')) ?></dt>
                     <dd class="mt-1 text-2xl font-semibold tabular-nums" x-text="day.checkout_at ?? '—'">—</dd>
                 </div>
                 <div class="col-span-2 sm:col-span-1">
-                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Worked</dt>
+                    <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('common.worked')) ?></dt>
                     <dd class="mt-1 text-2xl font-semibold tabular-nums" x-text="day.worked">—</dd>
                 </div>
             </dl>
@@ -97,55 +97,55 @@ if ($impersonating) {
                 <?php if ($blockedReason !== null) : ?>
                     <button type="button" class="btn-primary whitespace-nowrap" disabled
                             title="<?= esc($blockedReason, 'attr') ?>">
-                        Unavailable here
+                        <?= esc(lang('attendance.unavailable_here')) ?>
                     </button>
                 <?php else : ?>
                     <button type="button" class="btn-primary whitespace-nowrap"
                             x-show="!day.checkin_at" x-cloak
                             :disabled="submitting" @click="checkin()">
-                        <span x-show="!submitting">Check in</span>
-                        <span x-show="submitting" x-cloak>Checking in…</span>
+                        <span x-show="!submitting"><?= esc(lang('attendance.check_in')) ?></span>
+                        <span x-show="submitting" x-cloak><?= esc(lang('attendance.checking_in')) ?></span>
                     </button>
 
                     <button type="button" class="btn-primary whitespace-nowrap"
                             x-show="day.checkin_at" x-cloak
                             :disabled="submitting" @click="checkout()">
-                        <span x-show="!submitting" x-text="day.checkout_at ? 'Update check-out' : 'Check out'">Check out</span>
-                        <span x-show="submitting" x-cloak>Saving…</span>
+                        <span x-show="!submitting" x-text="day.checkout_at ? <?= json_encode(lang('attendance.update_checkout'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?> : <?= json_encode(lang('attendance.check_out'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>"><?= esc(lang('attendance.check_out')) ?></span>
+                        <span x-show="submitting" x-cloak><?= esc(lang('common.saving')) ?></span>
                     </button>
                 <?php endif ?>
 
                 <p class="text-xs text-[#787774] dark:text-gray-400" x-show="day.checkout_at" x-cloak>
-                    Checked out already — pressing again replaces the time.
+                    <?= esc(lang('attendance.already_out')) ?>
                 </p>
             </div>
         </div>
 
         <?php if ($ipEnforced && $ipAllowed) : ?>
             <p class="mt-4 border-t border-[#EAEAEA] pt-4 text-xs text-[#787774] dark:border-gray-700 dark:text-gray-400">
-                Your address is on the office network allowlist.
+                <?= esc(lang('attendance.on_allowlist')) ?>
             </p>
         <?php endif ?>
     </div>
 
     <?php if ($today !== null && (int) $today->missing_checkout === 1) : ?>
         <div class="mt-4 rounded-lg border border-[#E5C07B] bg-[#FDF6E7] p-4 text-sm text-[#7A5B14] dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200" role="alert">
-            No check-out was recorded for this day. Check out now, or ask your manager to correct it.
+            <?= esc(lang('attendance.missing_checkout_notice')) ?>
         </div>
     <?php endif ?>
 
-    <h2 class="mt-10 text-base font-semibold tracking-tight">History</h2>
+    <h2 class="mt-10 text-base font-semibold tracking-tight"><?= esc(lang('attendance.history')) ?></h2>
 
     <div class="mt-3 overflow-x-auto rounded-lg border border-[#EAEAEA] bg-white dark:border-gray-700 dark:bg-gray-800">
         <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
-                    <th scope="col" class="px-4 py-3">Date</th>
-                    <th scope="col" class="px-4 py-3">Check-in</th>
-                    <th scope="col" class="px-4 py-3">Check-out</th>
-                    <th scope="col" class="hidden px-4 py-3 sm:table-cell">Worked</th>
-                    <th scope="col" class="px-4 py-3">Status</th>
-                    <th scope="col" class="hidden px-4 py-3 sm:table-cell">Note</th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('common.date')) ?></th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('attendance.checkin_col')) ?></th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('attendance.checkout_col')) ?></th>
+                    <th scope="col" class="hidden px-4 py-3 sm:table-cell"><?= esc(lang('common.worked')) ?></th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('common.status')) ?></th>
+                    <th scope="col" class="hidden px-4 py-3 sm:table-cell"><?= esc(lang('common.note')) ?></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
@@ -156,7 +156,7 @@ if ($impersonating) {
                         <td class="whitespace-nowrap px-4 py-3 tabular-nums">
                             <?= esc(attendance_local_time($row->checkout_at)) ?>
                             <?php if ((int) $row->missing_checkout === 1) : ?>
-                                <span class="ml-1 rounded-full border border-[#E5C07B] px-2 py-0.5 text-xs font-medium text-[#7A5B14] dark:border-amber-700/60 dark:text-amber-200">missing</span>
+                                <span class="ml-1 rounded-full border border-[#E5C07B] px-2 py-0.5 text-xs font-medium text-[#7A5B14] dark:border-amber-700/60 dark:text-amber-200"><?= esc(lang('attendance.missing')) ?></span>
                             <?php endif ?>
                         </td>
                         <td class="hidden whitespace-nowrap px-4 py-3 tabular-nums sm:table-cell"><?= esc(attendance_format_duration($evaluations[$row->work_date]->worked_seconds ?? attendance_worked_seconds($row->checkin_at, $row->checkout_at))) ?></td>
@@ -164,7 +164,7 @@ if ($impersonating) {
                         <td class="hidden px-4 py-3 text-[#787774] sm:table-cell dark:text-gray-400">
                             <?= esc((string) ($row->note ?? '—')) ?>
                             <?php if ($row->edited_at !== null) : ?>
-                                <span class="ml-1 rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300">corrected</span>
+                                <span class="ml-1 rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300"><?= esc(lang('attendance.corrected')) ?></span>
                             <?php endif ?>
                         </td>
                     </tr>
@@ -172,7 +172,7 @@ if ($impersonating) {
                 <?php if ($history === []) : ?>
                     <tr>
                         <td colspan="6" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">
-                            No attendance recorded yet. Your first check-in will show up here.
+                            <?= esc(lang('attendance.empty_history')) ?>
                         </td>
                     </tr>
                 <?php endif ?>
@@ -187,7 +187,7 @@ if ($impersonating) {
                 <?php if ($page > 1) : ?>
                     <a href="?page=<?= esc((string) ($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
                 <?php endif ?>
-                <span>Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
+                <span><?= esc(lang('common.page_of')) ?> <?= esc((string) $page) ?> <?= esc(lang('common.of')) ?> <?= esc((string) $totalPages) ?></span>
                 <?php if ($page < $totalPages) : ?>
                     <a href="?page=<?= esc((string) ($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
                 <?php endif ?>
@@ -202,11 +202,11 @@ if ($impersonating) {
                 day: initial,
 
                 async checkin() {
-                    await this.record('/attendance/checkin', 'Could not check you in.');
+                    await this.record('/attendance/checkin', <?= json_encode(lang('attendance.checkin_failed'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);
                 },
 
                 async checkout() {
-                    await this.record('/attendance/checkout', 'Could not check you out.');
+                    await this.record('/attendance/checkout', <?= json_encode(lang('attendance.checkout_failed'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);
                 },
 
                 // Both buttons share one path: the server is the only thing that

@@ -36,22 +36,24 @@ final class TranslationModelTest extends CIUnitTestCase
     public function testExistsForLangSlugDetectsDuplicateAndIgnoresOtherLanguages(): void
     {
         $model = new TranslationModel();
-        $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $model->insert(['lang_code' => 'en', 'location' => 'probe', 'slug' => 'welcome', 'content' => 'Welcome']);
 
-        $this->assertTrue($model->existsForLangSlug('en', 'welcome'));
-        $this->assertFalse($model->existsForLangSlug('ja', 'welcome'));
-        $this->assertFalse($model->existsForLangSlug('en', 'goodbye'));
+        // Scoped to the location as well now, matching the table's unique key.
+        $this->assertTrue($model->existsForLangSlug('en', 'welcome', null, 'probe'));
+        $this->assertFalse($model->existsForLangSlug('ja', 'welcome', null, 'probe'));
+        $this->assertFalse($model->existsForLangSlug('en', 'goodbye', null, 'probe'));
+        $this->assertFalse($model->existsForLangSlug('en', 'welcome', null, 'other'), 'Another group may reuse the slug.');
     }
 
     public function testExistsForLangSlugExcludesGivenId(): void
     {
         $model = new TranslationModel();
-        $id    = $model->insert(['lang_code' => 'en', 'slug' => 'welcome', 'content' => 'Welcome']);
+        $id    = $model->insert(['lang_code' => 'en', 'location' => 'probe', 'slug' => 'welcome', 'content' => 'Welcome']);
 
-        $this->assertFalse($model->existsForLangSlug('en', 'welcome', $id));
+        $this->assertFalse($model->existsForLangSlug('en', 'welcome', $id, 'probe'));
 
-        $model->insert(['lang_code' => 'en', 'slug' => 'goodbye', 'content' => 'Bye']);
-        $this->assertTrue($model->existsForLangSlug('en', 'goodbye', $id));
+        $model->insert(['lang_code' => 'en', 'location' => 'probe', 'slug' => 'goodbye', 'content' => 'Bye']);
+        $this->assertTrue($model->existsForLangSlug('en', 'goodbye', $id, 'probe'));
     }
 
     public function testSearchAdminFiltersByKeywordAcrossSlugAndContent(): void

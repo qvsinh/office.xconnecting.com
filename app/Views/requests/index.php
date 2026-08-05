@@ -36,7 +36,7 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">My requests</h1>
+            <h1 class="text-xl font-semibold tracking-tight"><?= esc(lang('requests.title')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 Ask for a day off or permission to arrive late. A manager approves before it counts.
             </p>
@@ -51,7 +51,7 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
 
     <dl class="mt-6 grid grid-cols-3 gap-4">
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Annual leave left</dt>
+            <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('requests.annual_left')) ?></dt>
             <dd class="mt-1 text-2xl font-semibold tabular-nums"><?= esc(LeaveBalance::formatDays($balance->remaining)) ?></dd>
         </div>
         <div class="rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -73,12 +73,12 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
         <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
-                    <th scope="col" class="px-4 py-3">Dates</th>
-                    <th scope="col" class="px-4 py-3">Type</th>
-                    <th scope="col" class="hidden px-4 py-3 text-right sm:table-cell">Days</th>
-                    <th scope="col" class="hidden px-4 py-3 sm:table-cell">Reason</th>
-                    <th scope="col" class="px-4 py-3">Status</th>
-                    <th scope="col" class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('common.dates')) ?></th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('requests.type')) ?></th>
+                    <th scope="col" class="hidden px-4 py-3 text-right sm:table-cell"><?= esc(lang('common.days')) ?></th>
+                    <th scope="col" class="hidden px-4 py-3 sm:table-cell"><?= esc(lang('common.reason')) ?></th>
+                    <th scope="col" class="px-4 py-3"><?= esc(lang('common.status')) ?></th>
+                    <th scope="col" class="px-4 py-3 text-right"><?= esc(lang('common.actions')) ?></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
@@ -87,7 +87,7 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                         <td class="whitespace-nowrap px-4 py-3 font-medium tabular-nums">
                             <?= esc(leave_request_dates($item)) ?>
                             <?php if ((string) $item->start_date < $today && $item->status === LeaveRequestModel::STATUS_PENDING) : ?>
-                                <span class="ml-1 rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300">backdated</span>
+                                <span class="ml-1 rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#787774] dark:bg-gray-700 dark:text-gray-300"><?= esc(lang('requests.backdated')) ?></span>
                             <?php endif ?>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3"><?= esc(leave_request_label($item)) ?></td>
@@ -104,7 +104,7 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                         <td class="whitespace-nowrap px-4 py-3 text-right">
                             <?php if ($item->status === LeaveRequestModel::STATUS_PENDING && ! $impersonating) : ?>
                                 <button type="button" class="text-sm font-medium text-[#9F2F2D] hover:underline dark:text-red-400"
-                                        @click="confirmCancel(<?= (int) $item->id ?>, <?= esc(json_encode(leave_request_dates($item)), 'attr') ?>)">Withdraw</button>
+                                        @click="confirmCancel(<?= (int) $item->id ?>, <?= esc(json_encode(leave_request_dates($item)), 'attr') ?>)"><?= esc(lang('requests.withdraw')) ?></button>
                             <?php else : ?>
                                 <span class="text-xs text-[#787774] dark:text-gray-400">—</span>
                             <?php endif ?>
@@ -144,12 +144,12 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
         <div x-show="open" x-transition class="modal-panel relative max-w-lg"
              x-trap.noscroll="open" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
             <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-                    @click="open = false" aria-label="Close">
+                    @click="open = false" aria-label="<?= esc(lang('common.close'), 'attr') ?>">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <h2 id="request-modal-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">New request</h2>
+            <h2 id="request-modal-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90"><?= esc(lang('requests.new_request')) ?></h2>
 
             <form @submit.prevent="submit" class="mt-4 space-y-4">
                 <fieldset>
@@ -169,29 +169,29 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                 <template x-if="form.type === 'leave'">
                     <div class="space-y-4">
                         <div>
-                            <label for="leave_kind" class="form-label">Leave type</label>
+                            <label for="leave_kind" class="form-label"><?= esc(lang('requests.leave_type')) ?></label>
                             <select id="leave_kind" x-model="form.leave_kind" class="form-select">
-                                <option value="annual">Annual (uses your balance)</option>
-                                <option value="unpaid">Unpaid</option>
-                                <option value="sick">Sick</option>
+                                <option value="annual"><?= esc(lang('requests.annual')) ?></option>
+                                <option value="unpaid"><?= esc(lang('requests.unpaid')) ?></option>
+                                <option value="sick"><?= esc(lang('requests.sick')) ?></option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label for="start_date" class="form-label">From</label>
+                                <label for="start_date" class="form-label"><?= esc(lang('common.from')) ?></label>
                                 <input id="start_date" type="date" x-model="form.start_date" required class="form-input" @change="refreshDays()">
                             </div>
                             <div>
-                                <label for="end_date" class="form-label">To (optional)</label>
+                                <label for="end_date" class="form-label"><?= esc(lang('requests.to_optional')) ?></label>
                                 <input id="end_date" type="date" x-model="form.end_date" class="form-input" @change="refreshDays()">
                             </div>
                         </div>
                         <div x-show="!form.end_date || form.end_date === form.start_date">
-                            <label for="day_portion" class="form-label">How much of the day?</label>
+                            <label for="day_portion" class="form-label"><?= esc(lang('requests.day_portion')) ?></label>
                             <select id="day_portion" x-model="form.day_portion" class="form-select">
-                                <option value="full">Whole day</option>
-                                <option value="morning">Morning only</option>
-                                <option value="afternoon">Afternoon only</option>
+                                <option value="full"><?= esc(lang('requests.whole_day')) ?></option>
+                                <option value="morning"><?= esc(lang('requests.morning_only')) ?></option>
+                                <option value="afternoon"><?= esc(lang('requests.afternoon_only')) ?></option>
                             </select>
                         </div>
                         <p class="text-sm text-[#787774] dark:text-gray-400">
@@ -204,11 +204,11 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                 <template x-if="form.type === 'late'">
                     <div class="space-y-4">
                         <div>
-                            <label for="late_date" class="form-label">Date</label>
+                            <label for="late_date" class="form-label"><?= esc(lang('common.date')) ?></label>
                             <input id="late_date" type="date" x-model="form.start_date" required class="form-input">
                         </div>
                         <div>
-                            <label for="expected_time" class="form-label">Expected arrival</label>
+                            <label for="expected_time" class="form-label"><?= esc(lang('requests.expected_arrival')) ?></label>
                             <input id="expected_time" type="time" x-model="form.expected_time" class="form-input">
                             <p class="mt-1 text-xs text-[#787774] dark:text-gray-400">
                                 Must be later than your normal start (<?= esc($startTime) ?>).
@@ -218,15 +218,15 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                 </template>
 
                 <div>
-                    <label for="reason" class="form-label">Reason</label>
+                    <label for="reason" class="form-label"><?= esc(lang('common.reason')) ?></label>
                     <textarea id="reason" x-model="form.reason" rows="3" required maxlength="1000" class="form-textarea"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" class="btn-secondary" @click="open = false">Cancel</button>
+                    <button type="button" class="btn-secondary" @click="open = false"><?= esc(lang('common.cancel')) ?></button>
                     <button type="submit" :disabled="saving" class="btn-primary">
-                        <span x-show="!saving">Submit</span>
-                        <span x-show="saving" x-cloak>Submitting…</span>
+                        <span x-show="!saving"><?= esc(lang('common.submit')) ?></span>
+                        <span x-show="saving" x-cloak><?= esc(lang('common.submitting')) ?></span>
                     </button>
                 </div>
             </form>
@@ -305,7 +305,7 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                         this.$dispatch('toast', { type: 'success', text: json.message });
                         window.location.reload();
                     } else {
-                        this.$dispatch('toast', { type: 'error', text: json.message || 'Could not submit the request.' });
+                        this.$dispatch('toast', { type: 'error', text: json.message || <?= json_encode(lang('requests.submit_failed'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?> });
                     }
                 },
 
@@ -322,7 +322,7 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                                 this.$dispatch('toast', { type: 'success', text: json.message });
                                 window.location.reload();
                             } else {
-                                this.$dispatch('toast', { type: 'error', text: json.message || 'Could not withdraw the request.' });
+                                this.$dispatch('toast', { type: 'error', text: json.message || <?= json_encode(lang('requests.withdraw_failed'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?> });
                             }
                         },
                     });

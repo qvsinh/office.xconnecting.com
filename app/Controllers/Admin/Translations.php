@@ -14,7 +14,8 @@ use CodeIgniter\HTTP\ResponseInterface;
  *
  * `(lang_code, slug)` is a composite unique key — CI4's `is_unique` rule
  * can't span two columns, so `create()`/`update()` check
- * `TranslationModel::existsForLangSlug()` manually before writing; the DB
+ * `TranslationModel::existsForLangSlug()` manually before writing (scoped to
+ * lang + location + slug, matching the table's unique key); the DB
  * `UNIQUE(lang_code, slug)` key is the backstop against a race.
  */
 class Translations extends BaseController
@@ -53,15 +54,16 @@ class Translations extends BaseController
 
         $langCode = trim((string) $this->request->getPost('lang_code'));
         $slug     = trim((string) $this->request->getPost('slug'));
+        $location = trim((string) $this->request->getPost('location'));
 
         $translationModel = model(TranslationModel::class);
-        if ($translationModel->existsForLangSlug($langCode, $slug)) {
+        if ($translationModel->existsForLangSlug($langCode, $slug, null, $location)) {
             return $this->jsonFailed('A translation for this language and slug already exists.');
         }
 
         $translationModel->insert([
             'lang_code' => $langCode,
-            'location'  => trim((string) $this->request->getPost('location')),
+            'location'  => $location,
             'slug'      => $slug,
             'content'   => (string) $this->request->getPost('content'),
         ]);
@@ -107,14 +109,15 @@ class Translations extends BaseController
 
         $langCode = trim((string) $this->request->getPost('lang_code'));
         $slug     = trim((string) $this->request->getPost('slug'));
+        $location = trim((string) $this->request->getPost('location'));
 
-        if ($translationModel->existsForLangSlug($langCode, $slug, $id)) {
+        if ($translationModel->existsForLangSlug($langCode, $slug, $id, $location)) {
             return $this->jsonFailed('A translation for this language and slug already exists.');
         }
 
         $translationModel->update($id, [
             'lang_code' => $langCode,
-            'location'  => trim((string) $this->request->getPost('location')),
+            'location'  => $location,
             'slug'      => $slug,
             'content'   => (string) $this->request->getPost('content'),
         ]);

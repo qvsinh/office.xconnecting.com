@@ -32,7 +32,7 @@ if (! in_array($limit, $options, true)) {
 <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#787774] dark:text-gray-400">
 
     <div class="flex items-center gap-2">
-        <label for="limit" class="whitespace-nowrap">Rows per page</label>
+        <label for="limit" class="whitespace-nowrap"><?= esc(lang('common.rows_per_page')) ?></label>
 
         <?php /*
           Self-navigating, so it needs no form and no hidden inputs: the URL API
@@ -49,19 +49,19 @@ if (! in_array($limit, $options, true)) {
         </select>
 
         <span class="whitespace-nowrap">
-            <?= esc((string) $total) ?> <?= esc($noun) ?><?= $total === 1 ? '' : 's' ?> total
+            <?= esc((string) $total) ?> <?= esc($noun) ?><?= $total === 1 ? '' : 's' ?> <?= esc(lang('common.total')) ?>
         </span>
     </div>
 
     <div class="flex items-center gap-2">
         <?php if ($page > 1) : ?>
-            <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Prev</a>
+            <a href="<?= esc($pageUrl($page - 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"><?= esc(lang('common.prev')) ?></a>
         <?php endif ?>
 
-        <span class="whitespace-nowrap">Page <?= esc((string) $page) ?> of <?= esc((string) $totalPages) ?></span>
+        <span class="whitespace-nowrap"><?= esc(lang('common.page_of')) ?> <?= esc((string) $page) ?> <?= esc(lang('common.of')) ?> <?= esc((string) $totalPages) ?></span>
 
         <?php if ($page < $totalPages) : ?>
-            <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700">Next</a>
+            <a href="<?= esc($pageUrl($page + 1), 'attr') ?>" class="rounded-md border border-[#EAEAEA] px-3 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"><?= esc(lang('common.next')) ?></a>
         <?php endif ?>
     </div>
 </div>

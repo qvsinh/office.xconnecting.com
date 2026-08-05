@@ -21,9 +21,9 @@ helper('attendance');
 $weekday = static fn (string $date): string => date('D', strtotime($date));
 
 $stats = [
-    ['Worked', attendance_format_duration($summary->worked_seconds)],
-    ['Expected', attendance_format_duration($summary->expected_seconds)],
-    ['Overtime', attendance_format_duration($summary->overtime_seconds)],
+    [lang('common.worked'), attendance_format_duration($summary->worked_seconds)],
+    [lang('attendance.expected'), attendance_format_duration($summary->expected_seconds)],
+    [lang('attendance.overtime'), attendance_format_duration($summary->overtime_seconds)],
     ['Late', $summary->late . ' day(s), ' . $summary->late_minutes . ' min'],
 ];
 ?>
@@ -33,20 +33,20 @@ $stats = [
 
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold tracking-tight">My month</h1>
+            <h1 class="text-xl font-semibold tracking-tight"><?= esc(lang('attendance.report_title')) ?></h1>
             <p class="mt-1 text-sm text-[#787774] dark:text-gray-400">
                 Your attendance for <?= esc($month) ?>. Hours are net of the lunch break; times in Vietnam time.
             </p>
         </div>
-        <a href="/attendance" class="btn-secondary whitespace-nowrap">Back to check-in</a>
+        <a href="/attendance" class="btn-secondary whitespace-nowrap"><?= esc(lang('attendance.back_to_checkin')) ?></a>
     </div>
 
     <form method="get" class="mt-6 flex flex-wrap items-end gap-3 rounded-lg border border-[#EAEAEA] bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <div>
-            <label for="month" class="form-label">Month</label>
+            <label for="month" class="form-label"><?= esc(lang('common.month')) ?></label>
             <input type="month" id="month" name="month" value="<?= esc($month, 'attr') ?>" class="form-input">
         </div>
-        <button type="submit" class="btn-secondary">Show</button>
+        <button type="submit" class="btn-secondary"><?= esc(lang('common.show')) ?></button>
     </form>
 
     <dl class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -69,12 +69,12 @@ $stats = [
         <table class="min-w-full divide-y divide-[#EAEAEA] text-sm dark:divide-gray-700">
             <thead>
                 <tr class="text-left text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">
-                    <th scope="col" class="px-3 py-3 sm:px-4">Date</th>
-                    <th scope="col" class="hidden px-3 py-3 sm:px-4 sm:table-cell">Day</th>
-                    <th scope="col" class="px-3 py-3 sm:px-4">In</th>
-                    <th scope="col" class="px-3 py-3 sm:px-4">Out</th>
-                    <th scope="col" class="hidden px-3 py-3 sm:px-4 sm:table-cell">Worked</th>
-                    <th scope="col" class="px-3 py-3 sm:px-4">Status</th>
+                    <th scope="col" class="px-3 py-3 sm:px-4"><?= esc(lang('common.date')) ?></th>
+                    <th scope="col" class="hidden px-3 py-3 sm:px-4 sm:table-cell"><?= esc(lang('common.day')) ?></th>
+                    <th scope="col" class="px-3 py-3 sm:px-4"><?= esc(lang('attendance.in_col')) ?></th>
+                    <th scope="col" class="px-3 py-3 sm:px-4"><?= esc(lang('attendance.out_col')) ?></th>
+                    <th scope="col" class="hidden px-3 py-3 sm:px-4 sm:table-cell"><?= esc(lang('common.worked')) ?></th>
+                    <th scope="col" class="px-3 py-3 sm:px-4"><?= esc(lang('common.status')) ?></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EAEAEA] dark:divide-gray-700">
@@ -91,7 +91,7 @@ $stats = [
                 <?php endforeach ?>
                 <?php if ($days === []) : ?>
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400">Nothing recorded for this month yet.</td>
+                        <td colspan="6" class="px-4 py-10 text-center text-sm text-[#787774] dark:text-gray-400"><?= esc(lang('attendance.empty_month')) ?></td>
                     </tr>
                 <?php endif ?>
             </tbody>
