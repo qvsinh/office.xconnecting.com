@@ -15,6 +15,11 @@
  * @var string $at         the time this event happened
  * @var string $timezone
  * @var bool   $isCheckin
+ *
+ * No footer: it used to name `mail_notify_recipient` and `mail_notify_attendance`,
+ * which is internal configuration leaking into somebody's inbox. Where to change
+ * the recipient belongs in DEPLOYMENT.md and on the settings screen, not in every
+ * notification.
  */
 $accent = $isCheckin ? '#346538' : '#1F6C9F';
 ?>
@@ -56,9 +61,5 @@ $accent = $isCheckin ? '#346538' : '#1F6C9F';
             </td>
         </tr>
     </table>
-    <p style="max-width:520px;margin:12px auto 0;font-size:12px;color:#5c5955;text-align:center;">
-        Sent by <?= esc(site_name()) ?>. Change the recipient or switch these off in Settings
-        (<code>mail_notify_recipient</code>, <code>mail_notify_attendance</code>).
-    </p>
 </body>
 </html>

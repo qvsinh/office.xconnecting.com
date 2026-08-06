@@ -6,6 +6,7 @@ use App\Models\AccessLogModel;
 use App\Models\AttendanceDayModel;
 use App\Models\EmailModel;
 use App\Models\SiteVariableModel;
+use CodeIgniter\Config\Factories;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -65,6 +66,12 @@ final class AttendanceMailTest extends CIUnitTestCase
      */
     public function testCheckingInQueuesANotificationToTheConfiguredRecipient(): void
     {
+        // Injected rather than inherited from `.env`: an earlier version read
+        // whatever the developer had configured, so it passed while sending was off
+        // and failed the day somebody switched SES on. The status under test is
+        // "sending is off", which the test has to state.
+        Factories::injectMock('config', 'Mail', $this->mailConfig(false));
+
         $this->setSetting(AttendanceNotifier::SETTING_RECIPIENT, 'boss@example.com');
         $this->loginAs($this->seedWebUser(['email' => 'arriving@example.com', 'name' => 'Arriving Person']));
 
@@ -78,7 +85,7 @@ final class AttendanceMailTest extends CIUnitTestCase
         $this->assertSame('attendance.' . AccessLogModel::EVENT_CHECKIN, $mail->name);
         $this->assertStringContainsString('Arriving Person', $mail->subject);
         $this->assertStringContainsString('checked in', $mail->subject);
-        // Sending is off in the test .env, so it is recorded as pending, not failed.
+        // Sending is off, so it is recorded as pending, not failed.
         $this->assertSame(Mailer::STATUS_PENDING, (int) $mail->status);
     }
 

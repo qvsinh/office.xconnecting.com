@@ -339,6 +339,52 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                 <span class="text-sm font-medium text-[#787774] dark:text-gray-400"><?= esc($navZone === 'admin' ? lang('ui.admin_console') : lang('ui.client_console')) ?></span>
 
                 <div class="flex items-center gap-2">
+                <?php /*
+                  Language switcher, left of the theme toggle.
+
+                  A dropdown rather than an EN|VI pair of buttons: the list comes
+                  from Config\App::$supportedLocales, so a third language must not
+                  push the header wider. The trigger shows the current code, which
+                  keeps it ~56px — narrow enough to sit beside the theme toggle at
+                  360px, where the header is already tight.
+
+                  Isolated Alpine component, like the theme toggle and the bell —
+                  never merged into appShell(), which owns the shared toast root.
+                */ ?>
+                <div class="relative" x-data="localeSwitcher()" @click.outside="open = false"
+                     @keydown.escape.window="open = false">
+                    <button type="button" @click="open = !open"
+                            class="flex items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-[#787774] hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                            :aria-expanded="open" aria-haspopup="true"
+                            aria-label="<?= esc(lang('ui.language'), 'attr') ?>">
+                        <span class="uppercase"><?= esc($navLocale) ?></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
+                        </svg>
+                    </button>
+
+                    <div x-show="open" x-transition x-cloak
+                         class="absolute right-0 z-20 mt-2 w-44 rounded-md border border-[#EAEAEA] bg-white py-1 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                         role="menu">
+                        <?php foreach ($navLocales as $code => $label) : ?>
+                            <button type="button" role="menuitem"
+                                    @click="choose('<?= esc($code, 'attr') ?>')"
+                                    :disabled="switching"
+                                    class="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-700 <?= $code === $navLocale
+                                            ? 'font-medium text-brand-600 dark:text-brand-400'
+                                            : 'text-[#111111] dark:text-gray-100' ?>"
+                                    <?= $code === $navLocale ? 'aria-current="true"' : '' ?>>
+                                <span><?= esc($label) ?></span>
+                                <?php if ($code === $navLocale) : ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                <?php endif ?>
+                            </button>
+                        <?php endforeach ?>
+                    </div>
+                </div>
+
                 <!-- Theme toggle: isolated nested Alpine component, never merged
                      into appShell() (same invariant as the notification bell
                      below). Pre-paint script above already set the initial
@@ -415,28 +461,6 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
                         </div>
                         <a href="/account" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700"><?= esc(lang('nav.account')) ?></a>
                         <a href="/account/security" class="block px-4 py-2 text-sm text-[#111111] hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700"><?= esc(lang('nav.security')) ?></a>
-                        <?php /*
-                          Language switcher. In the account menu rather than as a
-                          separate header control: it is a personal preference set
-                          once, not something reached for repeatedly, and the header
-                          is already tight at 360px.
-                        */ ?>
-                        <div class="border-t border-[#EAEAEA] px-4 py-2 dark:border-gray-700">
-                            <p class="mb-1 text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400"><?= esc(lang('ui.language')) ?></p>
-                            <div class="flex gap-1" x-data="localeSwitcher()">
-                                <?php foreach ($navLocales as $code => $label) : ?>
-                                    <button type="button" @click="choose('<?= esc($code, 'attr') ?>')"
-                                            :disabled="switching"
-                                            class="flex-1 rounded-md border px-2 py-1 text-xs font-medium transition <?= $code === $navLocale
-                                                    ? 'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400'
-                                                    : 'border-[#EAEAEA] text-[#111111] hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700' ?>"
-                                            <?= $code === $navLocale ? 'aria-current="true"' : '' ?>>
-                                        <?= esc($label) ?>
-                                    </button>
-                                <?php endforeach ?>
-                            </div>
-                        </div>
-
                         <a href="/logout" class="block border-t border-[#EAEAEA] px-4 py-2 text-sm text-[#9F2F2D] hover:bg-gray-50 dark:border-gray-700 dark:text-red-400 dark:hover:bg-gray-700"><?= esc(lang('ui.log_out')) ?></a>
                     </div>
                 </div>
@@ -518,6 +542,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     <script>
         function localeSwitcher() {
             return {
+                open: false,
                 switching: false,
 
                 async choose(locale) {

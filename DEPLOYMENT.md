@@ -491,7 +491,10 @@ enough for that latency to show, move it behind `schedule:run`.
 
 ## 8c. Languages
 
-English and Vietnamese, switchable from the account menu in the header.
+English and Vietnamese, switchable from the header — a compact dropdown showing the
+current code, immediately left of the dark/light toggle. A dropdown rather than an
+EN|VI pair so a third language cannot widen the header; measured at 48px, which
+still fits beside the theme toggle at 360px.
 
 `lang('group.key')` resolves from the `translation` table, so `/admin/translations`
 genuinely changes what the app says — that screen used to be CRUD over a table

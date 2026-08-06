@@ -148,19 +148,38 @@ final class MailConfigTest extends CIUnitTestCase
     }
 
     /**
-     * As shipped: the switch is off and the credentials are absent, so SES is not
-     * usable. Pinned so the state is explicit rather than surprising — and so
-     * turning mail on without finishing the setup fails here instead of in
-     * production.
+     * A coherence check on the real `.env`, not a pinned opinion about it.
+     *
+     * The previous version asserted "sending is off", which was true when written
+     * and became wrong the moment somebody switched SES on — a test asserting an
+     * operator's choice. What is worth failing over is the *incoherent* state:
+     * sending switched on with incomplete credentials means every notification is
+     * quietly recorded as failed and no mail arrives, which is far easier to ship
+     * than to notice.
      */
-    public function testMailIsNotEnabledInThisProject(): void
+    public function testEnabledSendingMustHaveCompleteCredentials(): void
     {
         $mail = config('Mail');
 
-        $this->assertFalse($mail->enabled(), 'Nothing dispatches mail yet; the switch should stay off.');
-        $this->assertFalse(
-            $mail->configured(),
-            'SES counts as configured only with an access key, a secret and a region.',
+        if (! $mail->enabled()) {
+            $this->assertFalse($mail->enabled());
+
+            return;
+        }
+
+        $missing = [];
+
+        foreach (['access_key_id', 'secret_access_key', 'region'] as $key) {
+            if (trim((string) ($mail->aws[$key] ?? '')) === '') {
+                $missing[] = 'mail.aws.' . $key;
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $missing,
+            "mail.sending_enable is on, so SES has to be complete. Missing: " . implode(', ', $missing)
+            . '. Until these are set, every notification is logged as failed and nothing is delivered.',
         );
     }
 }
