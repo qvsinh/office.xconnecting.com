@@ -71,6 +71,47 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
   swallow them, especially where they have side effects.
 - Format & check with `php-cs-fixer`, `phpstan`, and `phpunit`.
 
+## One place per concern — reuse these, don't re-invent
+
+| Concern | The single place |
+|---|---|
+| Password hash/verify | `App\Libraries\PasswordHasher` (bcrypt via `password_hash()`, tuned by `auth.password_algorithm` / `auth.password_cost`). Legacy md5 rows still verify and are rewritten on next login — never add a second hashing site. |
+| Sending mail | `App\Libraries\Mailer` (Amazon SES, `aws/aws-sdk-php`). `AttendanceNotifier` composes the check-in/out notification. Every attempt is logged to `emails` and **never** throws into the caller. |
+| Company timezone | `attendance_tz()` — not a literal. Business dates come from `attendance_today()`. |
+| Translated strings | `lang('group.key')`, resolved from the `translation` table by `App\Libraries\DatabaseLanguage`. |
+| Asset cache-busting | `asset_version()` (helper `app`, autoloaded). |
+| Pagination footer | `view('_pagination', …)` — rows-per-page + Prev/Next, used by all nine admin lists. |
+| Password inputs | `view('admin/users/_password_field', …)` and `view('_password_reveal', …)`. |
+
+**AWS credentials belong in `mail.aws.*` only.** Never `AWS_ACCESS_KEY_ID` /
+`AWS_SECRET_ACCESS_KEY`: the SDK's default credential chain reads those and they then
+shadow the EC2 instance role for *every* AWS client in the process.
+
+## i18n
+
+`lang('group.key')` reads `translation` (`location` = group, `slug` = key), layered
+over the files in `app/Language/`. Locale is resolved per request by `LocaleFilter`:
+session choice -> `users.language` -> `Config\App::$defaultLocale`; only codes in
+`$supportedLocales` are honoured.
+
+- Slugs are unique per **`(lang_code, location, slug)`** — `common.date` and
+  `attendance.date` can coexist. `common` holds anything used on more than one screen.
+- Adding strings: seed them (see `2026-08-05-030000_SeedInterfaceTranslations`) **and**
+  run `vendor/bin/phpunit tests/database/TranslationCoverageTest.php`. It extracts every
+  `lang()` key from the templates and fails when one is missing a row in any language —
+  necessary because a missing key does not error, it renders as the literal `group.key`.
+- Translated so far: layout/nav/header, both dashboards, notifications, attendance,
+  requests, account. The admin CRUD screens, auth pages and docs are still literal English.
+
+## Scripts
+
+```bash
+sudo scripts/prepare-writable.sh   # REQUIRED on a fresh clone: writable/{logs,cache,debugbar} are not in git
+scripts/build-assets.sh [--watch]  # npm install if needed, then the Tailwind build
+python3 scripts/make-favicon.py    # regenerate the multi-size favicon.ico from the SVG
+node scripts/mobile-audit.js       # real-browser check for horizontal overflow (needs a running app + login)
+```
+
 ## Coding & review discipline — ponytail (REQUIRED)
 
 Use the **`ponytail`** skill for all coding, and **`ponytail-review`** for all code review.
@@ -107,7 +148,7 @@ replaces the old `tasks/{id}/plan.md` location. See `kanban/README.md`.
 php spark serve              # local dev server
 php spark migrate            # run database migrations
 php spark routes             # list all routes
-npm run dev                  # Tailwind watch build (once package.json exists)
+npm run dev                  # Tailwind watch build (or scripts/build-assets.sh --watch)
 npm run build                # Tailwind production build
 vendor/bin/phpunit           # run tests
 vendor/bin/php-cs-fixer fix  # format code
@@ -124,8 +165,9 @@ vendor/bin/phpstan analyse   # static analysis
   (just CREATE it — migrations rebuild the schema), and
   `There is a gap in the migration sequence near version …` when the DB still holds migration
   history from another branch.
-- **Full suite runs >120s** (gets backgrounded). Run in chunks: `vendor/bin/phpunit tests/feature`, then
-  `vendor/bin/phpunit tests/database tests/unit tests/session`.
+- **`tests/feature` alone runs >10 minutes** and will blow a 600s tool timeout — start it with
+  `run_in_background` and wait, or narrow with `--filter`. `vendor/bin/phpunit tests/database tests/unit tests/session`
+  is ~1 minute. Run the two groups **one at a time**, never concurrently (next bullet).
 - **After editing `app/Views/**` classes, run `npm run build`.** Tailwind JIT only emits classes/arbitrary
   values (e.g. `min-h-[500px]`) present at build time (content glob = `./app/Views/**/*.php`); the browser
   caches `/css/app.css`, so hard-refresh to see changes.
@@ -139,9 +181,21 @@ vendor/bin/phpstan analyse   # static analysis
   component (the `/requests` modal could not be closed). A 200 response proves nothing here;
   `tests/feature/Web/AuthedPagesRenderTest.php` asserts every authed page returns 200 **and** parses
   its inline scripts with `node --check`.
+- **In tests use `->response()->getBody()`, never `->getBody()`.** `TestResponse` has no
+  `getBody()`, so the call is forwarded to `DOMParser` and you get libxml's re-serialization:
+  attribute names lowercased (`viewBox` -> `viewbox`), void elements expanded, and **every
+  `@click` silently dropped** because `@` is not a valid attribute name to libxml. Asserting on
+  any Alpine binding through `->getBody()` cannot pass, and it looks like the app emitted broken
+  markup. `esc($v, 'attr')` also encodes spaces and slashes as entities — decode before matching.
+- **`min-w-0` on the layout's content column is load-bearing** (`app/Views/layouts/app.php`).
+  A flex item defaults to `min-width: auto` and refuses to shrink below its widest child, so
+  without it the column grows to the widest table and drags the whole page sideways — measured
+  +706px on `/admin/attendance/report` at 375px, while the `overflow-x-auto` wrappers sit unused.
+- **Bump `asset.version` in the server's `.env`** whenever `public/css/app.css` changes, or
+  returning visitors keep the cached stylesheet.
 - **`postForm()` (layout AJAX helper) can't send array fields** — send a CSV string and `explode()` server-side
   (see `Admin\WorkSchedules::resolveWorkdays`).
-- **`BasicAuthGateTest` has 4 pre-existing failures** (empty `app.basic.auth.*` in `.env`) — unrelated to feature work; don't chase them.
+- **`BasicAuthGateTest` has 4 pre-existing failures** (`app.basic.auth.username` is empty in `.env`, which disables the gate) — unrelated to feature work; don't chase them.
 - Persist client-side UI state (active tab, etc.) in `localStorage` keyed per record; Alpine auto-calls a
   component's `init()` — use it to `$watch` and persist (see `myRequests` in `requests/index.php`).
 - Sidebar nav (`app/Views/layouts/app.php`): top-level links use `url_is('x') || url_is('x/*')` for active
@@ -149,36 +203,39 @@ vendor/bin/phpstan analyse   # static analysis
 
 ---
 
-# CodeGraph — Code Intelligence
+# CodeGraph — Code Intelligence (CLI)
 
-Once application code exists it is indexed by **CodeGraph** (local SQLite graph at
-`.codegraph/codegraph.db`). Use the CodeGraph MCP tools to navigate and assess impact instead of
-grepping blindly. Run `codegraph sync` after adding code so the index stays current.
+The `codegraph` CLI is installed (`/usr/bin/codegraph`, v0.9.7). **The MCP tools are
+not** — do not call `codegraph_*` tools, they do not exist in this project. Use the
+CLI through Bash.
 
-## Always Do
+`.codegraph/` does not exist yet, so the first step is `init` + `index`:
 
-- **Run impact analysis before editing an existing symbol.** Use `codegraph_impact` and report the
-  blast radius (callers, callees, affected files) before modifying a function/class/method.
-- **Warn** if impact analysis shows a large/critical blast radius before proceeding.
-- Use `codegraph_search` to locate symbols and `codegraph_context` to build task context instead of grepping.
-- When renaming/moving a symbol, run `codegraph_callers` first to enumerate every call site.
+```bash
+codegraph init && codegraph index     # one-off, builds .codegraph/codegraph.db
+codegraph sync                        # after adding code, incremental
+codegraph status                      # index health
+```
 
-## MCP Tools Quick Reference
+Then, instead of grepping blindly:
 
-| Tool | When to use |
-|------|-------------|
-| `codegraph_search` | Find symbols by name |
-| `codegraph_context` | Build relevant code context for a task |
-| `codegraph_node` | Get symbol details with optional source |
-| `codegraph_callers` / `codegraph_callees` | What calls / is called by a symbol |
-| `codegraph_trace` | Trace call paths between symbols |
-| `codegraph_impact` | Analyze affected code (blast radius) |
-| `codegraph_status` | Check index health |
+| Command | Use |
+|---|---|
+| `codegraph query <search>` | find a symbol by name |
+| `codegraph callers <symbol>` | every call site — run this **before renaming or moving** anything |
+| `codegraph callees <symbol>` | what a symbol calls |
+| `codegraph impact <symbol>` | blast radius before editing an existing symbol; report it, and warn if it is large |
+| `codegraph context <task>` | build task context as markdown |
+| `codegraph affected <files...>` | **which test files a change touches** |
+| `codegraph index --force` | full rebuild |
 
-CLI equivalents: `codegraph status`, `codegraph query <search>`, `codegraph callers/callees <symbol>`,
-`codegraph impact <symbol>`, `codegraph sync` (incremental), `codegraph index --force` (full rebuild).
+`affected` is worth reaching for here specifically: `vendor/bin/phpunit tests/feature`
+takes over ten minutes (see the gotchas), so running only the affected tests during
+a change and the full suite once at the end is much faster than the full suite each
+time.
 
----
+`codegraph install` would register the MCP server with Claude Code if you prefer the
+tool interface — until then, CLI only.
 
 # Available Skills
 
