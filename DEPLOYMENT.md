@@ -471,7 +471,7 @@ rather than silently swallowed.
 
 | Setting | Meaning |
 |---|---|
-| `mail_notify_recipient` | who receives check-in/out mail (`admin@xconnecting.com`) |
+| `mail_notify_admin_recipient` | the administrator's address for check-in/out mail (`admin@xconnecting.com`). The employee who checked in is never copied. |
 | `mail_notify_attendance` | `1` to send, `0` to stop |
 
 Two things to get right on the AWS side:

@@ -13,8 +13,12 @@ use Throwable;
  * (`/admin/settings`), not constants — so nobody needs a deploy to change the
  * recipient or to stop the mail during a noisy week:
  *
- *   mail_notify_recipient    where attendance notifications go
- *   mail_notify_attendance   1 = send, 0 = do not
+ *   mail_notify_admin_recipient   the administrator's address
+ *   mail_notify_attendance        1 = send, 0 = do not
+ *
+ * **One recipient, and it is the administrator.** The employee who checked in is
+ * never sent a copy — the earlier name (`mail_notify_recipient`) did not say whose
+ * address it held, which reads as "the person this is about".
  *
  * Credentials and the master send switch stay in `.env` (`Config\Mail`). That
  * split is deliberate: an AWS secret key does not belong in a database table that
@@ -32,7 +36,7 @@ use Throwable;
  */
 class AttendanceNotifier
 {
-    public const SETTING_RECIPIENT = 'mail_notify_recipient';
+    public const SETTING_RECIPIENT = 'mail_notify_admin_recipient';
     public const SETTING_ENABLED   = 'mail_notify_attendance';
 
     /**

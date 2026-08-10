@@ -260,4 +260,69 @@ final class AttendanceMailTest extends CIUnitTestCase
         $this->assertStringNotContainsString('<script>alert(1)</script>', $body);
         $this->assertStringContainsString('&lt;script&gt;', $body);
     }
+
+    // ------------------------------------------------- who actually gets mail
+
+    /**
+     * One recipient, and it is the administrator.
+     *
+     * Worth pinning explicitly because the old setting name — `mail_notify_recipient`
+     * — did not say whose address it held, and reads as "the person this
+     * notification is about", i.e. the employee. It never was: the employee's
+     * address appears in the body as information, never in `To`.
+     */
+    public function testOnlyTheAdminIsMailedNeverTheEmployee(): void
+    {
+        Factories::injectMock('config', 'Mail', $this->mailConfig(false));
+        $this->setSetting(AttendanceNotifier::SETTING_RECIPIENT, 'boss@example.com');
+
+        $this->loginAs($this->seedWebUser(['email' => 'walker@example.com', 'name' => 'Walker']));
+        $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
+
+        $logged = $this->logged();
+        $this->assertCount(1, $logged, 'Exactly one message, not one per person.');
+        $this->assertSame('boss@example.com', $logged[0]->to_email);
+        $this->assertNotSame('walker@example.com', $logged[0]->to_email);
+
+        // The employee is named in the body — that is the whole point of the mail —
+        // but is not a recipient.
+        $this->assertStringContainsString('walker@example.com', (string) $logged[0]->content);
+    }
+
+    /**
+     * The setting is the renamed one. A stale key name would silently fall back to
+     * the built-in default, so mail would keep arriving and nobody would notice the
+     * admin's configured address had stopped being read.
+     */
+    public function testTheRecipientComesFromTheRenamedSetting(): void
+    {
+        $this->assertSame('mail_notify_admin_recipient', AttendanceNotifier::SETTING_RECIPIENT);
+
+        $this->setSetting('mail_notify_admin_recipient', 'renamed@example.com');
+        $this->assertSame('renamed@example.com', (new AttendanceNotifier())->recipient());
+
+        // The old name must no longer be consulted.
+        $this->setSetting('mail_notify_recipient', 'old-name@example.com');
+        $this->assertSame('renamed@example.com', (new AttendanceNotifier())->recipient());
+    }
+
+    /**
+     * The migration carries the configured value across rather than re-defaulting
+     * it, and leaves no duplicate knob on the settings screen.
+     */
+    public function testTheRenameMigrationKeepsTheValueAndDropsTheOldRow(): void
+    {
+        $model = model(SiteVariableModel::class);
+
+        $this->assertNotNull($model->findByName('mail_notify_admin_recipient'), 'The renamed setting should exist after migration.');
+        $this->assertNull($model->findByName('mail_notify_recipient'), 'The old row should be gone, not left as a second knob.');
+
+        // The seeded default survived the rename.
+        $this->assertSame(AttendanceNotifier::DEFAULT_RECIPIENT, $model->getValue('mail_notify_admin_recipient'));
+
+        // ...and the sibling switch no longer describes a setting that does not exist.
+        $description = (string) ($model->findByName('mail_notify_attendance')->description ?? '');
+        $this->assertStringContainsString('mail_notify_admin_recipient', $description);
+        $this->assertStringNotContainsString('email mail_notify_recipient', $description);
+    }
 }

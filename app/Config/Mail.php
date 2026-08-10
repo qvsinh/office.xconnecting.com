@@ -26,7 +26,7 @@ use CodeIgniter\Config\BaseConfig;
  * `App\Libraries\Mailer` — the SES transport — and nothing else. Check-in and
  * check-out notify the office administrator through it; who receives them and
  * whether they are sent at all are separate, admin-editable settings
- * (`mail_notify_recipient`, `mail_notify_attendance`), because a recipient should
+ * (`mail_notify_admin_recipient`, `mail_notify_attendance`), because a recipient should
  * be changeable without a deploy while a secret key should not live in a table the
  * admin UI prints on screen.
  *

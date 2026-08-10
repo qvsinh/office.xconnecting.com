@@ -76,7 +76,7 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
 | Concern | The single place |
 |---|---|
 | Password hash/verify | `App\Libraries\PasswordHasher` (bcrypt via `password_hash()`, tuned by `auth.password_algorithm` / `auth.password_cost`). Legacy md5 rows still verify and are rewritten on next login — never add a second hashing site. |
-| Sending mail | `App\Libraries\Mailer` (Amazon SES, `aws/aws-sdk-php`). `AttendanceNotifier` composes the check-in/out notification. Every attempt is logged to `emails` and **never** throws into the caller. |
+| Sending mail | `App\Libraries\Mailer` (Amazon SES, `aws/aws-sdk-php`). `AttendanceNotifier` composes the check-in/out notification and sends it to **one** address — the admin's `mail_notify_admin_recipient` setting; the employee is never copied. Every attempt is logged to `emails` and **never** throws into the caller. |
 | Company timezone | `attendance_tz()` — not a literal. Business dates come from `attendance_today()`. |
 | Translated strings | `lang('group.key')`, resolved from the `translation` table by `App\Libraries\DatabaseLanguage`. |
 | Asset cache-busting | `asset_version()` (helper `app`, autoloaded). |

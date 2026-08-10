@@ -16,7 +16,7 @@
  * @var string $timezone
  * @var bool   $isCheckin
  *
- * No footer: it used to name `mail_notify_recipient` and `mail_notify_attendance`,
+ * No footer: it used to name `mail_notify_admin_recipient` and `mail_notify_attendance`,
  * which is internal configuration leaking into somebody's inbox. Where to change
  * the recipient belongs in DEPLOYMENT.md and on the settings screen, not in every
  * notification.

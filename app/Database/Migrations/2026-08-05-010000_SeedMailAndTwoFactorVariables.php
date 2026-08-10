@@ -31,7 +31,7 @@ class SeedMailAndTwoFactorVariables extends Migration
         [
             'name'        => 'mail_notify_attendance',
             'value'       => '1',
-            'description' => 'Set to 1 to email mail_notify_recipient on every check-in and check-out, 0 to stop. Requires mail.sending_enable and the mail.aws.* credentials in .env.',
+            'description' => 'Set to 1 to email mail_notify_admin_recipient on every check-in and check-out, 0 to stop. Requires mail.sending_enable and the mail.aws.* credentials in .env.',
         ],
         [
             'name'        => 'security_2fa_name',
