@@ -272,13 +272,15 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                     this.editLoading = true;
                     let json;
                     try {
-                        const res = await fetch('/admin/translations/edit/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                        json = await res.json();
+                        json = await fetchLatest('translations.edit', '/admin/translations/edit/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     } catch (e) {
                         this.editOpen = false;
                         this.$dispatch('toast', { type: 'error', text: 'Network error. Please try again.' });
                         return;
                     }
+
+                    // A newer open superseded this response: it is not on screen any more.
+                    if (json === null) return;
                     this.editLoading = false;
                     if (json.status !== 'success') {
                         this.editOpen = false;

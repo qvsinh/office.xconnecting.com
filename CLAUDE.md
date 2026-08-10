@@ -80,6 +80,7 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
 | Company timezone | `attendance_tz()` — not a literal. Business dates come from `attendance_today()`. |
 | Translated strings | `lang('group.key')`, resolved from the `translation` table by `App\Libraries\DatabaseLanguage`. |
 | Asset cache-busting | `asset_version()` (helper `app`, autoloaded). |
+| Modal detail fetches | `fetchLatest(key, url, options)` (layout, next to `postForm()`) — GET JSON for anything a user can reopen before the last request lands. Returns `null` when superseded; the caller returns without touching state. Never call `fetch()` directly from an `openEdit`/`openShow`. |
 | Pagination footer | `view('_pagination', …)` — rows-per-page + Prev/Next, used by all nine admin lists. |
 | Password inputs | `view('admin/users/_password_field', …)` and `view('_password_reveal', …)`. |
 
@@ -198,6 +199,18 @@ vendor/bin/phpstan analyse   # static analysis
   at `z-40`, below the drawer it dims. Reasoning about the cascade is enough here only because no
   ancestor of the content column creates a stacking context (no transform/filter/opacity) — check
   that before trusting a z-index, or measure with `document.elementFromPoint()` over the sidebar.
+- **A modal that fetches its record must ignore superseded responses** — use `fetchLatest()`.
+  Every `openEdit`/`openShow` used to `fetch()` directly, so abandoning a slow open (Escape) and
+  picking another row let the first response populate the modal already on screen. Measured in a
+  real browser with one row's response delayed 700ms: `/admin/emails` showed row 0's body when
+  asked for row 2 (5/5), and `/admin/users` held the *wrong user* in the edit form (4/4) — id
+  included, so Save would have written the record you walked away from.
+- **Never measure timing or iframe behaviour with Chrome's `--virtual-time-budget`.** It fast-
+  forwards timers and fabricates results: it reported that changing an iframe's `srcdoc` never
+  commits a document, "reproducing" a bug that does not exist and pointing at the wrong fix. Drive
+  a real browser instead — `npm i --no-save playwright-core` (already vendored Chrome:
+  `chromium.launch({executablePath: '/usr/bin/google-chrome'})`), and read a sandboxed iframe
+  through `page.frames()`, not `contentDocument` (the sandbox makes it null).
 - **Bump `asset.version` in the server's `.env`** whenever `public/css/app.css` changes, or
   returning visitors keep the cached stylesheet.
 - **`postForm()` (layout AJAX helper) can't send array fields** — send a CSV string and `explode()` server-side

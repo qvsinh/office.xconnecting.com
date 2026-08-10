@@ -138,15 +138,17 @@ $itemsForJs = array_map(static fn (array $item): array => [
 
                     let json;
                     try {
-                        const res = await fetch('/admin/system/logs/preview?file=' + encodeURIComponent(item.name), {
+                        json = await fetchLatest('system-logs.preview', '/admin/system/logs/preview?file=' + encodeURIComponent(item.name), {
                             headers: { 'X-Requested-With': 'XMLHttpRequest' },
                         });
-                        json = await res.json();
                     } catch (e) {
                         this.previewOpen = false;
                         this.$dispatch('toast', { type: 'error', text: 'Network error. Please try again.' });
                         return;
                     }
+
+                    // A newer open superseded this response: it is not on screen any more.
+                    if (json === null) return;
 
                     this.previewLoading = false;
                     if (json.status !== 'success') {

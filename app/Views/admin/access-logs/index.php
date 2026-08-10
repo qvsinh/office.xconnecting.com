@@ -226,13 +226,15 @@ $deviceIcons = [
 
                     let json;
                     try {
-                        const res = await fetch('/admin/access-logs/show/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                        json = await res.json();
+                        json = await fetchLatest('access-logs.show', '/admin/access-logs/show/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     } catch (e) {
                         this.open = false;
                         this.$dispatch('toast', { type: 'error', text: 'Network error. Please try again.' });
                         return;
                     }
+
+                    // A newer open superseded this response: it is not on screen any more.
+                    if (json === null) return;
 
                     this.loading = false;
 

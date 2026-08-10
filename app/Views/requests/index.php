@@ -287,8 +287,10 @@ $startTime = $schedule === null ? '08:30' : substr((string) $schedule->start_tim
                     if (this.form.type !== 'leave' || !this.form.start_date) return;
                     const params = new URLSearchParams({ start_date: this.form.start_date, end_date: this.form.end_date || '' });
                     try {
-                        const res = await fetch('/requests/preview?' + params, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                        const json = await res.json();
+                        // Fires on every date change, so an earlier, slower answer
+                        // must not end up beside the dates now on screen.
+                        const json = await fetchLatest('requests.preview', '/requests/preview?' + params, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        if (json === null) return;
                         this.counted = json.status === 'success' ? json.workdays : null;
                     } catch (e) {
                         this.counted = null;

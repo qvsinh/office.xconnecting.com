@@ -735,6 +735,37 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
         // every validated request — see auth/login.php), parses JSON on both
         // success and error responses, and never throws on 4xx. Returns the
         // parsed JSON, or null on a network/parse failure (after toasting).
+        /*
+         * GET JSON for a modal that can be reopened before its previous request
+         * lands. Returns null when a newer request for the same `key` has been
+         * made since — the caller must ignore that response and touch nothing.
+         *
+         * Without this, abandoning a slow open (Escape) and picking another row
+         * left the first response free to populate the modal you were already
+         * reading. Measured on the sent-email viewer with a 700ms row: asking for
+         * row 2 showed row 0's body five times out of five. In an *edit* modal the
+         * same race replaces the form — including its record id — so Save would
+         * write the record you had walked away from.
+         */
+        const _latestRequest = {};
+
+        async function fetchLatest(key, url, options = {}) {
+            const seq = _latestRequest[key] = (_latestRequest[key] || 0) + 1;
+            const superseded = () => seq !== _latestRequest[key];
+
+            try {
+                const res  = await fetch(url, options);
+                const json = await res.json();
+
+                return superseded() ? null : json;
+            } catch (e) {
+                // A superseded request's failure is not the open modal's problem.
+                if (superseded()) return null;
+
+                throw e;
+            }
+        }
+
         async function postForm(url, fields) {
             const body = new URLSearchParams();
             Object.entries(fields || {}).forEach(([k, v]) => body.set(k, v ?? ''));

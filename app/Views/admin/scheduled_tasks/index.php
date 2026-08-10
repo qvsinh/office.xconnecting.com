@@ -317,13 +317,15 @@ $statusBadgeClass = static function (?string $status): string {
                     this.editLoading = true;
                     let json;
                     try {
-                        const res = await fetch('/admin/scheduled-tasks/edit/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                        json = await res.json();
+                        json = await fetchLatest('scheduled-tasks.edit', '/admin/scheduled-tasks/edit/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     } catch (e) {
                         this.editOpen = false;
                         this.$dispatch('toast', { type: 'error', text: 'Network error. Please try again.' });
                         return;
                     }
+
+                    // A newer open superseded this response: it is not on screen any more.
+                    if (json === null) return;
                     this.editLoading = false;
                     if (json.status !== 'success') {
                         this.editOpen = false;
