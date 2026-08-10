@@ -83,7 +83,7 @@ $itemsForJs = array_map(static fn (array $item): array => [
     </div>
 
     <!-- Preview modal: raw log tail is untrusted, hence x-text (never x-html) -->
-    <div x-show="previewOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
+    <div x-show="previewOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4"
          @keydown.escape.window="closePreview()">
         <div class="fixed inset-0 bg-black/40" x-show="previewOpen" x-transition.opacity @click="closePreview()"></div>
         <div x-show="previewOpen" x-transition

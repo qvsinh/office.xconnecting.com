@@ -138,11 +138,11 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
     ]) ?>
 
     <!-- Detail modal (read-only) -->
-    <div x-show="showOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4 py-8"
+    <div x-show="showOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
          @keydown.escape.window="showOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="showOpen = false"></div>
         <div x-show="showOpen" x-transition
-             class="modal-panel relative max-h-full max-w-2xl overflow-y-auto"
+             class="modal-panel relative flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden"
              x-trap.noscroll="showOpen" role="dialog" aria-modal="true" aria-labelledby="show-email-title">
             <button type="button" class="absolute right-4 top-4 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                     @click="showOpen = false" aria-label="Close">
@@ -150,10 +150,10 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <h2 id="show-email-title" class="pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Sent email</h2>
+            <h2 id="show-email-title" class="shrink-0 pr-8 text-lg font-semibold text-gray-800 dark:text-white/90">Sent email</h2>
             <p x-show="showLoading" x-cloak class="mt-4 text-sm text-[#787774] dark:text-gray-400">Loading…</p>
-            <div x-show="!showLoading" class="mt-4 space-y-3 text-sm">
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+            <div x-show="!showLoading" class="mt-3 flex min-h-0 flex-1 flex-col gap-2 text-sm">
+                <dl class="grid shrink-0 grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-4">
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">From</dt>
                         <dd class="dark:text-gray-100" x-text="showItem.from_email"></dd>
@@ -161,10 +161,6 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">To</dt>
                         <dd class="dark:text-gray-100" x-text="showItem.to_email"></dd>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Subject</dt>
-                        <dd class="dark:text-gray-100" x-text="showItem.subject"></dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Status</dt>
@@ -174,22 +170,23 @@ $statusBadge  = static function (int $status) use ($statusLabels): string {
                         <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Created</dt>
                         <dd class="dark:text-gray-100" x-text="showItem.created_at"></dd>
                     </div>
+                    <div class="sm:col-span-4">
+                        <dt class="text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Subject</dt>
+                        <dd class="dark:text-gray-100" x-text="showItem.subject"></dd>
+                    </div>
                 </dl>
-                <div x-show="showItem.error_message" x-cloak class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+                <div x-show="showItem.error_message && Number(showItem.status) === 2" x-cloak class="shrink-0 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
                     <span x-text="showItem.error_message"></span>
                 </div>
-                <div>
-                    <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Body</p>
+                <div class="flex min-h-0 flex-1 flex-col">
+                    <p class="mb-1.5 shrink-0 text-xs font-medium uppercase tracking-wide text-[#787774] dark:text-gray-400">Body</p>
                     <!-- Sandboxed preview: srcdoc bound via Alpine attribute binding
                          (never x-html), no allow-scripts — the logged HTML renders
                          isolated and can never touch this page's DOM/scripts. -->
                     <iframe :srcdoc="showItem.content" sandbox=""
-                            class="h-72 w-full rounded-md border border-[#EAEAEA] bg-white dark:border-gray-700"
+                            class="min-h-0 w-full flex-1 rounded-md border border-[#EAEAEA] bg-white dark:border-gray-700"
                             title="Email body preview"></iframe>
                 </div>
-            </div>
-            <div class="mt-6 flex justify-end">
-                <button type="button" class="btn-secondary" @click="showOpen = false">Close</button>
             </div>
         </div>
     </div>

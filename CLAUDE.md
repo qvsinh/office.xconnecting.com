@@ -191,6 +191,13 @@ vendor/bin/phpstan analyse   # static analysis
   A flex item defaults to `min-width: auto` and refuses to shrink below its widest child, so
   without it the column grows to the widest table and drags the whole page sideways — measured
   +706px on `/admin/attendance/report` at 375px, while the `overflow-x-auto` wrappers sit unused.
+- **The z-index scale is fixed: sidebar `z-50` < modal overlay `z-[60]` < confirm modal `z-[70]` <
+  toast/alert `z-[80]`.** The sidebar is `fixed` and always on screen at `lg`, so a modal below its
+  `z-50` has the sidebar punched through its own backdrop — that is what every overlay's original
+  `z-40` did, on all 20 of them. New modals copy `z-[60]`; the sidebar's *own* mobile backdrop stays
+  at `z-40`, below the drawer it dims. Reasoning about the cascade is enough here only because no
+  ancestor of the content column creates a stacking context (no transform/filter/opacity) — check
+  that before trusting a z-index, or measure with `document.elementFromPoint()` over the sidebar.
 - **Bump `asset.version` in the server's `.env`** whenever `public/css/app.css` changes, or
   returning visitors keep the cached stylesheet.
 - **`postForm()` (layout AJAX helper) can't send array fields** — send a CSV string and `explode()` server-side

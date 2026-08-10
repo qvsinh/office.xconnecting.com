@@ -196,7 +196,7 @@ $dateRange = static function (object $request): string {
     </div>
 
     <!-- Reject modal: a rejection deserves a reason. -->
-    <div x-show="rejectOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
+    <div x-show="rejectOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4"
          @keydown.escape.window="rejectOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="rejectOpen = false"></div>
         <div x-show="rejectOpen" x-transition class="modal-panel relative max-w-md"

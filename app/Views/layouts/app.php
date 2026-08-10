@@ -474,7 +474,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     </div>
 
     <!-- Shared alert banner: any page/script triggers it via $dispatch('alert', {variant, text}) -->
-    <div class="pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-2 px-4">
+    <div class="pointer-events-none fixed inset-x-0 top-4 z-[80] flex flex-col items-center gap-2 px-4">
         <template x-for="a in alerts" :key="a.id">
             <div class="pointer-events-auto w-full max-w-lg rounded-md border px-4 py-3 text-sm shadow-sm"
                  :class="{
@@ -493,7 +493,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     </div>
 
     <!-- Shared toast stack -->
-    <div class="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+    <div class="pointer-events-none fixed bottom-4 right-4 z-[80] flex flex-col gap-2">
         <template x-for="t in toasts" :key="t.id">
             <div class="pointer-events-auto w-72 rounded-md border px-4 py-3 text-sm shadow-sm"
                  :class="{
@@ -512,7 +512,7 @@ $navIconDefault = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink
     </div>
 
     <!-- Shared confirm modal -->
-    <div x-show="confirmState.open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center px-4"
+    <div x-show="confirmState.open" x-cloak class="fixed inset-0 z-[70] flex items-center justify-center px-4"
          @keydown.escape.window="closeConfirm()">
         <div class="fixed inset-0 bg-black/40" x-show="confirmState.open" x-transition.opacity @click="closeConfirm()"></div>
         <div x-show="confirmState.open" x-transition

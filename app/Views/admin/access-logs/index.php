@@ -183,7 +183,7 @@ $deviceIcons = [
     </div>
 
     <!-- Detail modal: the raw user-agent header, which is too long for a column. -->
-    <div x-show="open" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
+    <div x-show="open" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4"
          @keydown.escape.window="open = false">
         <div class="fixed inset-0 bg-black/40" @click="open = false"></div>
         <div x-show="open" x-transition class="modal-panel relative max-w-lg"

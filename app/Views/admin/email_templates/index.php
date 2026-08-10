@@ -145,7 +145,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
     ]) ?>
 
     <!-- Create modal -->
-    <div x-show="createOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4 py-8"
+    <div x-show="createOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
          @keydown.escape.window="createOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="createOpen = false"></div>
         <div x-show="createOpen" x-transition
@@ -205,7 +205,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
     </div>
 
     <!-- Edit modal -->
-    <div x-show="editOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4 py-8"
+    <div x-show="editOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8"
          @keydown.escape.window="editOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="editOpen = false"></div>
         <div x-show="editOpen" x-transition

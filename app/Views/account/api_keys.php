@@ -100,7 +100,7 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
     </div>
 
     <!-- Create modal -->
-    <div x-show="createOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4"
+    <div x-show="createOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4"
          @keydown.escape.window="createOpen = false">
         <div class="fixed inset-0 bg-black/40" @click="createOpen = false"></div>
         <div x-show="createOpen" x-transition
@@ -148,7 +148,7 @@ $statusBadge = static function (?string $revokedAt, ?string $expiresAt) use ($no
     </div>
 
     <!-- One-time token reveal -->
-    <div x-show="revealOpen" x-cloak class="fixed inset-0 z-40 flex items-center justify-center px-4">
+    <div x-show="revealOpen" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center px-4">
         <div class="fixed inset-0 bg-black/40"></div>
         <div x-show="revealOpen" x-transition
              class="modal-panel relative max-w-md"
