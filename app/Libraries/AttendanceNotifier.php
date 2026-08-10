@@ -14,11 +14,16 @@ use Throwable;
  * recipient or to stop the mail during a noisy week:
  *
  *   mail_notify_admin_recipient   the administrator's address
- *   mail_notify_attendance        1 = send, 0 = do not
+ *   mail_notify_attendance        master switch: 0 means nobody is mailed
+ *   mail_notify_employee          also send the employee their own receipt
  *
- * **One recipient, and it is the administrator.** The employee who checked in is
- * never sent a copy — the earlier name (`mail_notify_recipient`) did not say whose
- * address it held, which reads as "the person this is about".
+ * Two audiences, two templates. The administrator's copy reports *about* somebody;
+ * the employee's is a receipt addressed *to* them. One template with conditionals
+ * would read oddly to whichever side was not the primary reader.
+ *
+ * The employee copy has its own switch because it doubles the messages SES sends,
+ * and because a quiet week for the admin is not the same decision as a quiet week
+ * for everyone.
  *
  * Credentials and the master send switch stay in `.env` (`Config\Mail`). That
  * split is deliberate: an AWS secret key does not belong in a database table that
@@ -37,7 +42,17 @@ use Throwable;
 class AttendanceNotifier
 {
     public const SETTING_RECIPIENT = 'mail_notify_admin_recipient';
-    public const SETTING_ENABLED   = 'mail_notify_attendance';
+
+    /**
+     * Master switch. Off means nobody is mailed, admin or employee.
+     */
+    public const SETTING_ENABLED = 'mail_notify_attendance';
+
+    /**
+     * Whether the employee also gets their own receipt. Separate from the master
+     * switch because it doubles the number of messages SES sends.
+     */
+    public const SETTING_EMPLOYEE_COPY = 'mail_notify_employee';
 
     /**
      * Fallback recipient if the setting was deleted outright — better that the
@@ -82,29 +97,41 @@ class AttendanceNotifier
 
             $isCheckin = $event === AccessLogModel::EVENT_CHECKIN;
             $employee  = trim((string) ($user->name ?? '')) ?: (string) ($user->email ?? 'Unknown employee');
-            $at        = attendance_local_time($isCheckin ? ($day->checkin_at ?? null) : ($day->checkout_at ?? null));
 
-            $subject = sprintf(
-                '[%s] %s %s at %s',
-                site_name(),
-                $employee,
-                $isCheckin ? 'checked in' : 'checked out',
-                $at,
-            );
-
-            $body = view('emails/attendance_event', [
+            $facts = [
                 'event'      => $event,
                 'isCheckin'  => $isCheckin,
                 'employee'   => $employee,
+                'name'       => $employee,
                 'email'      => (string) ($user->email ?? ''),
                 'workDate'   => (string) ($day->work_date ?? ''),
                 'checkinAt'  => attendance_local_time($day->checkin_at ?? null),
                 'checkoutAt' => attendance_local_time($day->checkout_at ?? null),
-                'at'         => $at,
+                'at'         => attendance_local_time($isCheckin ? ($day->checkin_at ?? null) : ($day->checkout_at ?? null)),
                 'timezone'   => attendance_tz(),
-            ]);
+            ];
 
-            $this->mailer->send($this->recipient(), $subject, $body, 'attendance.' . $event);
+            // Dispatched separately, each guarded, so a broken template or a
+            // refused address on one side cannot suppress the other.
+            $this->dispatch(
+                'admin',
+                $this->recipient(),
+                sprintf('[%s] %s %s at %s', site_name(), $employee, $isCheckin ? 'checked in' : 'checked out', $facts['at']),
+                'emails/attendance_event',
+                $facts,
+                'attendance.' . $event,
+            );
+
+            if ($this->employeeCopyEnabled()) {
+                $this->dispatch(
+                    'employee',
+                    $facts['email'],
+                    sprintf('%s %s at %s', site_name(), $isCheckin ? '— checked in' : '— checked out', $facts['at']),
+                    'emails/attendance_event_employee',
+                    $facts,
+                    'attendance.' . $event . '.employee',
+                );
+            }
         } catch (Throwable $e) {
             log_message('error', 'Attendance notification failed ({event}): {msg}', [
                 'event' => $event,
@@ -123,6 +150,38 @@ class AttendanceNotifier
         helper('setting');
 
         return filter_var(get_site_variable(self::SETTING_ENABLED, '1'), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * Render and hand one message to the mailer, swallowing anything that goes
+     * wrong so the sibling send still happens.
+     *
+     * @param array<string, mixed> $facts
+     */
+    private function dispatch(string $audience, string $to, string $subject, string $template, array $facts, string $label): void
+    {
+        try {
+            $this->mailer->send($to, $subject, view($template, $facts), $label);
+        } catch (Throwable $e) {
+            log_message('error', 'Attendance {audience} notification failed: {msg}', [
+                'audience' => $audience,
+                'msg'      => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Does the employee get their own receipt?
+     *
+     * Defaults to on — it was asked for, and somebody who just tapped a button is
+     * the one person entitled to a record of it. Turn it off if the SES volume or
+     * the inbox noise stops being worth it.
+     */
+    public function employeeCopyEnabled(): bool
+    {
+        helper('setting');
+
+        return filter_var(get_site_variable(self::SETTING_EMPLOYEE_COPY, '1'), FILTER_VALIDATE_BOOLEAN);
     }
 
     public function recipient(): string

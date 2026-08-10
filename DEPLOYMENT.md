@@ -454,7 +454,11 @@ under **Settings**.
 
 ## 8b. Email (Amazon SES)
 
-Check-in and check-out email the office administrator. The transport is
+Check-in and check-out send up to two messages: a report to the administrator, and —
+when `mail_notify_employee` is on — a receipt to the employee who recorded it. Two
+audiences, two templates (`emails/attendance_event.php` and
+`…_employee.php`): one reports *about* somebody, the other is addressed *to* them.
+Each is dispatched separately, so a failure on one side cannot suppress the other. The transport is
 `App\Libraries\Mailer` (AWS SDK, `aws/aws-sdk-php`), and every attempt — sent,
 failed or suppressed — is recorded in `/admin/emails`.
 
@@ -471,8 +475,9 @@ rather than silently swallowed.
 
 | Setting | Meaning |
 |---|---|
-| `mail_notify_admin_recipient` | the administrator's address for check-in/out mail (`admin@xconnecting.com`). The employee who checked in is never copied. |
-| `mail_notify_attendance` | `1` to send, `0` to stop |
+| `mail_notify_admin_recipient` | the administrator's address for check-in/out mail (`admin@xconnecting.com`) |
+| `mail_notify_employee` | `1` to also send the employee their own receipt, `0` for admin-only. **Doubles the messages SES sends.** |
+| `mail_notify_attendance` | master switch — `0` means nobody is mailed, admin or employee |
 
 Two things to get right on the AWS side:
 

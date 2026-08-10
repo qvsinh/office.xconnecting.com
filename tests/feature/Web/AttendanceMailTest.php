@@ -47,6 +47,14 @@ final class AttendanceMailTest extends CIUnitTestCase
         return model(EmailModel::class)->orderBy('created_at', 'ASC')->findAll();
     }
 
+    /**
+     * @return list<object>
+     */
+    private function loggedFor(string $label): array
+    {
+        return array_values(array_filter($this->logged(), static fn (object $row): bool => $row->name === $label));
+    }
+
     private function mailConfig(bool $enabled, bool $configured = true): Mail
     {
         $config                 = new Mail();
@@ -77,10 +85,13 @@ final class AttendanceMailTest extends CIUnitTestCase
 
         $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
 
-        $logged = $this->logged();
-        $this->assertCount(1, $logged, 'Exactly one notification should have been recorded.');
+        // Two messages now: the admin's report and the employee's receipt.
+        $this->assertCount(2, $this->logged());
 
-        $mail = $logged[0];
+        $admin = $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN);
+        $this->assertCount(1, $admin, 'Exactly one admin notification.');
+
+        $mail = $admin[0];
         $this->assertSame('boss@example.com', $mail->to_email);
         $this->assertSame('attendance.' . AccessLogModel::EVENT_CHECKIN, $mail->name);
         $this->assertStringContainsString('Arriving Person', $mail->subject);
@@ -102,14 +113,17 @@ final class AttendanceMailTest extends CIUnitTestCase
         $names = array_map(static fn (object $row): string => $row->name, $this->logged());
         sort($names);
 
-        $this->assertSame(
-            ['attendance.' . AccessLogModel::EVENT_CHECKIN, 'attendance.' . AccessLogModel::EVENT_CHECKOUT],
-            $names,
-        );
+        // Four rows: an admin report and an employee receipt for each event.
+        $this->assertSame([
+            'attendance.' . AccessLogModel::EVENT_CHECKIN,
+            'attendance.' . AccessLogModel::EVENT_CHECKIN . '.employee',
+            'attendance.' . AccessLogModel::EVENT_CHECKOUT,
+            'attendance.' . AccessLogModel::EVENT_CHECKOUT . '.employee',
+        ], $names);
 
         $subjects = array_map(static fn (object $row): string => $row->subject, $this->logged());
-        $this->assertSame(1, count(array_filter($subjects, static fn (string $s): bool => str_contains($s, 'checked in'))));
-        $this->assertSame(1, count(array_filter($subjects, static fn (string $s): bool => str_contains($s, 'checked out'))));
+        $this->assertSame(2, count(array_filter($subjects, static fn (string $s): bool => str_contains($s, 'checked in'))));
+        $this->assertSame(2, count(array_filter($subjects, static fn (string $s): bool => str_contains($s, 'checked out'))));
     }
 
     /**
@@ -122,7 +136,9 @@ final class AttendanceMailTest extends CIUnitTestCase
         $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
         $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(409);
 
-        $this->assertCount(1, $this->logged(), 'The refused second attempt must not notify.');
+        // One event's worth (admin + employee), not two events'.
+        $this->assertCount(2, $this->logged(), 'The refused second attempt must not notify.');
+        $this->assertCount(1, $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN));
     }
 
     // ------------------------------------------------------------- the switch
@@ -264,14 +280,13 @@ final class AttendanceMailTest extends CIUnitTestCase
     // ------------------------------------------------- who actually gets mail
 
     /**
-     * One recipient, and it is the administrator.
+     * Each audience gets its own message, addressed to itself.
      *
-     * Worth pinning explicitly because the old setting name — `mail_notify_recipient`
-     * — did not say whose address it held, and reads as "the person this
-     * notification is about", i.e. the employee. It never was: the employee's
-     * address appears in the body as information, never in `To`.
+     * The admin's copy goes to the configured address and never to the employee —
+     * the employee's address belongs in its body as information about who checked
+     * in. The employee's copy goes to the employee and nowhere else.
      */
-    public function testOnlyTheAdminIsMailedNeverTheEmployee(): void
+    public function testEachAudienceIsAddressedSeparately(): void
     {
         Factories::injectMock('config', 'Mail', $this->mailConfig(false));
         $this->setSetting(AttendanceNotifier::SETTING_RECIPIENT, 'boss@example.com');
@@ -279,14 +294,85 @@ final class AttendanceMailTest extends CIUnitTestCase
         $this->loginAs($this->seedWebUser(['email' => 'walker@example.com', 'name' => 'Walker']));
         $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
 
-        $logged = $this->logged();
-        $this->assertCount(1, $logged, 'Exactly one message, not one per person.');
-        $this->assertSame('boss@example.com', $logged[0]->to_email);
-        $this->assertNotSame('walker@example.com', $logged[0]->to_email);
+        $admin    = $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN)[0];
+        $employee = $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN . '.employee')[0];
 
-        // The employee is named in the body — that is the whole point of the mail —
-        // but is not a recipient.
-        $this->assertStringContainsString('walker@example.com', (string) $logged[0]->content);
+        $this->assertSame('boss@example.com', $admin->to_email);
+        $this->assertSame('walker@example.com', $employee->to_email);
+
+        // The employee is named in the admin's body, not addressed by it.
+        $this->assertStringContainsString('walker@example.com', (string) $admin->content);
+    }
+
+    /**
+     * Two audiences, two templates — the receipt is written to the person, the
+     * report is written about them.
+     */
+    public function testTheTwoAudiencesGetDifferentBodies(): void
+    {
+        Factories::injectMock('config', 'Mail', $this->mailConfig(false));
+        $this->loginAs($this->seedWebUser(['email' => 'reader@example.com', 'name' => 'Reader']));
+        $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
+
+        $admin    = (string) $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN)[0]->content;
+        $employee = (string) $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN . '.employee')[0]->content;
+
+        $this->assertNotSame($admin, $employee, 'The two audiences must not share one body.');
+        $this->assertStringContainsString('You checked in at', $employee);
+        $this->assertStringNotContainsString('You checked in at', $admin);
+        // And no configuration names leak into either inbox.
+        foreach ([$admin, $employee] as $body) {
+            $this->assertStringNotContainsString('mail_notify_', $body);
+        }
+    }
+
+    public function testTheEmployeeCopyCanBeTurnedOffOnItsOwn(): void
+    {
+        Factories::injectMock('config', 'Mail', $this->mailConfig(false));
+        $this->setSetting(AttendanceNotifier::SETTING_EMPLOYEE_COPY, '0');
+
+        $this->loginAs($this->seedWebUser(['email' => 'adminonly@example.com']));
+        $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
+
+        $this->assertCount(1, $this->logged(), 'Only the admin should be mailed.');
+        $this->assertCount(1, $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN));
+        $this->assertSame([], $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN . '.employee'));
+    }
+
+    /**
+     * The master switch still silences everything, employee copy included.
+     */
+    public function testTheMasterSwitchSilencesBothAudiences(): void
+    {
+        Factories::injectMock('config', 'Mail', $this->mailConfig(false));
+        $this->setSetting(AttendanceNotifier::SETTING_ENABLED, '0');
+        $this->setSetting(AttendanceNotifier::SETTING_EMPLOYEE_COPY, '1');
+
+        $this->loginAs($this->seedWebUser(['email' => 'silent@example.com']));
+        $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
+
+        $this->assertSame([], $this->logged());
+    }
+
+    /**
+     * An employee with no address on file must not stop the admin being told, and
+     * must not raise anything into the check-in.
+     */
+    public function testAnEmployeeWithoutAnAddressStillLetsTheAdminMailThrough(): void
+    {
+        Factories::injectMock('config', 'Mail', $this->mailConfig(false));
+
+        $user = $this->seedWebUser(['email' => 'noaddress@example.com']);
+        $this->loginAs($user);
+        // Cleared after login, so the session still works but the row has none.
+        model(App\Models\UserModel::class)->update($user->id, ['email' => '']);
+
+        $this->withSession()->post('/attendance/checkin', $this->withCsrf([]))->assertStatus(200);
+
+        $this->assertCount(1, $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN), 'The admin is still told.');
+        $failed = $this->loggedFor('attendance.' . AccessLogModel::EVENT_CHECKIN . '.employee');
+        $this->assertCount(1, $failed, 'The attempt is recorded rather than vanishing.');
+        $this->assertSame(Mailer::STATUS_FAILED, (int) $failed[0]->status);
     }
 
     /**
