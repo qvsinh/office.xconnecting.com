@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\RequestNotifier;
 use App\Libraries\RequestReview;
 use App\Models\LeaveRequestModel;
 use App\Models\UserModel;
@@ -80,23 +81,24 @@ class RequestDecision extends BaseController
      * Who decided it?
      *
      * The link carries no session, so the best available answer is the account
-     * behind the address the mail was sent to. When that address belongs to
-     * nobody, the decision is recorded with no reviewer rather than attributed to
-     * an account that did not make it.
+     * behind the address the mail was sent to. When no configured address belongs
+     * to anybody, the decision is recorded with no reviewer rather than attributed
+     * to an account that did not make it.
      */
     private function reviewerId(): ?int
     {
-        helper('setting');
+        // Through the notifier, so the comma-separated setting is parsed in one
+        // place. With several addresses configured we cannot know which of them
+        // clicked, so the first that belongs to an account is the honest answer.
+        foreach ((new RequestNotifier())->recipients() as $address) {
+            $user = model(UserModel::class)->findActiveByEmail($address);
 
-        $address = trim((string) get_site_variable('mail_notify_admin_recipient', ''));
-
-        if ($address === '') {
-            return null;
+            if ($user !== null) {
+                return (int) $user->id;
+            }
         }
 
-        $user = model(UserModel::class)->findActiveByEmail($address);
-
-        return $user === null ? null : (int) $user->id;
+        return null;
     }
 
     private function normaliseAction(string $action): string

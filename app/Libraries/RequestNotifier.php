@@ -127,9 +127,10 @@ class RequestNotifier extends MailNotifier
             // sentence, and the subject line is the only part most people read.
             $verb = $event === self::EVENT_SUBMITTED ? 'requested' : 'withdrew';
 
-            $this->dispatch(
-                'admin',
-                $this->recipient(),
+            // One token, shared by every administrator's copy: whoever acts first
+            // decides, and the link dies with the decision. Minting per recipient
+            // would leave all but the last one broken.
+            $this->dispatchToAdmins(
                 sprintf('[%s] %s %s %s', site_name(), $facts['employee'], $verb, strtolower($facts['what'])),
                 'emails/request_admin',
                 $facts,

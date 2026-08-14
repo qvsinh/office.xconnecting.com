@@ -475,7 +475,7 @@ rather than silently swallowed.
 
 | Setting | Meaning |
 |---|---|
-| `mail_notify_admin_recipient` | the administrator's address for check-in/out mail (`admin@xconnecting.com`) |
+| `mail_notify_admin_recipient` | administrator address(es) for attendance and leave-request mail (`admin@xconnecting.com`). **Several are allowed, comma-separated** — spaces around them are ignored and each address gets its own copy. |
 | `mail_notify_employee` | `1` to also send the employee their own receipt, `0` for admin-only. **Doubles the messages SES sends.** |
 | `mail_notify_requests` | `1` to email leave / late-arrival requests — the administrator when one is submitted or withdrawn, the employee when it is approved or rejected. `0` stops both directions. |
 

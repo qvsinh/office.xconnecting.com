@@ -268,6 +268,57 @@ final class RequestMailTest extends CIUnitTestCase
         $this->seeInDatabase('leave_requests', ['id' => $request->id, 'status' => LeaveRequestModel::STATUS_APPROVED]);
     }
 
+    /**
+     * Several administrators, one event: each gets their own copy, so a typo in
+     * one address is visible on /admin/emails and cannot suppress the others.
+     */
+    public function testEveryConfiguredAdminAddressGetsItsOwnCopy(): void
+    {
+        // Written the way somebody actually types it: spaces, a trailing comma,
+        // and the same address twice.
+        $this->setSetting(RequestNotifier::SETTING_RECIPIENT, ' boss@example.com , hr@example.com ,, boss@example.com,');
+
+        $this->loginAs($this->seedWebUser(['email' => 'walker@example.com', 'name' => 'Walker']));
+        $this->submitLeave();
+
+        $logged = $this->logged('requests.submitted');
+        $addresses = array_map(static fn (object $row): string => (string) $row->to_email, $logged);
+
+        sort($addresses);
+        $this->assertSame(['boss@example.com', 'hr@example.com'], $addresses, 'trimmed, de-duplicated, blanks dropped');
+    }
+
+    public function testTheParsedListIsWhatTheNotifierReports(): void
+    {
+        $this->setSetting(RequestNotifier::SETTING_RECIPIENT, "a@example.com ,\tb@example.com");
+
+        $notifier = new RequestNotifier();
+
+        $this->assertSame(['a@example.com', 'b@example.com'], $notifier->recipients());
+        // The single-address accessor keeps meaning "the first one".
+        $this->assertSame('a@example.com', $notifier->recipient());
+    }
+
+    public function testOneBadAddressAmongGoodOnesStillDeliversTheRest(): void
+    {
+        $this->setSetting(RequestNotifier::SETTING_RECIPIENT, 'not-an-address, hr@example.com');
+
+        $this->loginAs($this->seedWebUser(['email' => 'walker@example.com']));
+        $this->submitLeave();
+
+        $logged = $this->logged('requests.submitted');
+        $this->assertCount(2, $logged, 'both attempts recorded');
+
+        $byAddress = [];
+
+        foreach ($logged as $row) {
+            $byAddress[(string) $row->to_email] = (int) $row->status;
+        }
+
+        $this->assertSame(2, $byAddress['not-an-address'], 'the typo is logged as failed');
+        $this->assertSame(0, $byAddress['hr@example.com'], 'the good address still went out');
+    }
+
     public function testTheAdminAddressIsTheSharedOneAndFallsBackWhenBlank(): void
     {
         $this->setSetting(RequestNotifier::SETTING_RECIPIENT, '   ');

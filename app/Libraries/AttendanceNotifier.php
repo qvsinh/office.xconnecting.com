@@ -97,9 +97,7 @@ class AttendanceNotifier extends MailNotifier
 
             // Dispatched separately, each guarded, so a broken template or a
             // refused address on one side cannot suppress the other.
-            $this->dispatch(
-                'admin',
-                $this->recipient(),
+            $this->dispatchToAdmins(
                 sprintf('[%s] %s %s at %s', site_name(), $employee, $isCheckin ? 'checked in' : 'checked out', $facts['at']),
                 'emails/attendance_event',
                 $facts,

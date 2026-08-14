@@ -297,6 +297,37 @@ final class RequestDecisionLinkTest extends CIUnitTestCase
         $this->seeInDatabase('leave_requests', ['id' => $row->id, 'reviewed_by' => $admin->id]);
     }
 
+    /**
+     * With several administrators configured we cannot know which one clicked, so
+     * the first address that belongs to an account is the attribution. Everyone
+     * shares one token — whoever acts first decides.
+     */
+    public function testSeveralAdminsShareOneLinkAndTheFirstKnownAccountIsCredited(): void
+    {
+        $this->seedWebUser(['email' => 'nobody-account@example.com', 'zone' => 'admin', 'name' => 'Ghost']);
+        $hr = $this->seedWebUser(['email' => 'hr@example.com', 'zone' => 'admin', 'name' => 'HR']);
+        $this->setSetting('mail_notify_admin_recipient', 'unknown@example.com, hr@example.com');
+
+        [$row, $token] = $this->submitAndCaptureLink();
+
+        // One event, two copies, and the same link in both.
+        $mails = model(App\Models\EmailModel::class)->where('name', 'requests.submitted')->findAll();
+        $this->assertCount(2, $mails);
+
+        foreach ($mails as $mail) {
+            $this->assertStringContainsString(
+                'request-decision/' . $token,
+                html_entity_decode((string) $mail->content),
+                'every administrator gets the same working link',
+            );
+        }
+
+        $this->withSession()->post('/request-decision/' . $token, $this->withCsrf(['action' => 'approve']))
+            ->assertStatus(200);
+
+        $this->seeInDatabase('leave_requests', ['id' => $row->id, 'reviewed_by' => $hr->id]);
+    }
+
     public function testAnAddressBelongingToNobodyRecordsNoReviewerRatherThanInventingOne(): void
     {
         $this->setSetting('mail_notify_admin_recipient', 'nobody@example.com');

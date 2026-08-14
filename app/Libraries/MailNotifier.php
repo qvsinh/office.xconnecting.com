@@ -25,7 +25,8 @@ use Throwable;
 abstract class MailNotifier
 {
     /**
-     * The administrator's address, admin-editable on `/admin/settings`.
+     * The administrator address(es), admin-editable on `/admin/settings`.
+     * Comma-separated for an office where more than one person watches this.
      */
     public const SETTING_RECIPIENT = 'mail_notify_admin_recipient';
 
@@ -42,13 +43,58 @@ abstract class MailNotifier
         $this->mailer = $mailer ?? new Mailer();
     }
 
-    public function recipient(): string
+    /**
+     * Every administrator address the setting names, in the order written.
+     *
+     * The setting is one free-text field, so it is parsed defensively: split on
+     * commas, trim each part (`a@x , b@y` is what people actually type), drop the
+     * empties a trailing comma leaves behind, and drop duplicates so nobody is
+     * mailed twice for one event. Falls back to the built-in address when the
+     * setting is blank — better that the mail lands somewhere real than nowhere.
+     *
+     * Addresses are *not* validated here: `Mailer` refuses an undeliverable one
+     * and records the attempt, which is how a typo becomes visible on
+     * `/admin/emails` instead of vanishing.
+     *
+     * @return list<string>
+     */
+    public function recipients(): array
     {
         helper('setting');
 
-        $value = trim((string) get_site_variable(static::SETTING_RECIPIENT, static::DEFAULT_RECIPIENT));
+        $addresses = array_filter(
+            array_map('trim', explode(',', (string) get_site_variable(static::SETTING_RECIPIENT, static::DEFAULT_RECIPIENT))),
+            static fn (string $address): bool => $address !== '',
+        );
 
-        return $value === '' ? static::DEFAULT_RECIPIENT : $value;
+        $addresses = array_values(array_unique($addresses));
+
+        return $addresses === [] ? [static::DEFAULT_RECIPIENT] : $addresses;
+    }
+
+    /**
+     * The first administrator address — for the places that can only mean one,
+     * such as matching an emailed decision back to an account.
+     */
+    public function recipient(): string
+    {
+        return $this->recipients()[0];
+    }
+
+    /**
+     * Send one message to every administrator address.
+     *
+     * One send per address rather than one message with several recipients: each
+     * gets its own row in `emails`, so a typo in the third address is visible and
+     * cannot suppress the first two.
+     *
+     * @param array<string, mixed> $facts
+     */
+    protected function dispatchToAdmins(string $subject, string $template, array $facts, string $label): void
+    {
+        foreach ($this->recipients() as $address) {
+            $this->dispatch('admin', $address, $subject, $template, $facts, $label);
+        }
     }
 
     /**
