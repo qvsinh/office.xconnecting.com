@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Libraries\AttendanceCalendar;
 use App\Libraries\LeaveBalance;
+use App\Libraries\RequestNotifier;
 use App\Models\LeaveRequestModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -101,7 +102,7 @@ class Requests extends BaseController
             return $this->jsonFailed('You already have a pending or approved request covering those dates.', 409);
         }
 
-        model(LeaveRequestModel::class)->createRequest([
+        $requestId = model(LeaveRequestModel::class)->createRequest([
             'user_id'       => $userId,
             'type'          => $type,
             'leave_kind'    => $isLeave ? (string) $this->request->getPost('leave_kind') : null,
@@ -111,6 +112,10 @@ class Requests extends BaseController
             'expected_time' => $isLeave ? null : $this->expectedTime(),
             'reason'        => trim((string) $this->request->getPost('reason')),
         ]);
+
+        // Fire-and-forget: the notifier swallows its own failures, so a slow or
+        // misconfigured SES can never turn a valid request into an error.
+        $this->notifyAdmin($requestId, 'submitted');
 
         return $this->jsonSuccess('Your request has been submitted and is awaiting approval.');
     }
@@ -132,7 +137,37 @@ class Requests extends BaseController
             return $this->jsonFailed('Only a pending request can be withdrawn.', 409);
         }
 
+        // The administrator was asked to approve this; they should hear that they
+        // no longer need to.
+        $this->notifyAdmin($id, 'withdrawn');
+
         return $this->jsonSuccess('Your request has been withdrawn.');
+    }
+
+    /**
+     * Mail the administrator about a request, reading the stored row back so the
+     * message describes what was saved rather than what was posted.
+     */
+    private function notifyAdmin(int $requestId, string $event): void
+    {
+        $row = model(LeaveRequestModel::class)->findRequest($requestId);
+
+        if ($row === null) {
+            return;
+        }
+
+        $notifier = new RequestNotifier();
+
+        if ($event === 'submitted') {
+            $notifier->submitted($row);
+
+            return;
+        }
+
+        // Retire the emailed approve/reject link first: the message announcing the
+        // withdrawal should not arrive while the earlier one still works.
+        model(LeaveRequestModel::class)->clearDecisionToken($requestId);
+        $notifier->withdrawn($row);
     }
 
     /**

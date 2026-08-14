@@ -31,18 +31,15 @@ use Throwable;
  *
  * ## Never breaks the check-in
  *
- * `notify()` cannot throw. An employee tapping "Check in" at 08:29 must not see
- * an error because SES was slow, so every failure ends up in the log and the
- * request carries on. Same rule as `AccessLogger`.
+ * `notify()` cannot throw — see `MailNotifier`, which owns that rule and the
+ * administrator's address for every notifier.
  *
  * Note this sends inline, on the employee's request. One SES call is fast, but if
  * the office grows to where that latency is felt, move it behind the existing
  * `scheduled_tasks` runner rather than making the controller wait.
  */
-class AttendanceNotifier
+class AttendanceNotifier extends MailNotifier
 {
-    public const SETTING_RECIPIENT = 'mail_notify_admin_recipient';
-
     /**
      * Master switch. Off means nobody is mailed, admin or employee.
      */
@@ -53,19 +50,6 @@ class AttendanceNotifier
      * switch because it doubles the number of messages SES sends.
      */
     public const SETTING_EMPLOYEE_COPY = 'mail_notify_employee';
-
-    /**
-     * Fallback recipient if the setting was deleted outright — better that the
-     * mail lands somewhere real than nowhere.
-     */
-    public const DEFAULT_RECIPIENT = 'admin@xconnecting.com';
-
-    private Mailer $mailer;
-
-    public function __construct(?Mailer $mailer = null)
-    {
-        $this->mailer = $mailer ?? new Mailer();
-    }
 
     /**
      * The employee is looked up by id rather than passed in, so this works the
@@ -147,27 +131,7 @@ class AttendanceNotifier
      */
     public function enabled(): bool
     {
-        helper('setting');
-
-        return filter_var(get_site_variable(self::SETTING_ENABLED, '1'), FILTER_VALIDATE_BOOLEAN);
-    }
-
-    /**
-     * Render and hand one message to the mailer, swallowing anything that goes
-     * wrong so the sibling send still happens.
-     *
-     * @param array<string, mixed> $facts
-     */
-    private function dispatch(string $audience, string $to, string $subject, string $template, array $facts, string $label): void
-    {
-        try {
-            $this->mailer->send($to, $subject, view($template, $facts), $label);
-        } catch (Throwable $e) {
-            log_message('error', 'Attendance {audience} notification failed: {msg}', [
-                'audience' => $audience,
-                'msg'      => $e->getMessage(),
-            ]);
-        }
+        return $this->switchedOn(self::SETTING_ENABLED);
     }
 
     /**
@@ -179,17 +143,6 @@ class AttendanceNotifier
      */
     public function employeeCopyEnabled(): bool
     {
-        helper('setting');
-
-        return filter_var(get_site_variable(self::SETTING_EMPLOYEE_COPY, '1'), FILTER_VALIDATE_BOOLEAN);
-    }
-
-    public function recipient(): string
-    {
-        helper('setting');
-
-        $value = trim((string) get_site_variable(self::SETTING_RECIPIENT, self::DEFAULT_RECIPIENT));
-
-        return $value === '' ? self::DEFAULT_RECIPIENT : $value;
+        return $this->switchedOn(self::SETTING_EMPLOYEE_COPY);
     }
 }
