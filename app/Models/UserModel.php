@@ -28,7 +28,7 @@ class UserModel extends Model
      * `password`/`google2fa_secret` so the admin list result set never
      * carries a secret into the view layer, even by accident.
      */
-    private const LIST_COLUMNS = 'id, name, email, company, zone, status, login_at, created_at';
+    private const LIST_COLUMNS = 'id, name, email, company, zone, status, attendance_exempt, login_at, created_at';
 
     protected $table            = 'users';
     protected $primaryKey       = 'id';
@@ -56,6 +56,8 @@ class UserModel extends Model
         'work_schedule_id',
         // Per-employee annual leave quota; NULL falls back to the site setting.
         'annual_leave_days',
+        // 1 = not on the clock: no check-in/out, left off the attendance screens.
+        'attendance_exempt',
         'created_at',
     ];
     protected $useTimestamps = false;
@@ -168,21 +170,51 @@ class UserModel extends Model
     }
 
     /**
-     * The employee roster attendance is reported over: active (`status = 1`),
-     * non-soft-deleted, both zones (admins are employees too and also check in).
+     * Every active account: `status = 1`, non-soft-deleted, both zones.
      *
-     * Bounded so a large tenant can't OOM a report page. Extracted because the
-     * management filter, the today board and the monthly report all need exactly
-     * this set — three copies would drift the day someone changes the definition.
+     * This is the "pick a person" set — the employee dropdowns on the leave-request
+     * queue and the access log, where somebody exempt from attendance still takes
+     * leave and still signs in. For anything that measures attendance use
+     * {@see attendanceRoster()}.
+     *
+     * Bounded so a large tenant can't OOM a page.
      *
      * @return list<object>
      */
     public function activeRoster(int $limit = 500): array
     {
+        return $this->rosterQuery()->findAll($limit);
+    }
+
+    /**
+     * The employee roster attendance is measured over: active accounts minus the
+     * ones flagged `attendance_exempt`.
+     *
+     * The exempt ones are not absent, they are simply not on the clock — a
+     * director, a contractor, an account that only receives reports. Counting them
+     * turned the today board and the monthly report into a wall of red for people
+     * nobody expected to see there, and had the reminder job nudging them daily.
+     *
+     * One definition, used by the today board, the dashboard, the monthly report
+     * and the reminders. Absence being the *absence* of a row means every one of
+     * those screens starts from this list, so a second copy of the rule would
+     * eventually disagree with this one.
+     *
+     * @return list<object>
+     */
+    public function attendanceRoster(int $limit = 500): array
+    {
+        return $this->rosterQuery()->where('attendance_exempt', 0)->findAll($limit);
+    }
+
+    /**
+     * Shared shape of both rosters — same columns, same order, one place.
+     */
+    private function rosterQuery(): static
+    {
         return $this->select('id, name, email, work_schedule_id')
             ->where('status', 1)
-            ->orderBy('name', 'ASC')
-            ->findAll($limit);
+            ->orderBy('name', 'ASC');
     }
 
     /**

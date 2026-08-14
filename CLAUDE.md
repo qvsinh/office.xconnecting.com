@@ -77,6 +77,7 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
 |---|---|
 | Password hash/verify | `App\Libraries\PasswordHasher` (bcrypt via `password_hash()`, tuned by `auth.password_algorithm` / `auth.password_cost`). Legacy md5 rows still verify and are rewritten on next login — never add a second hashing site. |
 | Sending mail | `App\Libraries\Mailer` (Amazon SES, `aws/aws-sdk-php`). `AttendanceNotifier` composes the check-in/out notification for **two** audiences with **two** templates: a report to `mail_notify_admin_recipient` and, when `mail_notify_employee` is on, a receipt to the employee. Each send is dispatched independently so one failure cannot suppress the other; `mail_notify_attendance` is the master switch. Every attempt is logged to `emails` and **never** throws into the caller. |
+| Who attendance is measured over | `UserModel::attendanceRoster()` — active accounts minus `users.attendance_exempt`. Used by the today board, admin dashboard, monthly report and the reminders. `activeRoster()` is the *picker* set (every active account) for the leave-request and access-log filters — an exempt person still books leave and still signs in. |
 | Company timezone | `attendance_tz()` — not a literal. Business dates come from `attendance_today()`. |
 | Translated strings | `lang('group.key')`, resolved from the `translation` table by `App\Libraries\DatabaseLanguage`. |
 | Asset cache-busting | `asset_version()` (helper `app`, autoloaded). |
@@ -175,6 +176,12 @@ vendor/bin/phpstan analyse   # static analysis
 - **Gating tests redirect before the view renders**, so they miss view-variable mismatches (500s).
   `tests/feature/Web/AuthedPagesRenderTest.php` logs in and asserts every authed page returns 200 —
   add new pages to its provider.
+- **`users.attendance_exempt = 1` means "not on the clock", not "hidden"** — they drop off the
+  today board, admin dashboard, monthly report, the check-out reminder and the missing-checkout
+  digest, and `Attendance::guardRecording()` refuses their check-in outright. Their *existing*
+  rows stay on `/admin/attendance`, which is deliberately where a manager can still see and fix a
+  dangling row. The two reminder queries filter on `COALESCE(users.attendance_exempt, 0) = 0`
+  rather than through the roster, because they start from `attendance_days`, not from people.
 - **Data going into a `<script>` body must use
   `json_encode($v, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)`** (see `requests/index.php`).
   `esc($v, 'js')` is only correct *inside* a quoted JS string — used bare it emits `\x22…\x22`, which is a

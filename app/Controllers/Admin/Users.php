@@ -92,6 +92,8 @@ class Users extends BaseController
             'status'   => (int) $this->request->getPost('status'),
             'language' => trim((string) $this->request->getPost('language')) ?: 'en',
             'timezone' => trim((string) $this->request->getPost('timezone')) ?: attendance_tz(),
+            // Not on the clock: no check-in/out, and left off the attendance screens.
+            'attendance_exempt' => (int) $this->request->getPost('attendance_exempt'),
         ]);
 
         return $this->jsonSuccess('User has been created successfully.');
@@ -110,14 +112,15 @@ class Users extends BaseController
         }
 
         return $this->jsonSuccess('OK', ['user' => [
-            'id'       => (int) $user->id,
-            'name'     => $user->name,
-            'email'    => $user->email,
-            'company'  => $user->company ?? null,
-            'zone'     => $user->zone,
-            'status'   => (int) $user->status,
-            'language' => $user->language,
-            'timezone' => $user->timezone,
+            'id'                => (int) $user->id,
+            'name'              => $user->name,
+            'email'             => $user->email,
+            'company'           => $user->company ?? null,
+            'zone'              => $user->zone,
+            'status'            => (int) $user->status,
+            'language'          => $user->language,
+            'timezone'          => $user->timezone,
+            'attendance_exempt' => (int) ($user->attendance_exempt ?? 0),
         ]]);
     }
 
@@ -144,13 +147,14 @@ class Users extends BaseController
         }
 
         $data = [
-            'name'     => trim((string) $this->request->getPost('name')),
-            'email'    => trim((string) $this->request->getPost('email')),
-            'zone'     => $newZone,
-            'role_id'  => $this->roleIdForZone($newZone),
-            'status'   => $newStatus,
-            'language' => trim((string) $this->request->getPost('language')) ?: $existing->language,
-            'timezone' => trim((string) $this->request->getPost('timezone')) ?: $existing->timezone,
+            'name'              => trim((string) $this->request->getPost('name')),
+            'email'             => trim((string) $this->request->getPost('email')),
+            'zone'              => $newZone,
+            'role_id'           => $this->roleIdForZone($newZone),
+            'status'            => $newStatus,
+            'language'          => trim((string) $this->request->getPost('language')) ?: $existing->language,
+            'timezone'          => trim((string) $this->request->getPost('timezone')) ?: $existing->timezone,
+            'attendance_exempt' => (int) $this->request->getPost('attendance_exempt'),
         ];
 
         $password = (string) $this->request->getPost('password');
@@ -254,12 +258,13 @@ class Users extends BaseController
             : 'required|valid_email|max_length[255]|is_unique[users.email]';
 
         $rules = [
-            'name'     => 'required|max_length[255]',
-            'email'    => $emailRule,
-            'zone'     => 'required|in_list[admin,user]',
-            'status'   => 'permit_empty|in_list[0,1]',
-            'language' => 'permit_empty|max_length[5]',
-            'timezone' => 'permit_empty|max_length[30]',
+            'name'              => 'required|max_length[255]',
+            'email'             => $emailRule,
+            'zone'              => 'required|in_list[admin,user]',
+            'status'            => 'permit_empty|in_list[0,1]',
+            'attendance_exempt' => 'permit_empty|in_list[0,1]',
+            'language'          => 'permit_empty|max_length[5]',
+            'timezone'          => 'permit_empty|max_length[30]',
             // Blank means "auto-generate" on create / "keep current" on update;
             // anything typed must satisfy the shared policy.
             'password' => 'permit_empty|strong_password',

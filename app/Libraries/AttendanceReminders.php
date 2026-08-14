@@ -117,7 +117,7 @@ class AttendanceReminders
         }
 
         $date   = $this->workDate($params);
-        $roster = model(UserModel::class)->activeRoster();
+        $roster = model(UserModel::class)->attendanceRoster();
 
         if ($roster === []) {
             return 'No active employees.';

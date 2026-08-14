@@ -33,7 +33,7 @@ class Dashboard extends BaseController
     public function index(): string
     {
         $date     = attendance_today();
-        $roster   = model(UserModel::class)->activeRoster();
+        $roster   = model(UserModel::class)->attendanceRoster();
         $userIds  = array_map(static fn (object $user): int => (int) $user->id, $roster);
         $calendar = new AttendanceCalendar();
 

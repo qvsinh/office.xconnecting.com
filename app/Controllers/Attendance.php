@@ -7,6 +7,7 @@ use App\Libraries\AttendanceCalendar;
 use App\Libraries\AttendanceNotifier;
 use App\Models\AccessLogModel;
 use App\Models\AttendanceDayModel;
+use App\Models\UserModel;
 use CodeIgniter\Database\Exceptions\DatabaseException;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
@@ -50,6 +51,7 @@ class Attendance extends BaseController
             'ipAllowed'     => office_ip_allowed(),
             'ipEnforced'    => attendance_ip_enforced(),
             'impersonating' => is_impersonating(),
+            'exempt'        => $this->isAttendanceExempt(),
         ]);
     }
 
@@ -215,7 +217,28 @@ class Attendance extends BaseController
             return $this->jsonFailed('You can only record attendance from the office network.', 403);
         }
 
+        // Exempt accounts are left off every attendance screen, so a row recorded
+        // here would be invisible everywhere it matters. Refuse it instead of
+        // storing something nobody can see. The card hides the buttons too — this
+        // is the guard behind them.
+        if ($this->isAttendanceExempt()) {
+            return $this->jsonFailed('This account does not record check-in or check-out.', 403);
+        }
+
         return null;
+    }
+
+    /**
+     * Is the signed-in employee off the clock entirely?
+     *
+     * Read from the row rather than the session so revoking the exemption takes
+     * effect on the next request instead of the next login.
+     */
+    private function isAttendanceExempt(): bool
+    {
+        $user = model(UserModel::class)->findUser(current_user_id());
+
+        return (int) ($user->attendance_exempt ?? 0) === 1;
     }
 
     /**

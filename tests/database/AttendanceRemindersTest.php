@@ -7,6 +7,7 @@ use App\Models\LeaveRequestModel;
 use App\Models\NotificationModel;
 use App\Models\PermissionModel;
 use App\Models\RoleModel;
+use App\Models\ScheduledTaskModel;
 use App\Models\SiteVariableModel;
 use App\Models\UserModel;
 use CodeIgniter\I18n\Time;
@@ -29,9 +30,9 @@ final class AttendanceRemindersTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate   = true;
-    protected $refresh   = true;
-    protected $namespace = null;
+    protected $migrate = true;
+    protected $refresh = true;
+    protected $namespace;
 
     protected function tearDown(): void
     {
@@ -126,6 +127,24 @@ final class AttendanceRemindersTest extends CIUnitTestCase
         model(AttendanceDayModel::class)->checkin($userId, '10.0.0.1', '2026-07-22', '2026-07-22 01:30:00');
 
         $this->assertStringContainsString('Too early', (new AttendanceReminders())->remindCheckout());
+        $this->assertCount(0, $this->notificationsFor($userId));
+    }
+
+    /**
+     * Somebody off the clock has nothing to be reminded about, and a daily nudge
+     * to check out is exactly the noise `attendance_exempt` exists to stop.
+     */
+    public function testAnExemptEmployeeIsNeverReminded(): void
+    {
+        Time::setTestNow(Time::parse('2026-07-22 11:30:00', 'UTC'));
+
+        $userId = $this->makeEmployee('director@example.com', 'Off The Clock');
+        model(UserModel::class)->update($userId, ['attendance_exempt' => 1]);
+        // A row exists — they tapped it once before being exempted — so this is
+        // the roster filter being tested, not the absence of data.
+        model(AttendanceDayModel::class)->checkin($userId, '10.0.0.1', '2026-07-22', '2026-07-22 01:30:00');
+
+        $this->assertStringContainsString('Nobody to remind', (new AttendanceReminders())->remindCheckout());
         $this->assertCount(0, $this->notificationsFor($userId));
     }
 
@@ -343,7 +362,7 @@ final class AttendanceRemindersTest extends CIUnitTestCase
     {
         $roleHolder = $this->makeHolder('rolehead@example.com', 'attendance.manage');
         $adminZone  = (int) model(UserModel::class)->insert([
-            'name' => 'Boss', 'email' => 'boss@example.com',
+            'name'     => 'Boss', 'email' => 'boss@example.com',
             'password' => password_hash('x', PASSWORD_DEFAULT), 'zone' => 'admin', 'status' => 1,
         ], true);
         $plain = $this->makeEmployee('plain@example.com');
@@ -369,7 +388,7 @@ final class AttendanceRemindersTest extends CIUnitTestCase
         $userId = $this->makeEmployee('dispatch@example.com');
         model(AttendanceDayModel::class)->checkin($userId, '10.0.0.1', '2026-07-22', '2026-07-22 01:30:00');
 
-        $task = model(App\Models\ScheduledTaskModel::class);
+        $task = model(ScheduledTaskModel::class);
         $id   = (int) $task->insert([
             'name'             => 'Remind check-out',
             'handler'          => 'attendance.remind_checkout',

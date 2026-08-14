@@ -42,7 +42,7 @@ class AttendanceReport extends BaseController
             'rows'           => $rows,
             'totals'         => $this->companyTotals($rows),
             'groups'         => model(GroupModel::class)->orderBy('name', 'ASC')->findAll(200),
-            'employees'      => model(UserModel::class)->activeRoster(),
+            'employees'      => model(UserModel::class)->attendanceRoster(),
             'groupId'        => $groupId,
             'userId'         => $userId,
             'lockedThrough'  => attendance_locked_through(),
@@ -142,7 +142,7 @@ class AttendanceReport extends BaseController
      */
     private function roster(int $groupId, int $userId): array
     {
-        $roster = model(UserModel::class)->activeRoster();
+        $roster = model(UserModel::class)->attendanceRoster();
 
         if ($groupId > 0) {
             $memberIds = array_map(

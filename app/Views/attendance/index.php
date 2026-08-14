@@ -22,6 +22,7 @@
  * @var bool                  $ipAllowed     may this address record attendance
  * @var bool                  $ipEnforced    is the office-IP restriction switched on
  * @var bool                  $impersonating is an admin currently acting as this user
+ * @var bool                  $exempt        this account does not record attendance at all
  * @var array<string, object> $evaluations AttendanceCalendar results keyed by work_date
  */
 $this->extend('layouts/app');
@@ -44,7 +45,11 @@ $initial = [
 // One reason string, one disabled flag — the button never has to re-derive why
 // it is off, and the card and the banner can't disagree about it.
 $blockedReason = null;
-if ($impersonating) {
+if ($exempt) {
+    // Not a restriction being enforced on them — this account is simply not on
+    // the clock, and it is left off the attendance screens entirely.
+    $blockedReason = lang('attendance.blocked_exempt');
+} elseif ($impersonating) {
     $blockedReason = lang('attendance.blocked_impersonating');
 } elseif (! $ipAllowed) {
     $blockedReason = lang('attendance.blocked_offsite');

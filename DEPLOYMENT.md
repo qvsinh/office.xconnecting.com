@@ -425,7 +425,7 @@ Tasks are seeded **disabled**; enable the ones you want in
 | Task | Purpose |
 |---|---|
 | `attendance.flag_missing_checkout` | marks yesterday's un-checked-out days |
-| `attendance.remind_checkout` | nudges anyone still checked in at the end of the day |
+| `attendance.remind_checkout` | nudges anyone still checked in at the end of the day (never someone flagged **No check-in / check-out** on `/admin/users`) |
 | `attendance.missing_checkout_digest` | weekly manager summary of uncorrected days |
 | `attendance.absence_digest` | daily summary of who is absent |
 | `requests.pending_digest` | reminds approvers about waiting leave requests |

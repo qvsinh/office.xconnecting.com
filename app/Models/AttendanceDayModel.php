@@ -282,6 +282,11 @@ class AttendanceDayModel extends Model
             ->where('attendance_days.checkin_at IS NOT NULL')
             ->where('attendance_days.checkout_at', null)
             ->where('attendance_days.checkout_reminded_at', null)
+            // Nobody off the clock gets nudged: a person exempted while a row was
+            // still open would otherwise be reminded daily about attendance that
+            // is not measured for them. NULL-safe so a row whose user vanished
+            // still surfaces rather than being silently dropped.
+            ->where('COALESCE(users.attendance_exempt, 0) =', 0)
             ->findAll();
     }
 
@@ -315,6 +320,10 @@ class AttendanceDayModel extends Model
             ->where('attendance_days.checkout_at', null)
             ->where('attendance_days.work_date >=', $from)
             ->where('attendance_days.work_date <=', $to)
+            // Same rule as the check-out reminder: exempt employees are left off
+            // the attendance machinery. Their stale rows are still visible on
+            // /admin/attendance, which is where a manager corrects data.
+            ->where('COALESCE(users.attendance_exempt, 0) =', 0)
             ->orderBy('attendance_days.work_date', 'ASC')
             ->findAll();
     }

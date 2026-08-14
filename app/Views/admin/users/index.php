@@ -36,6 +36,8 @@ $createDefaults = [
     // attendance_tz(), not a literal: the company timezone already has one
     // home, and 'Asia/Tokyo' here was a leftover from the starter.
     'timezone' => attendance_tz(),
+    // New accounts are on the clock; exemption is the deliberate exception.
+    'attendance_exempt' => 0,
 ];
 
 $queryBase = [
@@ -124,6 +126,10 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                         <td class="px-4 py-3">
                             <p class="font-medium dark:text-gray-100"><?= esc($item->name) ?></p>
                             <p class="text-xs text-[#787774] dark:text-gray-400"><?= esc($item->email) ?></p>
+                            <?php if ((int) ($item->attendance_exempt ?? 0) === 1) : ?>
+                                <span class="mt-1 inline-block rounded-full bg-[#F7F6F3] px-2 py-0.5 text-xs font-medium text-[#5C5955] dark:bg-gray-700 dark:text-gray-300"
+                                      title="Not on the clock: no check-in/out, and left off the attendance screens.">No attendance</span>
+                            <?php endif ?>
                         </td>
                         <td class="px-4 py-3">
                             <span class="rounded-full px-2 py-0.5 text-xs font-medium uppercase tracking-wide <?= zone_is_admin($item->zone) ? 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-blue-900/40 dark:text-blue-300' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' ?>">
@@ -217,6 +223,15 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                            class="rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900">
                     Active
                 </label>
+                <label class="flex items-start gap-2 text-sm dark:text-gray-200">
+                    <input type="checkbox" :checked="createForm.attendance_exempt === 1"
+                           @change="createForm.attendance_exempt = $event.target.checked ? 1 : 0"
+                           class="mt-0.5 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900">
+                    <span>
+                        No check-in / check-out
+                        <span class="block text-xs text-[#787774] dark:text-gray-400">Left off the today board, the report and the reminders — not counted absent.</span>
+                    </span>
+                </label>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" class="btn-secondary" @click="createOpen = false">Cancel</button>
                     <button type="submit" :disabled="creating" class="btn-primary">
@@ -279,6 +294,15 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                            class="rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900">
                     Active
                 </label>
+                <label class="flex items-start gap-2 text-sm dark:text-gray-200">
+                    <input type="checkbox" :checked="editForm.attendance_exempt === 1"
+                           @change="editForm.attendance_exempt = $event.target.checked ? 1 : 0"
+                           class="mt-0.5 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-900">
+                    <span>
+                        No check-in / check-out
+                        <span class="block text-xs text-[#787774] dark:text-gray-400">Left off the today board, the report and the reminders — not counted absent.</span>
+                    </span>
+                </label>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" class="btn-secondary" @click="editOpen = false">Cancel</button>
                     <button type="submit" :disabled="editing" class="btn-primary">
@@ -315,7 +339,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                 editing: false,
                 editOpen: false,
                 editLoading: false,
-                editForm: { id: null, name: '', email: '', password: '', zone: 'user', status: 1, language: '', timezone: '' },
+                editForm: { id: null, name: '', email: '', password: '', zone: 'user', status: 1, language: '', timezone: '', attendance_exempt: 0 },
 
                 /**
                  * Fill a form's password with a server-generated one and reveal
@@ -399,6 +423,7 @@ $sortMark = static function (string $col) use ($sort, $order): string {
                         status: json.user.status,
                         language: json.user.language || '',
                         timezone: json.user.timezone || '',
+                        attendance_exempt: json.user.attendance_exempt,
                     };
                 },
 
