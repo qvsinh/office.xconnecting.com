@@ -478,6 +478,12 @@ rather than silently swallowed.
 | `mail_notify_admin_recipient` | the administrator's address for check-in/out mail (`admin@xconnecting.com`) |
 | `mail_notify_employee` | `1` to also send the employee their own receipt, `0` for admin-only. **Doubles the messages SES sends.** |
 | `mail_notify_requests` | `1` to email leave / late-arrival requests — the administrator when one is submitted or withdrawn, the employee when it is approved or rejected. `0` stops both directions. |
+
+The administrator's copy carries **Approve** and **Reject** buttons. They open a
+confirmation page that needs one more click, work without a login (so the
+basic-auth gate skips `request-decision/*`), expire after 14 days, and stop
+working the moment the request is decided or withdrawn. `app.baseURL` must be the
+address the administrator can actually reach — those links are built from it.
 | `mail_notify_attendance` | master switch — `0` means nobody is mailed, admin or employee |
 
 Two things to get right on the AWS side:

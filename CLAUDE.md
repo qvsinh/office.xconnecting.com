@@ -77,9 +77,10 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
 |---|---|
 | Password hash/verify | `App\Libraries\PasswordHasher` (bcrypt via `password_hash()`, tuned by `auth.password_algorithm` / `auth.password_cost`). Legacy md5 rows still verify and are rewritten on next login — never add a second hashing site. |
 | Sending mail | `App\Libraries\Mailer` (Amazon SES, `aws/aws-sdk-php`). Notifiers extend `App\Libraries\MailNotifier`, which owns the admin address (`mail_notify_admin_recipient`) and the rule that a send never throws into the caller. `AttendanceNotifier` composes the check-in/out notification for **two** audiences with **two** templates: a report to `mail_notify_admin_recipient` and, when `mail_notify_employee` is on, a receipt to the employee. Each send is dispatched independently so one failure cannot suppress the other; `mail_notify_attendance` is the master switch. Every attempt is logged to `emails` and **never** throws into the caller. |
-| Who attendance is measured over | `UserModel::attendanceRoster()` — active accounts minus `users.attendance_exempt`. Used by the today board, admin dashboard, monthly report and the reminders. `activeRoster()` is the *picker* set (every active account) for the leave-request and access-log filters — an exempt person still books leave and still signs in. |
+| Deciding a request | `App\Libraries\RequestReview::apply()` — the lock check, the concurrency guard and telling the employee, for **both** doors: the admin queue and the emailed one-click link. |
 | Request mail | `App\Libraries\RequestNotifier` — admin on submit/withdraw, employee on approve/reject, all three under `mail_notify_requests`. The employee's in-app notification is kept *alongside* the decision mail, not replaced by it. |
 | Company timezone | `attendance_tz()` — not a literal. Business dates come from `attendance_today()`. |
+| Who attendance is measured over | `UserModel::attendanceRoster()` — active accounts minus `users.attendance_exempt`. Used by the today board, admin dashboard, monthly report and the reminders. `activeRoster()` is the *picker* set (every active account) for the leave-request and access-log filters — an exempt person still books leave and still signs in. |
 | Translated strings | `lang('group.key')`, resolved from the `translation` table by `App\Libraries\DatabaseLanguage`. |
 | Asset cache-busting | `asset_version()` (helper `app`, autoloaded). |
 | Modal detail fetches | `fetchLatest(key, url, options)` (layout, next to `postForm()`) — GET JSON for anything a user can reopen before the last request lands. Returns `null` when superseded; the caller returns without touching state. Never call `fetch()` directly from an `openEdit`/`openShow`. |
@@ -177,6 +178,14 @@ vendor/bin/phpstan analyse   # static analysis
 - **Gating tests redirect before the view renders**, so they miss view-variable mismatches (500s).
   `tests/feature/Web/AuthedPagesRenderTest.php` logs in and asserts every authed page returns 200 —
   add new pages to its provider.
+- **The emailed approve/reject link is a credential, so it is shaped like one.** `<hashid>.<random>`
+  in the URL, only its sha256 in `leave_requests.decision_token_hash`, dead the moment the request
+  stops being pending (`review()` and `clearDecisionToken()` both null it), and expiring on the
+  app clock (`Time::now()`, never `strtotime()` — a test cannot move the latter). Its route skips
+  `authFilter` **and** the basic-auth gate (`Config\Filters::$globals` `except`) because nobody is
+  signed in. **The GET only asks**: mail clients and scanners follow links by themselves, so
+  deciding needs the POST from the confirm page. Every dead end returns the same 410 page — saying
+  *which* dead end would tell a prober whether a token exists.
 - **`users.attendance_exempt = 1` means "not on the clock", not "hidden"** — they drop off the
   today board, admin dashboard, monthly report, the check-out reminder and the missing-checkout
   digest, and `Attendance::guardRecording()` refuses their check-in outright. Their *existing*

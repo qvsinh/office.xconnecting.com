@@ -7,11 +7,11 @@ use App\Filters\ApiKeyFilter;
 use App\Filters\AuthFilter;
 use App\Filters\BasicAuthFilter;
 use App\Filters\GuestFilter;
+use App\Filters\LocaleFilter;
 use App\Filters\PermissionFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
-use App\Filters\LocaleFilter;
 use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\ForceHTTPS;
 use CodeIgniter\Filters\Honeypot;
@@ -90,7 +90,7 @@ class Filters extends BaseFilters
             // 'csrf',
             // 'invalidchars',
             'locale',
-            'basicauth' => ['except' => ['basic-auth', 'api/*']],
+            'basicauth' => ['except' => ['basic-auth', 'api/*', 'request-decision/*']],
         ],
         'after' => [
             // 'honeypot',

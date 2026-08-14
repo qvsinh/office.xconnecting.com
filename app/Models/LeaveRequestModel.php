@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Database\BaseBuilder;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 
 /**
@@ -34,6 +35,7 @@ class LeaveRequestModel extends Model
     protected $allowedFields    = [
         'user_id', 'type', 'leave_kind', 'start_date', 'end_date', 'day_portion',
         'expected_time', 'reason', 'status', 'reviewed_by', 'reviewed_at', 'review_note',
+        'decision_token_hash', 'decision_token_expires_at',
     ];
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
@@ -122,7 +124,7 @@ class LeaveRequestModel extends Model
      *
      * ponytail: the WHERE clause is the lock; no transaction needed.
      */
-    public function review(int $id, string $status, int $reviewerId, ?string $note): bool
+    public function review(int $id, string $status, ?int $reviewerId, ?string $note): bool
     {
         $this->builder()
             ->where('id', $id)
@@ -133,9 +135,92 @@ class LeaveRequestModel extends Model
                 'reviewed_at' => date('Y-m-d H:i:s'),
                 'review_note' => $note,
                 'updated_at'  => date('Y-m-d H:i:s'),
+                // The emailed link dies with the decision it was minted for.
+                'decision_token_hash'       => null,
+                'decision_token_expires_at' => null,
             ]);
 
         return $this->db->affectedRows() > 0;
+    }
+
+    /**
+     * Mint the one-click decision link for the administrator's email and return
+     * the plaintext token — the only time it exists outside that message.
+     *
+     * Shaped like a personal access token (`ApiKeyModel::createForUser`): the
+     * database keeps a sha256 hash, never the token itself, so a database backup
+     * cannot be replayed into an approval.
+     *
+     * The token is `<hashid of the request id>.<random secret>`. The hashid half
+     * makes the URL unique per request and finds the row without exposing a
+     * sequential id; the random half is what actually authorises — hashids is
+     * reversible by design and would be a lock with the key painted on it.
+     */
+    public function mintDecisionToken(int $id, int $daysValid = 14): string
+    {
+        helper('app');
+
+        $plain = get_hashids()->encode($id) . '.' . bin2hex(random_bytes(16));
+
+        $this->builder()
+            ->where('id', $id)
+            ->update([
+                'decision_token_hash' => hash('sha256', $plain),
+                // Time::now(), not strtotime(): the app's clock is the one the
+                // rest of attendance is measured on, and it is the only one a
+                // test can move.
+                'decision_token_expires_at' => Time::now()->addDays($daysValid)->format('Y-m-d H:i:s'),
+                'updated_at'                => date('Y-m-d H:i:s'),
+            ]);
+
+        return $plain;
+    }
+
+    /**
+     * Resolve an emailed token back to its request, or null.
+     *
+     * Rejects an unknown, spent or expired token, and never leaks *which* of
+     * those it was — a caller telling those apart would be telling an attacker
+     * whether a token ever existed.
+     */
+    public function findByDecisionToken(string $plain): ?object
+    {
+        helper('app');
+
+        [$hashid] = array_pad(explode('.', $plain, 2), 2, '');
+        $decoded  = get_hashids()->decode($hashid);
+
+        if ($decoded === []) {
+            return null;
+        }
+
+        $row = $this->find((int) $decoded[0]);
+
+        if (! is_object($row) || ($row->decision_token_hash ?? null) === null) {
+            return null;
+        }
+
+        if (! hash_equals((string) $row->decision_token_hash, hash('sha256', $plain))) {
+            return null;
+        }
+
+        if (($row->decision_token_expires_at ?? null) !== null && $row->decision_token_expires_at < Time::now()->format('Y-m-d H:i:s')) {
+            return null;
+        }
+
+        return $row;
+    }
+
+    /**
+     * Retire the link without deciding anything — used when the employee
+     * withdraws, so a stale mail in somebody's inbox stops working.
+     */
+    public function clearDecisionToken(int $id): void
+    {
+        $this->builder()->where('id', $id)->update([
+            'decision_token_hash'       => null,
+            'decision_token_expires_at' => null,
+        ]);
     }
 
     /**

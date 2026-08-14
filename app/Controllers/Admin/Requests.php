@@ -4,8 +4,8 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Libraries\LeaveBalance;
+use App\Libraries\RequestReview;
 use App\Models\LeaveRequestModel;
-use App\Models\NotificationModel;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -78,66 +78,25 @@ class Requests extends BaseController
     }
 
     /**
-     * One decision path for both outcomes, so the lock check, the concurrency
-     * guard and the employee notification can't diverge between them.
+     * One decision path for both outcomes, and the *same* path the emailed
+     * one-click link takes — see `App\Libraries\RequestReview`, which owns the
+     * lock check, the concurrency guard and telling the employee.
      */
     private function review(int $id, string $status): ResponseInterface
     {
-        helper('attendance');
-
-        $model = model(LeaveRequestModel::class);
-        $row   = $model->findRequest($id);
+        $row = model(LeaveRequestModel::class)->findRequest($id);
 
         if ($row === null) {
             return $this->jsonFailed('Request not found.', 404);
         }
 
-        if ($row->status !== LeaveRequestModel::STATUS_PENDING) {
-            return $this->jsonFailed('That request has already been ' . $row->status . '.', 409);
+        $note  = trim((string) $this->request->getPost('review_note')) ?: null;
+        $error = (new RequestReview())->apply($row, $status, current_user_id(), $note);
+
+        if ($error !== null) {
+            return $this->jsonFailed($error, 409);
         }
-
-        $endDate = (string) ($row->end_date ?? $row->start_date);
-
-        if (attendance_period_locked((string) $row->start_date) || attendance_period_locked($endDate)) {
-            return $this->jsonFailed('That period is closed for payroll (locked through ' . attendance_locked_through() . ').', 409);
-        }
-
-        $note = trim((string) $this->request->getPost('review_note')) ?: null;
-
-        // The pending check lives inside the UPDATE's WHERE clause, so a second
-        // manager clicking at the same moment loses cleanly rather than
-        // overwriting the first decision.
-        if (! $model->review($id, $status, current_user_id(), $note)) {
-            return $this->jsonFailed('That request was just reviewed by someone else.', 409);
-        }
-
-        $this->notifyEmployee($row, $status, $note);
 
         return $this->jsonSuccess('Request has been ' . $status . '.');
-    }
-
-    /**
-     * Tell the employee. A decision they never hear about is barely a decision —
-     * and they need to know before the date arrives.
-     */
-    private function notifyEmployee(object $row, string $status, ?string $note): void
-    {
-        $what = $row->type === LeaveRequestModel::TYPE_LEAVE ? 'Leave request' : 'Late-arrival request';
-        $when = (string) $row->start_date;
-
-        if (($row->end_date ?? null) !== null && (string) $row->end_date !== $when) {
-            $when .= ' to ' . $row->end_date;
-        }
-
-        $message = "{$what} for {$when} was {$status}.";
-
-        if ($note !== null) {
-            $message .= ' Note: ' . $note;
-        }
-
-        model(NotificationModel::class)->insert([
-            'user_id' => (int) $row->user_id,
-            'message' => $message,
-        ]);
     }
 }

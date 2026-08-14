@@ -8,6 +8,14 @@ $routes->get('/', 'Home::index');
 // Site gate: precedes app login (BasicAuthFilter, registered as a global
 // before-filter with `except => ['basic-auth']`), so this route must not
 // sit behind authFilter/guestFilter/adminFilter.
+// One-click approve / reject from the administrator's email. No auth filter and
+// no site gate: the token in the URL is the credential, and there is nobody to
+// hand a second password to. The GET only *asks* — deciding needs the button on
+// that page, so a mail client following the link changes nothing.
+$routes->get('request-decision/(:segment)/(:segment)', 'RequestDecision::show/$1/$2');
+$routes->get('request-decision/(:segment)', 'RequestDecision::show/$1');
+$routes->post('request-decision/(:segment)', 'RequestDecision::confirm/$1', ['filter' => 'csrf']);
+
 $routes->get('basic-auth', 'BasicAuth::index');
 $routes->post('basic-auth', 'BasicAuth::authenticate', ['filter' => 'csrf']);
 
@@ -183,7 +191,6 @@ $routes->group('', ['filter' => 'authFilter'], static function (RouteCollection 
     $routes->get('notifications/unread-count', 'Notifications::unreadCount');
     $routes->post('notifications/mark-read', 'Notifications::markRead', ['filter' => 'csrf']);
     $routes->post('notifications/mark-all-read', 'Notifications::markAllRead', ['filter' => 'csrf']);
-
 });
 
 // REST API for AI agents (Bearer token, `api_keys` table) — stateless, so no
@@ -195,5 +202,4 @@ $routes->post('locale/switch', 'Locale::switch', ['filter' => 'csrf']);
 
 $routes->group('api/v1', ['filter' => 'apikey'], static function (RouteCollection $routes) {
     $routes->get('me', 'Api\V1\Me::index');
-
 });
