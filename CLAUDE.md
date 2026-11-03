@@ -15,7 +15,7 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
 
 - **Auth & access** — email/password login, optional basic-auth site gate, TOTP 2FA, roles +
   permissions (`user_can()` helper / opt-in `permission:` route filter) alongside a `zone`
-  (global/client) admin gate, and admin "act as" impersonation.
+  (`admin`/`user`) admin gate, and admin "act as" impersonation.
 - **Admin** — users management, settings (site variables), translations (i18n + JSON export),
   email templates + a read-only sent-email log, scheduled tasks (`php spark schedule:run`), and
   system tools (info, migrations run/rollback, logs, OPcache/cache/DB-session reset).
@@ -154,7 +154,7 @@ php spark migrate            # run database migrations
 php spark routes             # list all routes
 npm run dev                  # Tailwind watch build (or scripts/build-assets.sh --watch)
 npm run build                # Tailwind production build
-vendor/bin/phpunit           # run tests
+vendor/bin/phpunit           # run tests (config is phpunit.dist.xml)
 vendor/bin/php-cs-fixer fix  # format code
 vendor/bin/phpstan analyse   # static analysis
 ```
@@ -353,7 +353,7 @@ Project rules for the global agents (backend-coder, frontend-coder, planner, tes
 - Translated UI text via `lang('group.key')`; admin CRUD/auth pages are still literal English, do not translate them unasked.
 
 **Tests**
-- Config file is `phpunit.dist.xml` (CLAUDE.md says `.dist`), ONE suite `App` = `./tests`; no `Unit`/`Database`/`Session` suites. Layout: `tests/unit`, `tests/database`, `tests/session`, `tests/feature/Web` (helper `tests/_support/Web/WebAuthFixture.php`), `tests/feature/Api/V1/ApiTest.php`, `tests/_support`.
+- Config file is `phpunit.dist.xml`, ONE suite `App` = `./tests`; no `Unit`/`Database`/`Session` suites. Layout: `tests/unit`, `tests/database`, `tests/session`, `tests/feature/Web` (helper `tests/_support/Web/WebAuthFixture.php`), `tests/feature/Api/V1/ApiTest.php`, `tests/_support`.
 - Fast set: `phpunit tests/database tests/unit tests/session`; `tests/feature` is >10 min (background or `--filter`). Use `codegraph affected <files>` to pick tests.
 
 **Plans**
