@@ -15,7 +15,7 @@ starts from a working, tested admin shell. See **`STARTER.md`** for setup + full
 
 - **Auth & access** — email/password login, optional basic-auth site gate, TOTP 2FA, roles +
   permissions (`user_can()` helper / opt-in `permission:` route filter) alongside a `zone`
-  (global/client) admin gate, and admin "act as" impersonation.
+  (`admin`/`user`) admin gate, and admin "act as" impersonation.
 - **Admin** — users management, settings (site variables), translations (i18n + JSON export),
   email templates + a read-only sent-email log, scheduled tasks (`php spark schedule:run`), and
   system tools (info, migrations run/rollback, logs, OPcache/cache/DB-session reset).
@@ -154,7 +154,7 @@ php spark migrate            # run database migrations
 php spark routes             # list all routes
 npm run dev                  # Tailwind watch build (or scripts/build-assets.sh --watch)
 npm run build                # Tailwind production build
-vendor/bin/phpunit           # run tests
+vendor/bin/phpunit           # run tests (config is phpunit.dist.xml)
 vendor/bin/php-cs-fixer fix  # format code
 vendor/bin/phpstan analyse   # static analysis
 ```
@@ -334,3 +334,32 @@ Supporting: **backend-patterns**, **api-design**, **database-migrations**, **doc
 > When in doubt: **superpowers:using-superpowers** → **superpowers:brainstorming** → domain skill
 > (PHP/CI4 → **codeigniter4**; UI → **frontend-patterns** + Tailwind; tests → **tdd-workflow**).
 > **Never** invoke `laravel-*` skills on this project.
+
+## Agent rules
+
+Project rules for the global agents (backend-coder, frontend-coder, planner, tester, reviewer); they override the agents' defaults.
+
+**Backend**
+- This is an attendance / leave-request / admin starter (no registrar, billing, sub-users or proxy code): ignore any "CNR/JPRS/registrar proxy" wording and the `../proxy.services.vn` reference.
+- Auth helpers (`app/Helpers/auth_helper.php`): authorization uses `is_admin()` / `is_client()` / `user_can('perm')` (read `userAuthenticated`); data ownership uses `current_user_id()` (reads `userWorking`). `current_zone()` / `is_working_admin()` are VIEW-ONLY, never for authorization.
+- `users.zone` is now `admin` / `user` (renamed from `global` / `client`, migration 2026-07-27-010000). Never compare to a literal: call `zone_is_admin()` (it still accepts legacy `global` for old sessions).
+- Admin act-as: `Admin\Users::actAs()` / `stopActing()` (`users/act-as/(:num)`) set `userWorking`. Actions that attest to a person's own conduct (check-in/out in `Attendance`) must refuse when `is_impersonating()`; viewing stays allowed.
+- Route groups in `app/Config/Routes.php`: `admin` + `['authFilter','adminFilter']` for admin-only; extra `admin` groups with `['authFilter','permission:<perm>']` (e.g. `requests.approve`, `attendance.manage`) for non-admin managers; `api/v1` + `apikey` filter (`ApiKeyFilter`, `ApiContext`); state-changing POSTs carry `['filter' => 'csrf']` per route. New permission = seed it in a guarded migration.
+- Controllers: `BaseController`, area dirs `Admin/`, `Account/`, `Client/`, `Api/V1/`; mail only via `Mailer` / `MailNotifier` subclasses (see CLAUDE.md table).
+
+**Frontend**
+- TailAdmin + Tailwind + Alpine + `fetch()` only. Layouts: `app/Views/layouts/app.php` (authed shell) and `layouts/standalone.php` (guest/standalone). Views: `admin/<feature>/`, `account/`, `attendance/`, `client/`, `requests/`, `auth/`, `emails/`; shared partials `_pagination.php`, `_password_reveal.php`.
+- Shared Alpine contract (defined in `layouts/app.php`, use exactly these names): toast `$dispatch('toast', {type:'success|error|warning|info', text})`; confirm `$dispatch('confirm', {title, body, variant:'danger|default', onConfirm})`; alert banner `$dispatch('alert', {variant, text})`; from plain JS use `window.dispatchEvent(new CustomEvent('toast', {detail}))`. CSRF: `window.csrf.{fieldName,token,headerName}`; POST via `postForm(url, fields)` (rotates the token from `csrf_hash`). Z-index scale and `fetchLatest()` rules: CLAUDE.md.
+- Translated UI text via `lang('group.key')`; admin CRUD/auth pages are still literal English, do not translate them unasked.
+
+**Tests**
+- Config file is `phpunit.dist.xml`, ONE suite `App` = `./tests`; no `Unit`/`Database`/`Session` suites. Layout: `tests/unit`, `tests/database`, `tests/session`, `tests/feature/Web` (helper `tests/_support/Web/WebAuthFixture.php`), `tests/feature/Api/V1/ApiTest.php`, `tests/_support`.
+- Fast set: `phpunit tests/database tests/unit tests/session`; `tests/feature` is >10 min (background or `--filter`). Use `codegraph affected <files>` to pick tests.
+
+**Plans**
+- Planner writes `kanban/plan/{id-or-YYYYMMDD}-{slug}.md`; first coder moves it to `kanban/processing/`; reviewer moves it to `kanban/done/` after sign-off with no CRITICAL/HIGH. Never copy, only move. (Not `tasks/{id}/plan.md`.)
+
+**Review**
+- CRITICAL: authorization decided from `userWorking`, or data scoped by `userAuthenticated` (leaks under act-as); a new `/admin` route without `adminFilter` or `permission:`.
+- HIGH: state-changing route missing `['filter'=>'csrf']`; attendance-recording path not guarded by `is_impersonating()`; new `site_variable` read missing from `SettingCatalogue::SETTINGS` + guarded migration.
+- Verify the emailed decision link (`RequestDecision`) behaviour in CLAUDE.md is not weakened (GET only asks, POST decides, uniform 410).
